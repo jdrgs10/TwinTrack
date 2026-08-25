@@ -1,74 +1,44 @@
-# TwinTrack
-TwinTrack AI graduation project
 # TwinTrack AI
 
-TwinTrack is a personal digital twin that connects lifestyle data with academic performance predictions.
+TwinTrack is a personal digital twin that connects lifestyle, wearable, and academic data with machine-learning predictions and what-if simulations.
+
+The goal is to help a user explore how different versions of their current profile affect TwinTrack's estimated academic score.
+
+## Current Prototype
+
+The current Windows/Python prototype includes:
+
+- A trained Ridge Regression prediction model
+- Lifestyle and academic profile inputs
+- What-if simulations
+- Model-tested recommendations
+- A local conversational digital-twin layer using Qwen3 4B through Ollama
+- Input validation and extrapolation warnings
+- Automated regression testing
 
 ## Inputs
+
+TwinTrack currently uses seven inputs:
+
 - Sleep hours
 - Steps
 - Exercise minutes
 - Resting heart rate
-- Study time
-- Screen time
+- Study minutes
+- Screen time minutes
 - Previous academic score
 
-## Output
-TwinTrack predicts an estimated assessment score from 0–100%.
+The current Python prototype uses a hardcoded example profile.
 
-## Machine Learning
-The main predictive model is a **Standardized Ridge Regression model trained for TwinTrack**.
+Future versions will replace supported wearable values with real Apple Health / HealthKit data from an iPhone and Apple Watch.
 
-Three models were tested:
-- Ridge Regression
-- Random Forest
-- Gradient Boosting
+## Prediction Output
 
-Ridge Regression performed best and was selected.
+TwinTrack predicts an estimated academic assessment score from 0 to 100.
 
-## Training and Evaluation
-- 1,000 synthetic development observations
-- 80% training data
-- 20% untouched final test data
-- 5-fold cross-validation
-- Hyperparameter tuning performed only on the training set
+For example:
 
-Final test results:
-
-- MAE: **4.76**
-- RMSE: **5.87**
-- R²: **0.570**
-
-The synthetic dataset is used for prototype development and does not prove real-world causal relationships.
-
-## What-If Simulation
-TwinTrack can change lifestyle inputs and run the trained model again to compare predicted outcomes.
-
-Example:
-
-`Current profile → 62.8%`
-
-`More sleep + more study time → 66.5%`
-
-## Conversational Twin
-TwinTrack also uses a **pretrained Qwen3 4B Instruct model running locally through Ollama**.
-
-The Ridge model calculates all prediction numbers.
-
-Qwen only explains predictions, recommendations, and simulations in natural language.
-
-## Privacy
-The AI runs locally and does not require ChatGPT or Claude APIs for predictions or conversation.
-
-## Future Integration
-The planned iPhone version will use Apple Health / HealthKit to provide data such as:
-
-- Sleep
-- Steps
-- Exercise
-- Resting heart rate
-
-Study time, screen time, and academic results can initially be entered manually.
-
-## Limitation
-The current model is a development prototype trained on synthetic data. Real-world validation would require genuine observations collected over time.
+```text
+Current profile: 62.8%
+9 hours of sleep: 65.4%
+Estimated change: +2.7 points
