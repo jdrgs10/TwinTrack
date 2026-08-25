@@ -1,0 +1,58 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\-_-\Desktop\twin track ai\TwinTrack\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\-_-\Desktop\twin track ai\TwinTrack
+plugins: anyio-4.14.2
+collecting ... collected 24 items
+
+ml/tests/test_twintrack.py::test_sleep_8_hours_prediction PASSED         [  4%]
+ml/tests/test_twintrack.py::test_sleep_8_and_study_2_hours_prediction PASSED [  8%]
+ml/tests/test_twintrack.py::test_reduce_screen_time_by_one_hour PASSED   [ 12%]
+ml/tests/test_twintrack.py::test_walk_10000_steps PASSED                 [ 16%]
+ml/tests/test_twintrack.py::test_statement_about_steps_does_not_simulate XFAIL [ 20%]
+ml/tests/test_twintrack.py::test_statement_about_sleep_does_not_simulate PASSED [ 25%]
+ml/tests/test_twintrack.py::test_partial_sleep_and_steps_is_refused XFAIL [ 29%]
+ml/tests/test_twintrack.py::test_partial_study_and_rhr_is_refused XFAIL  [ 33%]
+ml/tests/test_twintrack.py::test_conflicting_sleep_values_are_rejected XFAIL [ 37%]
+ml/tests/test_twintrack.py::test_natural_steps_increase XFAIL (Natur...) [ 41%]
+ml/tests/test_twintrack.py::test_two_more_hours_of_sleep XFAIL (Alte...) [ 45%]
+ml/tests/test_twintrack.py::test_rhr_drops_to_60 XFAIL (Natural RHR ...) [ 50%]
+ml/tests/test_twintrack.py::test_study_400_minutes_warns_extrapolation XFAIL [ 54%]
+ml/tests/test_twintrack.py::test_sleep_3_hours_warns_extrapolation XFAIL [ 58%]
+ml/tests/test_twintrack.py::test_in_range_simulation_has_no_extrapolation_warning PASSED [ 62%]
+ml/tests/test_twintrack.py::test_rhr_not_presented_as_confident_positive XFAIL [ 66%]
+ml/tests/test_twintrack.py::test_number_verifier_accepts_correct_values XFAIL [ 70%]
+ml/tests/test_twintrack.py::test_number_verifier_rejects_fake_percentage XFAIL [ 75%]
+ml/tests/test_twintrack.py::test_number_verifier_rejects_wrong_difference XFAIL [ 79%]
+ml/tests/test_twintrack.py::test_number_verifier_accepts_negative_change XFAIL [ 83%]
+ml/tests/test_twintrack.py::test_production_model_is_ridge_pipeline PASSED [ 87%]
+ml/tests/test_twintrack.py::test_best_alpha_is_10 PASSED                 [ 91%]
+ml/tests/test_twintrack.py::test_feature_order_is_correct PASSED         [ 95%]
+ml/tests/test_twintrack.py::test_headline_holdout_metrics PASSED         [100%]
+
+============================== warnings summary ===============================
+.venv\Lib\site-packages\joblib\numpy_pickle.py:207
+.venv\Lib\site-packages\joblib\numpy_pickle.py:207
+.venv\Lib\site-packages\joblib\numpy_pickle.py:207
+.venv\Lib\site-packages\joblib\numpy_pickle.py:207
+  C:\Users\-_-\Desktop\twin track ai\TwinTrack\.venv\Lib\site-packages\joblib\numpy_pickle.py:207: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    array.shape = self.shape
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+XFAIL ml/tests/test_twintrack.py::test_statement_about_steps_does_not_simulate - Known pre-patch router bug
+XFAIL ml/tests/test_twintrack.py::test_partial_sleep_and_steps_is_refused - Known pre-patch silent partial parse bug
+XFAIL ml/tests/test_twintrack.py::test_partial_study_and_rhr_is_refused - Known pre-patch silent partial parse bug
+XFAIL ml/tests/test_twintrack.py::test_conflicting_sleep_values_are_rejected - Conflict detection not implemented yet
+XFAIL ml/tests/test_twintrack.py::test_natural_steps_increase - Natural step phrasing not supported yet
+XFAIL ml/tests/test_twintrack.py::test_two_more_hours_of_sleep - Alternative sleep wording not supported yet
+XFAIL ml/tests/test_twintrack.py::test_rhr_drops_to_60 - Natural RHR wording not supported yet
+XFAIL ml/tests/test_twintrack.py::test_study_400_minutes_warns_extrapolation - Training-range warning not implemented yet
+XFAIL ml/tests/test_twintrack.py::test_sleep_3_hours_warns_extrapolation - Training-range warning not implemented yet
+XFAIL ml/tests/test_twintrack.py::test_rhr_not_presented_as_confident_positive - RHR sign presentation not patched yet
+XFAIL ml/tests/test_twintrack.py::test_number_verifier_accepts_correct_values - Qwen number verifier not implemented yet
+XFAIL ml/tests/test_twintrack.py::test_number_verifier_rejects_fake_percentage - Qwen number verifier not implemented yet
+XFAIL ml/tests/test_twintrack.py::test_number_verifier_rejects_wrong_difference - Qwen number verifier not implemented yet
+XFAIL ml/tests/test_twintrack.py::test_number_verifier_accepts_negative_change - Qwen number verifier not implemented yet
+================= 10 passed, 14 xfailed, 4 warnings in 1.44s ==================

@@ -1,4 +1,5 @@
 import json
+import math
 import re
 import urllib.request
 from pathlib import Path
@@ -13,6 +14,10 @@ import pandas as pd
 
 QWEN_MODEL = "qwen3:4b-instruct"
 OLLAMA_URL = "http://localhost:11434/api/chat"
+
+# Final untouched synthetic holdout MAE from evaluate.py.
+# This is an average absolute error, NOT a confidence interval.
+HOLDOUT_MAE = 4.76
 
 ml_root = Path(__file__).resolve().parents[1]
 model_file = ml_root / "models" / "twintrack_model.joblib"
@@ -71,6 +76,37 @@ current_score = predict_score(current)
 
 
 # =====================================================
+# 4B. OBSERVED TRAINING-DATA RANGE
+# =====================================================
+#
+# Used only to warn when a what-if scenario goes outside
+# the values observed in the synthetic development data.
+# TwinTrack still calculates the scenario, but labels it as
+# extrapolation instead of presenting it with full confidence.
+# =====================================================
+
+training_data_file = (
+    ml_root
+    / "data"
+    / "synthetic_students.csv"
+)
+
+_training_frame = pd.read_csv(
+    training_data_file
+)
+
+TRAINING_RANGE = {
+    feature: (
+        float(_training_frame[feature].min()),
+        float(_training_frame[feature].max())
+    )
+    for feature in feature_columns
+}
+
+del _training_frame
+
+
+# =====================================================
 # 5. MODEL INFLUENCE RANKING
 # =====================================================
 #
@@ -84,12 +120,28 @@ ridge_model = prediction_model.named_steps["ridge"]
 
 influences = []
 
+# Resting heart rate is treated specially in the current prototype.
+#
+# The synthetic generator encoded a small negative RHR relationship,
+# but this training sample produced a small positive fitted coefficient.
+# The signal is too weak to interpret the learned direction confidently.
+#
+# Keep RHR in the prediction model, but do not present its coefficient
+# direction as a reliable positive or negative relationship.
+UNCERTAIN_DIRECTION_FEATURES = {
+    "resting_heart_rate"
+}
+
+
 for feature, coefficient in zip(
     feature_columns,
     ridge_model.coef_
 ):
 
-    if coefficient > 0:
+    if feature in UNCERTAIN_DIRECTION_FEATURES:
+        direction = "uncertain"
+
+    elif coefficient > 0:
         direction = "positive"
 
     elif coefficient < 0:
@@ -111,9 +163,22 @@ influences.sort(
 )
 
 
+def describe_influence(item):
+
+    if item["direction"] == "uncertain":
+        return (
+            f"{item['feature']} - relationship direction is "
+            f"uncertain in the current synthetic sample"
+        )
+
+    return (
+        f"{item['feature']} - "
+        f"{item['direction']} estimated relationship"
+    )
+
+
 influence_text = "\n".join(
-    f"{index}. {item['feature']} - "
-    f"{item['direction']} estimated relationship"
+    f"{index}. {describe_influence(item)}"
     for index, item in enumerate(
         influences,
         start=1
@@ -276,6 +341,16 @@ def recommendation_text():
             f"→ {item['score']:.1f}% "
             f"({item['difference']:+.1f} points)"
         )
+
+    lines.append(
+        ""
+    )
+
+    lines.append(
+        "Note: these tested changes are very close together compared "
+        f"with the model's holdout MAE of {HOLDOUT_MAE:.2f} points. "
+        "Treat the ordering as indicative, not as a reliable ranking."
+    )
 
     return "\n".join(lines)
 
@@ -443,6 +518,11 @@ an occasional emoji is okay.
 
 Do not exaggerate encouragement.
 
+The user should be able to talk to you like a broad personal digital twin,
+not only like a prediction dashboard. For non-prediction questions, answer
+naturally and helpfully while keeping a clear boundary between general
+knowledge and TwinTrack's model-calculated results.
+
 
 =====================================================
 GREETING BEHAVIOR
@@ -483,6 +563,13 @@ the full profile.
 Do not highlight resting heart rate unless the user
 specifically asks about it.
 
+If the user specifically asks about resting heart rate,
+do NOT describe its current model relationship as confidently
+positive or negative.
+
+Say that its direction is uncertain in the current synthetic
+sample and should not be interpreted as a reliable relationship.
+
 
 =====================================================
 RECOMMENDATION BEHAVIOR
@@ -492,16 +579,18 @@ If the user asks what to focus on:
 
 Use ONLY the MODEL-TESTED POSSIBLE CHANGES above.
 
-Rank them according to the calculated estimated differences.
+The tested lifestyle scenarios are too close together relative
+to the model's holdout MAE to support a reliable ranking.
+
+Do NOT recommend one tested lifestyle change as clearly superior.
+Do NOT say the user should focus on the numerically highest one first.
+
+You may mention one or two of the highest model-tested changes as
+examples, but explicitly say their ordering should not be treated
+as reliable.
 
 Do not invent a new recommendation.
-
 Do not say something is "best for the user."
-
-Instead say something like:
-
-"Of the changes I've tested, this gives the largest
-estimated increase in my current prediction."
 
 
 =====================================================
@@ -541,22 +630,49 @@ instead of causal language such as:
 GROUNDING RULES
 =====================================================
 
-By default, explain only information supported by:
+For TwinTrack predictions, simulations, recommendations about the
+current profile, and explanations of model behaviour, stay grounded in:
 
 - the current TwinTrack profile
 - TwinTrack's trained prediction model
 - model-tested simulations
 - the conversation history provided to you
 
-Do NOT add outside scientific explanations unless the
-user explicitly asks for scientific research,
-general knowledge, or outside evidence.
+For ordinary questions that are NOT asking for a TwinTrack prediction,
+you may also answer using your general pretrained knowledge.
+
+This includes broad questions about topics such as:
+
+- food and nutrition
+- sleep routines
+- studying and productivity
+- exercise and general wellness
+- technology
+- school
+- everyday life
+
+When using general knowledge, clearly separate it from TwinTrack's
+prediction model. Do not imply that the Ridge model produced or
+scientifically validated that advice.
+
+Natural wording can be:
+
+"Outside my prediction model, general guidance is..."
+
+or
+
+"That isn't something my Ridge model predicts, but generally..."
+
+Do not refuse a normal low-risk general question just because it is
+not one of TwinTrack's seven model inputs.
 
 If the user asks WHY a prediction changed:
 
 1. Identify which input changed.
-2. State whether that input has a positive or negative
-   estimated relationship in the current model.
+2. State whether that input has a positive, negative,
+   or uncertain estimated relationship in the current model.
+   Resting heart rate must be described as uncertain in the
+   current synthetic sample.
 3. Explain that the other profile inputs remained unchanged.
 4. Connect that directly to the supplied prediction result.
 
@@ -612,21 +728,44 @@ Never call the synthetic patterns "historical patterns."
 
 
 =====================================================
-HEALTH SAFETY
+HEALTH + WELLNESS SAFETY
 =====================================================
 
-TwinTrack may use lifestyle and wearable measurements
-as prediction inputs.
+TwinTrack may answer normal, low-risk questions about food,
+nutrition, sleep habits, exercise, and general wellness using
+general pretrained knowledge.
 
-Do not diagnose medical conditions.
+For basic questions such as:
 
-Do not recommend medical treatment.
+- "What foods might help me sleep?"
+- "What is a balanced breakfast before school?"
+- "What are some easy high-protein snacks?"
+- "How can I improve my sleep routine?"
 
-Do not interpret a heart-rate measurement as proof that
-the user is healthy or unhealthy.
+answer normally and use practical, non-alarmist language.
 
-If a user asks a genuine medical question, separate that
-question from TwinTrack's academic prediction system.
+Do NOT automatically tell the user to see a doctor or dietitian
+for ordinary low-risk wellness questions.
+
+When helpful, briefly note that general wellness information is
+not a personalized medical plan and that the user can research
+further or speak with a qualified professional if they want advice
+specific to their health, diet, medication, allergies, or condition.
+
+If the user reports pain, concerning symptoms, a possible medical
+condition, medication questions, or asks for diagnosis or treatment:
+
+- do not diagnose
+- do not present TwinTrack's academic model as medical evidence
+- give only cautious general information
+- recommend appropriate professional medical advice when warranted
+- if symptoms sound urgent or dangerous, advise urgent medical care
+
+Do not interpret a heart-rate measurement as proof that the user
+is healthy or unhealthy.
+
+Keep medical questions clearly separate from TwinTrack's academic
+prediction system.
 """
 
 
@@ -816,9 +955,48 @@ def looks_like_what_if(question):
         "if i increase",
     ]
 
-    return any(
+    if any(
         marker in text
         for marker in markers
+    ):
+        return True
+
+    # Natural prediction-seeking wording such as:
+    # "Roughly what would 9 hours of sleep give me?"
+    # "What would 2 hours of study do to my prediction?"
+    prediction_patterns = [
+        r"\bwhat\s+would\b.*\b(?:sleep|study|screen|exercise|steps|heart rate|resting hr)\b",
+        r"\bwould\b.*\b(?:sleep|study|screen|exercise|steps|heart rate|resting hr)\b.*\b(?:give|do|change|move)\b",
+        r"\b(?:roughly|approximately|about)\s+what\s+would\b",
+    ]
+
+    return any(
+        re.search(pattern, text)
+        for pattern in prediction_patterns
+    )
+
+
+def looks_like_profile_measurement_statement(question):
+
+    text = question.lower()
+
+    # If it is actually asking for a simulation, let the what-if
+    # router handle it instead.
+    if looks_like_what_if(question):
+        return False
+
+    patterns = [
+        r"\b(?:i|my)\b.*\b(?:walked|steps?)\b.*\d",
+        r"\b(?:i|my)\b.*\b(?:slept|sleep)\b.*\d",
+        r"\b(?:i|my)\b.*\b(?:studied|study)\b.*\d",
+        r"\b(?:i|my)\b.*\b(?:exercised|exercise)\b.*\d",
+        r"\b(?:i|my)\b.*\b(?:screen time|screen)\b.*\d",
+        r"\b(?:my\s+)?(?:resting heart rate|resting hr)\b.*\d",
+    ]
+
+    return any(
+        re.search(pattern, text)
+        for pattern in patterns
     )
 
 
@@ -845,12 +1023,14 @@ def training_explanation():
 def reliability_explanation():
 
     return (
-        "Right now, treat my predictions as prototype estimates rather "
-        "than proven real-world accuracy. My regression model was tested "
-        "on held-out synthetic development data, but the relationships "
-        "inside that dataset were created for development rather than "
-        "learned from real students. Real-world validation would require "
-        "actual observations collected over time and evaluated separately."
+        "My prediction pipeline has been validated on an untouched 20% "
+        "holdout from the synthetic development dataset. On that holdout, "
+        "the tuned Ridge model achieved MAE 4.76, RMSE 5.87, and R² 0.570. "
+        "That shows the prediction pipeline is working consistently on the "
+        "development data and that the final evaluation was kept separate "
+        "from training and tuning. The current limitation is that the data "
+        "is synthetic, so these metrics describe prototype validation rather "
+        "than performance measured on real students."
     )
 
 
@@ -956,6 +1136,37 @@ def find_relative_change(
         )
 
 
+    # Examples:
+    # "2 more hours of sleep"
+    # "30 less minutes of screen time"
+    #
+    # This word order puts the amount before the field name.
+
+    alternate_match = re.search(
+        rf"(?:get\s+)?"
+        rf"(\d+(?:\.\d+)?)\s+"
+        rf"(more|less)\s+"
+        rf"({unit_pattern})\s+"
+        rf"(?:of\s+)?"
+        rf"(?:{field_pattern})\b",
+        text
+    )
+
+    if alternate_match:
+
+        direction = (
+            1
+            if alternate_match.group(2) == "more"
+            else -1
+        )
+
+        return (
+            direction,
+            float(alternate_match.group(1)),
+            alternate_match.group(3)
+        )
+
+
     return None
 
 
@@ -969,6 +1180,36 @@ def parse_what_if(question):
 
     updated = current.copy()
     changes = []
+    parsed_fields = set()
+
+
+    # =================================================
+    # CONFLICT CHECKS
+    # =================================================
+    #
+    # Refuse contradictory absolute sleep values instead of
+    # silently taking the first match.
+    # -------------------------------------------------
+
+    sleep_values = re.findall(
+        r"(?:sleep|sleeping)"
+        r"(?:\s+(?:for|to|at|is))?\s+"
+        r"(\d+(?:\.\d+)?)\s*"
+        r"(?:hours?|hrs?|h)\b",
+        text
+    )
+
+    distinct_sleep_values = {
+        float(value)
+        for value in sleep_values
+    }
+
+    if len(distinct_sleep_values) > 1:
+
+        return None, None, (
+            "You gave me two different sleep values. "
+            "Give me one sleep value and I'll simulate it."
+        )
 
 
     # =================================================
@@ -1004,6 +1245,7 @@ def parse_what_if(question):
         changes.append(
             f"Sleep: {old:.1f} → {target:.1f} hours"
         )
+        parsed_fields.add("sleep_hours")
 
     else:
 
@@ -1014,6 +1256,15 @@ def parse_what_if(question):
             r"(?:hours?|hrs?|h)\b",
             text
         )
+
+        if not sleep_match:
+
+            sleep_match = re.search(
+                r"(\d+(?:\.\d+)?)\s*"
+                r"(?:hours?|hrs?|h)\s+"
+                r"(?:of\s+)?sleep\b",
+                text
+            )
 
         if sleep_match:
 
@@ -1035,6 +1286,7 @@ def parse_what_if(question):
             changes.append(
                 f"Sleep: {old:.1f} → {value:.1f} hours"
             )
+            parsed_fields.add("sleep_hours")
 
 
     # =================================================
@@ -1076,6 +1328,7 @@ def parse_what_if(question):
             f"Study time: "
             f"{old:.0f} → {target:.0f} minutes"
         )
+        parsed_fields.add("study_minutes")
 
     else:
 
@@ -1115,6 +1368,7 @@ def parse_what_if(question):
                 f"Study time: "
                 f"{old:.0f} → {minutes:.0f} minutes"
             )
+            parsed_fields.add("study_minutes")
 
 
     # =================================================
@@ -1156,6 +1410,7 @@ def parse_what_if(question):
             f"Screen time: "
             f"{old:.0f} → {target:.0f} minutes"
         )
+        parsed_fields.add("screen_time_minutes")
 
     else:
 
@@ -1195,6 +1450,7 @@ def parse_what_if(question):
                 f"Screen time: "
                 f"{old:.0f} → {minutes:.0f} minutes"
             )
+            parsed_fields.add("screen_time_minutes")
 
 
     # =================================================
@@ -1236,6 +1492,7 @@ def parse_what_if(question):
             f"Exercise: "
             f"{old:.0f} → {target:.0f} minutes"
         )
+        parsed_fields.add("exercise_minutes")
 
     else:
 
@@ -1275,6 +1532,7 @@ def parse_what_if(question):
                 f"Exercise: "
                 f"{old:.0f} → {minutes:.0f} minutes"
             )
+            parsed_fields.add("exercise_minutes")
 
 
     # =================================================
@@ -1284,14 +1542,14 @@ def parse_what_if(question):
     steps_increase = re.search(
         r"(?:increase|raise|add)\s+"
         r"(?:my\s+)?steps\s+by\s+"
-        r"(\d[\d,]*)\s*steps?\b",
+        r"(\d[\d,]*)(?:\s*steps?)?\b",
         text
     )
 
     steps_decrease = re.search(
         r"(?:reduce|decrease|lower|cut)\s+"
         r"(?:my\s+)?steps\s+by\s+"
-        r"(\d[\d,]*)\s*steps?\b",
+        r"(\d[\d,]*)(?:\s*steps?)?\b",
         text
     )
 
@@ -1337,6 +1595,7 @@ def parse_what_if(question):
         changes.append(
             f"Steps: {old} → {target}"
         )
+        parsed_fields.add("steps")
 
     else:
 
@@ -1368,6 +1627,7 @@ def parse_what_if(question):
             changes.append(
                 f"Steps: {old} → {value}"
             )
+            parsed_fields.add("steps")
 
 
     # =================================================
@@ -1376,7 +1636,11 @@ def parse_what_if(question):
 
     heart_match = re.search(
         r"(?:resting heart rate|resting hr)"
-        r"(?:\s+(?:to|of|at|is))?\s+"
+        r"(?:\s+(?:"
+        r"to|of|at|is|"
+        r"drops?\s+to|falls?\s+to|"
+        r"goes?\s+down\s+to"
+        r"))?\s+"
         r"(\d+(?:\.\d+)?)"
         r"(?:\s*bpm)?",
         text
@@ -1408,13 +1672,140 @@ def parse_what_if(question):
             f"Resting heart rate: "
             f"{old} → {value} bpm"
         )
+        parsed_fields.add("resting_heart_rate")
 
 
-    return updated, changes, None
+    # =================================================
+    # DETECT MENTIONED BUT UNPARSED VARIABLES
+    # =================================================
+    #
+    # This prevents a multi-variable request from being
+    # only partly simulated without the user being told.
+    #
+    # Track parsing explicitly rather than comparing values
+    # with the current profile, because a correctly parsed
+    # request may intentionally use the current value.
+    # -------------------------------------------------
+
+    mentioned = {
+        "sleep_hours": (
+            "sleep" in text
+        ),
+        "study_minutes": (
+            "study" in text
+        ),
+        "screen_time_minutes": (
+            "screen" in text
+        ),
+        "exercise_minutes": (
+            "exercise" in text
+            or "exercising" in text
+        ),
+        "steps": (
+            "steps" in text
+            or "walk" in text
+        ),
+        "resting_heart_rate": (
+            "heart rate" in text
+            or "resting hr" in text
+        ),
+        "previous_score": (
+            "previous score" in text
+            or "last score" in text
+            or "previous grade" in text
+        ),
+    }
+
+    unparsed = [
+        field
+        for field, was_mentioned in mentioned.items()
+        if was_mentioned and field not in parsed_fields
+    ]
+
+    return updated, changes, None, unparsed
 
 
 # =====================================================
-# 14. LOCAL QWEN CONNECTION
+# 14. QWEN NUMERICAL SAFEGUARD
+# =====================================================
+
+PREDICTION_NUMBER_PATTERN = re.compile(
+    r"(?<!\w)([+-]?\d+(?:\.\d+)?)\s*"
+    r"(?:%|percent\b|percentage\s+points?\b|points?\b)",
+    re.IGNORECASE
+)
+
+
+def _allowed_number_variants(value):
+    """
+    Return reasonable display variants of one authoritative number.
+
+    Qwen may round a supplied value in natural language. We allow the
+    exact value, one-decimal rounding, integer rounding, floor/ceil,
+    and the positive magnitude of a negative change.
+    """
+
+    variants = set()
+
+    for candidate in (
+        float(value),
+        abs(float(value)),
+    ):
+
+        variants.update({
+            candidate,
+            round(candidate, 1),
+            float(round(candidate)),
+            float(math.floor(candidate)),
+            float(math.ceil(candidate)),
+        })
+
+    return variants
+
+
+def find_unapproved_prediction_numbers(
+    text,
+    allowed_values,
+    tolerance=0.051
+):
+    """
+    Return score-like numbers in Qwen prose that are not supported by
+    authoritative Python/Ridge values.
+
+    Only percentages and point/percentage-point values are checked.
+    Ordinary profile values such as 8 hours or 120 minutes are ignored.
+    """
+
+    allowed = set()
+
+    for value in allowed_values:
+        allowed.update(
+            _allowed_number_variants(value)
+        )
+
+    found = [
+        float(match)
+        for match in PREDICTION_NUMBER_PATTERN.findall(text)
+    ]
+
+    unapproved = []
+
+    for value in found:
+
+        magnitude = abs(value)
+
+        if not any(
+            abs(value - approved) <= tolerance
+            or abs(magnitude - approved) <= tolerance
+            for approved in allowed
+        ):
+            unapproved.append(value)
+
+    return unapproved
+
+
+# =====================================================
+# 15. LOCAL QWEN CONNECTION
 # =====================================================
 
 def send_to_qwen(messages):
@@ -1474,7 +1865,7 @@ def send_to_qwen(messages):
 
 
 # =====================================================
-# 15. BUILD A NORMAL CONVERSATION REQUEST
+# 16. BUILD A NORMAL CONVERSATION REQUEST
 # =====================================================
 
 def conversational_answer(
@@ -1521,7 +1912,7 @@ def conversational_answer(
 
 
 # =====================================================
-# 16. EXPLAIN MODEL-CALCULATED WHAT-IF SCENARIO
+# 17. EXPLAIN MODEL-CALCULATED WHAT-IF SCENARIO
 # =====================================================
 
 def explain_what_if(
@@ -1542,6 +1933,60 @@ def explain_what_if(
     )
 
 
+    extrapolation_notes = []
+
+    for field in feature_columns:
+
+        if updated[field] == current[field]:
+            continue
+
+        low, high = TRAINING_RANGE[field]
+        value = float(updated[field])
+
+        if value < low or value > high:
+
+            extrapolation_notes.append(
+                f"Note: {field} = {value:g} is outside the "
+                f"observed training range ({low:g}-{high:g}). "
+                f"This estimate is an extrapolation."
+            )
+
+
+    extrapolation_text = ""
+
+    if extrapolation_notes:
+
+        extrapolation_text = (
+            "\n".join(extrapolation_notes)
+            + "\n"
+        )
+
+
+    model_caution_notes = []
+
+    if (
+        updated["resting_heart_rate"]
+        != current["resting_heart_rate"]
+    ):
+
+        model_caution_notes.append(
+            "Note: resting heart rate has an uncertain direction "
+            "in the current synthetic sample. Do not interpret this "
+            "simulation as evidence that a higher or lower resting "
+            "heart rate is academically better."
+        )
+
+
+    model_caution_text = ""
+
+    if model_caution_notes:
+
+        model_caution_text = (
+            "\n".join(model_caution_notes)
+            + "\n"
+        )
+
+
     changes_text = "\n".join(
         f"- {change}"
         for change in changes
@@ -1559,11 +2004,6 @@ this simulation.
 You are only explaining the supplied result.
 
 Do NOT perform any prediction calculations yourself.
-
-
-USER REQUEST:
-
-{question}
 
 
 CURRENT PREDICTION:
@@ -1602,9 +2042,11 @@ my estimate by Y points."
 
 STRICT RULES:
 
-- Use the supplied numbers exactly.
+- Use only the supplied Ridge/Python results.
 - Never change a prediction value.
 - Never calculate another prediction.
+- Prefer NOT to repeat prediction percentages or point changes in your prose;
+  the deterministic TwinTrack header already displays them.
 - Do not add outside scientific explanations.
 - Do not claim causation.
 - Do not guarantee a real grade change.
@@ -1629,17 +2071,41 @@ STRICT RULES:
         {
             "role": "user",
             "content": (
+                f"The user asked: {question}\n\n"
                 "Explain this simulation naturally."
             )
         }
     ])
 
 
+    # Python/Ridge remains authoritative. If Qwen introduces a
+    # score-like number that does not match the supplied results,
+    # discard only the prose and use a deterministic safe fallback.
+    unapproved_numbers = find_unapproved_prediction_numbers(
+        answer,
+        [
+            current_score,
+            new_score,
+            difference,
+            HOLDOUT_MAE,
+        ]
+    )
+
+    if unapproved_numbers:
+
+        answer = (
+            "If I simulate that change and keep the rest of your "
+            "profile the same, my prediction moves as shown above."
+        )
+
+
     full_answer = (
         f"TwinTrack Simulation\n"
         f"Current: {current_score:.1f}%\n"
         f"Simulated: {new_score:.1f}%\n"
-        f"Estimated change: {difference:+.1f} points\n\n"
+        f"Estimated change: {difference:+.1f} points\n"
+        f"{extrapolation_text}"
+        f"{model_caution_text}\n"
         f"TwinTrack:\n"
         f"{answer}"
     )
@@ -1662,7 +2128,7 @@ STRICT RULES:
 
 
 # =====================================================
-# 17. MAIN TWINTRACK ROUTER
+# 18. MAIN TWINTRACK ROUTER
 # =====================================================
 
 def ask_twintrack(question):
@@ -1722,40 +2188,99 @@ def ask_twintrack(question):
     # -------------------------------------------------
     # Try to detect a real what-if request
     # -------------------------------------------------
-
-    updated, changes, error = parse_what_if(
-        question
-    )
-
-
-    if error:
-
-        remember(
-            question,
-            error
-        )
-
-        return error
-
-
-    if changes:
-
-        return explain_what_if(
-            question,
-            updated,
-            changes
-        )
-
-
-    # -------------------------------------------------
-    # A what-if question was detected in natural
-    # language, but Python could not confidently map
-    # it to a supported TwinTrack variable.
     #
-    # Do NOT let Qwen invent a score.
+    # Only run the deterministic what-if parser when the
+    # user's message actually looks like a simulation request.
+    # This prevents plain statements such as
+    # "I walked 12000 steps yesterday" from being simulated.
     # -------------------------------------------------
 
     if looks_like_what_if(question):
+
+        parse_result = parse_what_if(
+            question
+        )
+
+        # Range/conflict errors still use the original
+        # three-value return shape. Successful parsing now
+        # includes a fourth value containing unparsed fields.
+        if len(parse_result) == 3:
+
+            updated, changes, error = parse_result
+            unparsed = []
+
+        else:
+
+            updated, changes, error, unparsed = parse_result
+
+
+        if error:
+
+            remember(
+                question,
+                error
+            )
+
+            return error
+
+
+        # -------------------------------------------------
+        # Refuse partial simulations.
+        #
+        # If the user mentioned a supported variable that
+        # Python could not confidently parse, do not simulate
+        # only the part that happened to parse successfully.
+        # -------------------------------------------------
+
+        if unparsed:
+
+            friendly_names = {
+                "sleep_hours": "sleep",
+                "study_minutes": "study time",
+                "screen_time_minutes": "screen time",
+                "exercise_minutes": "exercise",
+                "steps": "steps",
+                "resting_heart_rate": "resting heart rate",
+                "previous_score": "previous score",
+            }
+
+            missing_text = ", ".join(
+                friendly_names.get(field, field)
+                for field in unparsed
+            )
+
+            answer = (
+                "I couldn't safely run that simulation because I "
+                f"couldn't confidently map: {missing_text}. "
+                "I won't simulate only part of your request. "
+                "Give me a clearer value for that input and I'll "
+                "run the full scenario."
+            )
+
+            remember(
+                question,
+                answer
+            )
+
+            return answer
+
+
+        if changes:
+
+            return explain_what_if(
+                question,
+                updated,
+                changes
+            )
+
+
+        # -------------------------------------------------
+        # A what-if question was detected in natural
+        # language, but Python could not confidently map
+        # it to a supported TwinTrack variable.
+        #
+        # Do NOT let Qwen invent a score.
+        # -------------------------------------------------
 
         answer = (
             "I can simulate that, but I couldn't confidently map "
@@ -1789,7 +2314,7 @@ Do NOT list every profile variable.
 Mention at most two relevant current inputs or
 model-tested changes.
 
-The two highest-ranked tested changes are:
+Two of the numerically highest model-tested changes are:
 
 1. {recommendations[0]["change"]}
    → {recommendations[0]["score"]:.1f}%
@@ -1798,6 +2323,16 @@ The two highest-ranked tested changes are:
 2. {recommendations[1]["change"]}
    → {recommendations[1]["score"]:.1f}%
    ({recommendations[1]["difference"]:+.1f} points)
+
+Their differences are small compared with the model's holdout
+MAE of {HOLDOUT_MAE:.2f} points.
+
+Do NOT call either one the best, strongest, or most useful choice.
+Do NOT say either change "could help" the user's real academic result.
+If you mention them, frame them as examples of what the current
+model responds to, not as a reliable ranking.
+
+Do not call MAE an uncertainty range or a margin of error.
 
 Do not highlight resting heart rate.
 
@@ -1834,25 +2369,32 @@ Do not end with a question unless genuinely useful.
         instruction = f"""
 Answer using only TwinTrack's model-tested scenarios.
 
-The largest estimated increase is:
+Two of the highest model-tested estimated changes are:
 
 {top["change"]}
 → {top["score"]:.1f}%
 ({top["difference"]:+.1f} points)
 
-The second-largest estimated increase is:
-
 {second["change"]}
 → {second["score"]:.1f}%
 ({second["difference"]:+.1f} points)
 
-Preserve these numbers exactly.
+These tested lifestyle scenarios are very close together compared
+with the model's holdout MAE of {HOLDOUT_MAE:.2f} points.
 
-Say "largest estimated increase" rather than claiming that
-this is objectively the best habit.
+Do NOT present their order as a reliable ranking.
+Do NOT say "I recommend focusing on X first" or anything equivalent.
+Do NOT call the MAE an uncertainty range or margin of error.
 
+Say that the scenarios are too close to separate confidently and
+mention the top one or two only as examples of what the current model
+responds to.
+
+If you explain MAE, call it average absolute error on the synthetic
+holdout data.
+
+Preserve the supplied numbers exactly.
 Do not promise a real grade improvement.
-
 Keep it natural and concise.
 """
 
@@ -1883,8 +2425,11 @@ explain only why THAT model prediction moved.
 
 Use the previous supplied simulation numbers exactly.
 
-Identify the changed input and whether it has a positive
-or negative estimated relationship in the current model.
+Identify the changed input and whether it has a positive,
+negative, or uncertain estimated relationship in the current model.
+
+Resting heart rate must be described as uncertain in the current
+synthetic sample.
 
 Mention that other profile inputs remained unchanged.
 
@@ -1899,6 +2444,32 @@ Use about 2–4 sentences.
         answer = conversational_answer(
             question,
             instruction
+        )
+
+        remember(
+            question,
+            answer
+        )
+
+        return answer
+
+
+    # -------------------------------------------------
+    # Plain profile measurement / history statement
+    # -------------------------------------------------
+    #
+    # Do not let Qwen reinterpret a plain statement as a
+    # prediction request. The current prototype profile is
+    # not silently updated here.
+    # -------------------------------------------------
+
+    if looks_like_profile_measurement_statement(question):
+
+        answer = (
+            "Got it. I haven't changed your current prototype profile "
+            "or run a prediction from that statement. If you want to "
+            "test it as a scenario, phrase it as a what-if and I'll "
+            "run the Ridge model on it."
         )
 
         remember(
@@ -1930,6 +2501,32 @@ Do not end with a question by default.
     )
 
 
+    generic_allowed_numbers = [
+        current_score,
+        HOLDOUT_MAE,
+    ]
+
+    for item in recommendations:
+        generic_allowed_numbers.extend([
+            item["score"],
+            item["difference"],
+        ])
+
+
+    unapproved_numbers = find_unapproved_prediction_numbers(
+        answer,
+        generic_allowed_numbers
+    )
+
+    if unapproved_numbers:
+
+        answer = (
+            "I don't have a model-calculated result for that request yet, "
+            "so I won't invent a prediction. Ask me to simulate a specific "
+            "supported input and I'll run it through the Ridge model."
+        )
+
+
     remember(
         question,
         answer
@@ -1938,65 +2535,65 @@ Do not end with a question by default.
 
     return answer
 
-
 # =====================================================
-# 18. INTERACTIVE TWINTRACK CHAT
+# 19. INTERACTIVE TWINTRACK CHAT
 # =====================================================
 
-print("=" * 55)
-print("TWINTRACK — PERSONAL DIGITAL TWIN")
-print("=" * 55)
+def main():
 
-print(
-    f"\nCurrent prediction: "
-    f"{current_score:.1f}%"
-)
+    print("=" * 55)
+    print("TWINTRACK — PERSONAL DIGITAL TWIN")
+    print("=" * 55)
 
-print("\nYou can ask things like:")
-print("- How am I looking?")
-print("- What should I focus on?")
-print("- What if I sleep 8 hours?")
-print("- What if I sleep 8 hours and study for 2 hours?")
-print("- What if I reduce my screen time by 1 hour?")
-print("- What if I walk 10,000 steps?")
-print("- Why?")
-print("- How were you trained?")
-
-print(
-    "\nType 'exit' to close TwinTrack.\n"
-)
-
-
-while True:
-
-    question = input(
-        "You: "
-    ).strip()
-
-
-    if question.lower() in {
-        "exit",
-        "quit",
-        "bye"
-    }:
-
-        print(
-            "\nTwinTrack: See you later."
-        )
-
-        break
-
-
-    if not question:
-        continue
-
-
-    print()
-
-    answer = ask_twintrack(
-        question
+    print(
+        f"\nCurrent prediction: "
+        f"{current_score:.1f}%"
     )
 
-    print(answer)
+    print("\nYou can ask things like:")
+    print("- How am I looking?")
+    print("- What should I focus on?")
+    print("- What if I sleep 8 hours?")
+    print("- What if I sleep 8 hours and study for 2 hours?")
+    print("- What if I reduce my screen time by 1 hour?")
+    print("- What if I walk 10,000 steps?")
+    print("- Why?")
+    print("- How were you trained?")
 
-    print()
+    print(
+        "\nType 'exit' to close TwinTrack.\n"
+    )
+
+    while True:
+
+        question = input(
+            "You: "
+        ).strip()
+
+        if question.lower() in {
+            "exit",
+            "quit",
+            "bye"
+        }:
+
+            print(
+                "\nTwinTrack: See you later."
+            )
+
+            break
+
+        if not question:
+            continue
+
+        print()
+
+        answer = ask_twintrack(
+            question
+        )
+
+        print(answer)
+        print()
+
+
+if __name__ == "__main__":
+    main()

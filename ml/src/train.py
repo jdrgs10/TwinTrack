@@ -2,12 +2,12 @@ import pandas as pd
 import joblib
 from pathlib import Path
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold, cross_validate
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import Ridge
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
 
 # -----------------------------
 # 1. Locate project files
@@ -16,7 +16,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 project_root = Path(__file__).resolve().parents[1]
 data_file = project_root / "data" / "synthetic_students.csv"
 models_dir = project_root / "models"
+
 models_dir.mkdir(parents=True, exist_ok=True)
+
 
 # -----------------------------
 # 2. Load the dataset
@@ -37,25 +39,37 @@ feature_columns = [
 X = df[feature_columns]
 y = df["assessment_score"]
 
+
 # -----------------------------
-# 3. Split training/test data
+# 3. Create the same 80/20 split
+# -----------------------------
+#
+# IMPORTANT:
+# The 20% holdout is deliberately NOT used by this model-comparison
+# script.
+#
+# Model selection happens using cross-validation on the 80% training
+# portion only.
+#
+# The untouched holdout is reserved for the final tuned model in
+# tune.py.
 # -----------------------------
 
-X_train, X_test, y_train, y_test = train_test_split(
+X_train, _, y_train, _ = train_test_split(
     X,
     y,
     test_size=0.20,
-    random_state=42
+    random_state=42,
 )
 
+
 # -----------------------------
-# 4. Define models
+# 4. Define candidate models
 # -----------------------------
 
-# Ridge needs scaling because its features use very different units.
 ridge_pipeline = Pipeline([
     ("scaler", StandardScaler()),
-    ("ridge", Ridge(alpha=1.0))
+    ("ridge", Ridge(alpha=1.0)),
 ])
 
 models = {
@@ -63,81 +77,136 @@ models = {
 
     "Random Forest": RandomForestRegressor(
         n_estimators=200,
-        random_state=42
+        random_state=42,
     ),
 
     "Gradient Boosting": GradientBoostingRegressor(
-        random_state=42
+        random_state=42,
     ),
 }
 
+
 # -----------------------------
-# 5. Train and evaluate models
+# 5. Define cross-validation
+# -----------------------------
+
+cv = KFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42,
+)
+
+scoring = {
+    "mae": "neg_mean_absolute_error",
+    "rmse": "neg_root_mean_squared_error",
+    "r2": "r2",
+}
+
+
+# -----------------------------
+# 6. Compare models using only
+#    the training data
 # -----------------------------
 
 results = {}
 
-print("=== MODEL TRAINING ===")
+print("=== MODEL COMPARISON ===")
+print("Selection uses 5-fold CV on the 80% training split only.")
+print("The 20% final holdout is not used here.")
 
 for name, model in models.items():
 
-    model.fit(X_train, y_train)
+    scores = cross_validate(
+        model,
+        X_train,
+        y_train,
+        cv=cv,
+        scoring=scoring,
+        n_jobs=-1,
+    )
 
-    predictions = model.predict(X_test)
-
-    mae = mean_absolute_error(y_test, predictions)
-    rmse = mean_squared_error(y_test, predictions) ** 0.5
-    r2 = r2_score(y_test, predictions)
+    mean_mae = -scores["test_mae"].mean()
+    mean_rmse = -scores["test_rmse"].mean()
+    mean_r2 = scores["test_r2"].mean()
 
     results[name] = {
-        "model": model,
-        "mae": mae,
-        "rmse": rmse,
-        "r2": r2,
+        "cv_mae": mean_mae,
+        "cv_rmse": mean_rmse,
+        "cv_r2": mean_r2,
     }
 
     print(f"\n{name}")
-    print(f"MAE:  {mae:.2f}")
-    print(f"RMSE: {rmse:.2f}")
-    print(f"R²:   {r2:.3f}")
+    print(f"CV MAE:  {mean_mae:.2f}")
+    print(f"CV RMSE: {mean_rmse:.2f}")
+    print(f"CV R²:   {mean_r2:.3f}")
+
 
 # -----------------------------
-# 6. Select best model
+# 7. Select the best model using
+#    TRAINING CV MAE only
 # -----------------------------
 
 best_name = min(
     results,
-    key=lambda name: results[name]["mae"]
+    key=lambda name: results[name]["cv_mae"],
 )
 
-best_model = results[best_name]["model"]
+best_model = models[best_name]
 
-print("\n=== BEST MODEL ===")
+print("\n=== BEST MODEL BY TRAINING CV ===")
 print(best_name)
 
-print("\n=== BEST MODEL METRICS ===")
-print(f"MAE:  {results[best_name]['mae']:.2f}")
-print(f"RMSE: {results[best_name]['rmse']:.2f}")
-print(f"R²:   {results[best_name]['r2']:.3f}")
+print("\n=== BEST MODEL CV METRICS ===")
+print(f"CV MAE:  {results[best_name]['cv_mae']:.2f}")
+print(f"CV RMSE: {results[best_name]['cv_rmse']:.2f}")
+print(f"CV R²:   {results[best_name]['cv_r2']:.3f}")
+
 
 # -----------------------------
-# 7. Save the winning model
+# 8. Fit the selected comparison
+#    model on the full 80% train set
 # -----------------------------
 
-model_file = models_dir / "twintrack_model.joblib"
+best_model.fit(
+    X_train,
+    y_train,
+)
+
+
+# -----------------------------
+# 9. Save ONLY the comparison
+#    artifact
+# -----------------------------
+#
+# IMPORTANT:
+# This script does NOT write twintrack_model.joblib.
+#
+# tune.py remains the sole producer of the production
+# TwinTrack model.
+# -----------------------------
+
+comparison_file = models_dir / "model_comparison.joblib"
 
 joblib.dump(
     {
         "model": best_model,
         "features": feature_columns,
         "model_name": best_name,
-        "metrics": {
-            "mae": results[best_name]["mae"],
-            "rmse": results[best_name]["rmse"],
-            "r2": results[best_name]["r2"],
-        }
+        "selection_method": (
+            "5-fold cross-validation on the 80% training split"
+        ),
+        "selection_metric": "mean cross-validation MAE",
+        "cv_metrics": results,
+        "production_model": False,
     },
-    model_file
+    comparison_file,
 )
 
-print(f"\nSaved model to: {model_file}")
+print(
+    f"\nSaved model-comparison artifact to:\n{comparison_file}"
+)
+
+print(
+    "\nProduction model unchanged."
+    "\nml/models/twintrack_model.joblib is still owned by tune.py."
+)
