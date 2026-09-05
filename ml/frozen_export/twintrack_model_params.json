@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "model_name": "Tuned Standardized Ridge Regression",
+  "source_artifact": "ml/models/twintrack_model.joblib",
+  "feature_order": [
+    "sleep_hours",
+    "steps",
+    "exercise_minutes",
+    "resting_heart_rate",
+    "study_minutes",
+    "screen_time_minutes",
+    "previous_score"
+  ],
+  "n_features": 7,
+  "scaler": {
+    "type": "StandardScaler",
+    "with_mean": true,
+    "with_std": true,
+    "ddof": 0,
+    "mean": [
+      6.9750875,
+      6835.025,
+      31.021375,
+      68.09925000000001,
+      90.76825000000001,
+      245.52300000000002,
+      74.94800000000001
+    ],
+    "scale": [
+      1.165721232689767,
+      2478.3349716846187,
+      18.76555103399245,
+      8.758956812172327,
+      48.136470237622326,
+      91.09202926710987,
+      12.11120951845851
+    ]
+  },
+  "ridge": {
+    "alpha": 10.0,
+    "fit_intercept": true,
+    "coef": [
+      1.0313609218864506,
+      0.8551817402946157,
+      0.5057650814894945,
+      0.24125669488872578,
+      1.5671184670863296,
+      -0.9375490969179391,
+      6.4394301275765775
+    ],
+    "intercept": 67.90012499999999
+  },
+  "output_clamp": {
+    "min": 0.0,
+    "max": 100.0
+  },
+  "training_range": {
+    "sleep_hours": [
+      4.0,
+      10.0
+    ],
+    "steps": [
+      1000.0,
+      14286.0
+    ],
+    "exercise_minutes": [
+      0.0,
+      91.2
+    ],
+    "resting_heart_rate": [
+      45.0,
+      95.8
+    ],
+    "study_minutes": [
+      0.0,
+      262.7
+    ],
+    "screen_time_minutes": [
+      30.0,
+      531.7
+    ],
+    "previous_score": [
+      38.2,
+      100.0
+    ]
+  },
+  "provenance": {
+    "test_size": 0.2,
+    "random_state": 42,
+    "n_rows_total": 1000,
+    "n_rows_train": 800,
+    "n_rows_holdout": 200,
+    "cross_validated_mae": 4.636596102140946,
+    "holdout_metrics": {
+      "mae": 4.76146176524888,
+      "rmse": 5.868372602783463,
+      "r2": 0.5704285621846623
+    }
+  }
+}
