@@ -10,6 +10,32 @@
 
 **A learning status:** Not confirmed by A.
 
+## Shared state and Manual Inputs
+
+**Question:** How does TwinTrack keep one source of truth across its three tabs?
+
+**Answer outline:** The app creates one `TwinTrackState` at the application root and injects that same object above the root `TabView`. Manual Inputs writes to it, and Home, TwinTrack AI, and Profile can read the same current values. The implementation does not create separate stores for individual screens.
+
+**Question:** How are Study Time and Screen Time represented?
+
+**Answer outline:** The user selects Hours and Minutes with native wheel pickers. TwinTrack converts the selections into one total-minute value for each model input. This keeps the user interface readable while matching the Ridge model's `study_minutes` and `screen_time_minutes` features.
+
+**Question:** How does TwinTrack distinguish missing data from a real zero?
+
+**Answer outline:** All seven current inputs are optional. An unavailable value is represented as `nil` and displayed as Not entered or unavailable. If the user explicitly enters zero, zero is stored as a real value instead of being used as a missing-data placeholder.
+
+**Question:** How are the manual values validated and persisted?
+
+**Answer outline:** Previous Score is restricted to finite numeric values from 0 through 100. The three manual values are saved locally in `UserDefaults`, and the presence or absence of each key preserves the difference between an entered zero and a missing value. Automated recreation testing and a simulator relaunch confirmed persistence.
+
+**Question:** Why does adding Manual Inputs not make a prediction available yet?
+
+**Answer outline:** The frozen Ridge model requires all seven real inputs. The four HealthKit-owned values remain unavailable, so the shared state does not create a complete `TwinTrackProfile` and does not call Ridge with fake replacements.
+
+**Evidence:** `manual_inputs_verified.png` shows the Manual Inputs sheet with Study Time `2h 48m`, Screen Time `4h 15m`, and Previous Score `82`. `manual_inputs_persistence_verified.png` shows the same saved values after stopping and relaunching the app.
+
+**A learning status:** Not confirmed by A.
+
 ## Frozen prediction engine
 
 **Question:** How does TwinTrack calculate its numerical prediction on the iPhone?

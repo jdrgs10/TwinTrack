@@ -24,7 +24,7 @@ struct ContentView: View {
             shellScreen("TwinTrack AI")
                 .tabItem { Label("TwinTrack AI", systemImage: "sparkles") }
 
-            shellScreen("Profile")
+            ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(accent)
@@ -42,9 +42,13 @@ struct ContentView: View {
 }
 
 #Preview("Light") {
-    ContentView().preferredColorScheme(.light)
+    ContentView()
+        .environmentObject(TwinTrackState())
+        .preferredColorScheme(.light)
 }
 
 #Preview("Dark") {
-    ContentView().preferredColorScheme(.dark)
+    ContentView()
+        .environmentObject(TwinTrackState())
+        .preferredColorScheme(.dark)
 }
