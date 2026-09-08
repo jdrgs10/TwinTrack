@@ -24,7 +24,7 @@ struct HomeView: View {
                     healthStatus
                     predictionHero
                     inputSection
-                    emptyTrendCard
+                    PredictionTrendView(snapshots: state.predictionHistory)
                     insightCard
                     openAIButton
                 }
@@ -193,32 +193,6 @@ struct HomeView: View {
         Text("Health: previous completed day")
             .font(.caption2)
             .foregroundStyle(palette.tertiaryText)
-    }
-
-    private var emptyTrendCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("7-DAY TREND")
-                .font(.caption2.weight(.semibold))
-                .tracking(1.1)
-                .foregroundStyle(palette.secondaryText)
-            Text("No prediction history yet")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(palette.primaryText)
-            Text("Trends will appear after real prediction history is implemented.")
-                .font(.footnote)
-                .foregroundStyle(palette.secondaryText)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 17)
-        .padding(.horizontal, 18)
-        .padding(.bottom, 15)
-        .background(palette.card, in: RoundedRectangle(cornerRadius: 20))
-        .overlay {
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(palette.border, lineWidth: 1)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 24)
     }
 
     private var insightCard: some View {

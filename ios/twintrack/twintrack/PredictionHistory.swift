@@ -1,0 +1,201 @@
+import Foundation
+
+struct PredictionInputs: Codable, Equatable, Sendable {
+    let sleepHours: Double
+    let steps: Double
+    let exerciseMinutes: Double
+    let restingHeartRate: Double
+    let studyMinutes: Double
+    let screenTimeMinutes: Double
+    let previousScore: Double
+
+    init(profile: TwinTrackProfile) {
+        sleepHours = profile.sleepHours
+        steps = profile.steps
+        exerciseMinutes = profile.exerciseMinutes
+        restingHeartRate = profile.restingHeartRate
+        studyMinutes = profile.studyMinutes
+        screenTimeMinutes = profile.screenTimeMinutes
+        previousScore = profile.previousScore
+    }
+
+    var profile: TwinTrackProfile {
+        TwinTrackProfile(
+            sleepHours: sleepHours,
+            steps: steps,
+            exerciseMinutes: exerciseMinutes,
+            restingHeartRate: restingHeartRate,
+            studyMinutes: studyMinutes,
+            screenTimeMinutes: screenTimeMinutes,
+            previousScore: previousScore
+        )
+    }
+
+    var isValid: Bool {
+        let nonnegative = [sleepHours, steps, exerciseMinutes, studyMinutes, screenTimeMinutes]
+        return nonnegative.allSatisfy { $0.isFinite && $0 >= 0 }
+            && restingHeartRate.isFinite && restingHeartRate > 0
+            && previousScore.isFinite && (0...100).contains(previousScore)
+    }
+}
+
+struct PredictionHealthWindow: Codable, Equatable, Sendable {
+    let dayStart: Date
+    let dayEnd: Date
+    let sleepStart: Date
+    let sleepEnd: Date
+    let timeZoneIdentifier: String
+
+    init(_ window: HealthDataWindow) {
+        dayStart = window.day.start
+        dayEnd = window.day.end
+        sleepStart = window.sleep.start
+        sleepEnd = window.sleep.end
+        timeZoneIdentifier = window.timeZone.identifier
+    }
+
+    var isValid: Bool {
+        dayStart < dayEnd && sleepStart < sleepEnd && !timeZoneIdentifier.isEmpty
+    }
+}
+
+struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
+    // Value semantics and let-only fields keep past predictions independent from
+    // later edits to TwinTrackState.
+    let id: UUID
+    let createdAt: Date
+    let prediction: Double
+    let inputs: PredictionInputs
+    let healthWindow: PredictionHealthWindow?
+
+    init(
+        id: UUID = UUID(),
+        createdAt: Date,
+        prediction: Double,
+        inputs: PredictionInputs,
+        healthWindow: PredictionHealthWindow?
+    ) {
+        self.id = id
+        self.createdAt = createdAt
+        self.prediction = prediction
+        self.inputs = inputs
+        self.healthWindow = healthWindow
+    }
+
+    static func realBaseline(
+        profile: TwinTrackProfile,
+        createdAt: Date,
+        healthWindow: HealthDataWindow?
+    ) -> PredictionSnapshot? {
+        let inputs = PredictionInputs(profile: profile)
+        let prediction = TwinTrackModel.predict(profile)
+        guard inputs.isValid,
+              createdAt.timeIntervalSinceReferenceDate.isFinite,
+              prediction.isFinite,
+              (0...100).contains(prediction) else {
+            return nil
+        }
+
+        let storedHealthWindow: PredictionHealthWindow?
+        if let healthWindow {
+            storedHealthWindow = PredictionHealthWindow(healthWindow)
+        } else {
+            storedHealthWindow = nil
+        }
+
+        return PredictionSnapshot(
+            createdAt: createdAt,
+            prediction: prediction,
+            inputs: inputs,
+            healthWindow: storedHealthWindow
+        )
+    }
+
+    var isValid: Bool {
+        createdAt.timeIntervalSinceReferenceDate.isFinite
+            && prediction.isFinite
+            && (0...100).contains(prediction)
+            && inputs.isValid
+            && (healthWindow?.isValid ?? true)
+    }
+
+    func hasSameSourceIdentity(as other: PredictionSnapshot) -> Bool {
+        // Timestamp and derived prediction are deliberately excluded. The real
+        // inputs and completed Health windows define whether a snapshot is new.
+        inputs == other.inputs && healthWindow == other.healthWindow
+    }
+}
+
+protocol PredictionHistoryPersisting {
+    func load() -> [PredictionSnapshot]
+    func save(_ snapshots: [PredictionSnapshot]) throws
+}
+
+struct UserDefaultsPredictionHistoryStore: PredictionHistoryPersisting {
+    private let defaults: UserDefaults
+    private let key: String
+
+    init(
+        defaults: UserDefaults = .standard,
+        key: String = "twintrack.prediction.history.v1"
+    ) {
+        self.defaults = defaults
+        self.key = key
+    }
+
+    func load() -> [PredictionSnapshot] {
+        guard let data = defaults.data(forKey: key),
+              let decoded = try? JSONDecoder().decode([PredictionSnapshot].self, from: data) else {
+            return []
+        }
+
+        return decoded.filter(\.isValid).sorted { $0.createdAt < $1.createdAt }
+    }
+
+    func save(_ snapshots: [PredictionSnapshot]) throws {
+        guard !snapshots.isEmpty else {
+            defaults.removeObject(forKey: key)
+            return
+        }
+
+        defaults.set(try JSONEncoder().encode(snapshots), forKey: key)
+    }
+}
+
+struct PredictionTrendPoint: Equatable, Sendable {
+    let day: Date
+    let snapshot: PredictionSnapshot
+}
+
+enum PredictionHistoryTrend {
+    static func points(
+        from snapshots: [PredictionSnapshot],
+        now: Date,
+        calendar: Calendar
+    ) -> [PredictionTrendPoint] {
+        let today = calendar.startOfDay(for: now)
+        guard let start = calendar.date(byAdding: .day, value: -6, to: today),
+              let end = calendar.date(byAdding: .day, value: 1, to: today) else {
+            return []
+        }
+
+        var latestByDay: [Date: PredictionSnapshot] = [:]
+        for snapshot in snapshots where snapshot.createdAt >= start && snapshot.createdAt < end {
+            let day = calendar.startOfDay(for: snapshot.createdAt)
+            // Full history remains intact; only the chart chooses the latest real
+            // snapshot per local day. Days without a snapshot never gain a value.
+            if latestByDay[day].map({ $0.createdAt < snapshot.createdAt }) ?? true {
+                latestByDay[day] = snapshot
+            }
+        }
+
+        return latestByDay
+            .map { PredictionTrendPoint(day: $0.key, snapshot: $0.value) }
+            .sorted { $0.day < $1.day }
+    }
+
+    static func days(now: Date, calendar: Calendar) -> [Date] {
+        let today = calendar.startOfDay(for: now)
+        return (-6...0).compactMap { calendar.date(byAdding: .day, value: $0, to: today) }
+    }
+}

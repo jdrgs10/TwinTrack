@@ -108,6 +108,46 @@ struct ProfileView: View {
                                 .stroke(border, lineWidth: 1)
                         }
                         .accessibilityIdentifier("manualInputsButton")
+
+                        Text("DATA & PRIVACY")
+                            .font(.caption2.weight(.semibold))
+                            .tracking(1.1)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.top, 18)
+
+                        NavigationLink {
+                            DataPrivacyView()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "lock.shield")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 30, height: 30)
+                                    .background(border, in: RoundedRectangle(cornerRadius: 9))
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Data & Privacy")
+                                        .font(.subheadline.weight(.medium))
+                                    Text(PredictionHistoryDisplay.historySummary(state.predictionHistory.count))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                                    .accessibilityHidden(true)
+                            }
+                            .padding(.horizontal, 15)
+                            .padding(.vertical, 14)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .background(card, in: RoundedRectangle(cornerRadius: 18))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 18).stroke(border, lineWidth: 1)
+                        }
+                        .accessibilityIdentifier("dataPrivacyButton")
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 6)

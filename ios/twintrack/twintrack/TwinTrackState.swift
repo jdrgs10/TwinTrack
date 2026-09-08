@@ -56,9 +56,11 @@ final class TwinTrackState: ObservableObject {
     @Published private(set) var studyMinutes: Int?
     @Published private(set) var screenTimeMinutes: Int?
     @Published private(set) var previousScore: Double?
+    @Published private(set) var predictionHistory: [PredictionSnapshot]
 
     private let defaults: UserDefaults
     private let healthService: any HealthDataProviding
+    private let historyStore: any PredictionHistoryPersisting
     private var healthGeneration = 0
     private var isHealthSceneActive = true
 
@@ -69,9 +71,15 @@ final class TwinTrackState: ObservableObject {
         static let healthRequestCompleted = "twintrack.health.fourTypeRequestCompleted"
     }
 
-    init(defaults: UserDefaults = .standard, healthService: (any HealthDataProviding)? = nil) {
+    init(
+        defaults: UserDefaults = .standard,
+        healthService: (any HealthDataProviding)? = nil,
+        historyStore: (any PredictionHistoryPersisting)? = nil
+    ) {
         self.defaults = defaults
         self.healthService = healthService ?? HealthKitService()
+        self.historyStore = historyStore ?? UserDefaultsPredictionHistoryStore(defaults: defaults)
+        predictionHistory = self.historyStore.load()
         healthAccess = defaults.bool(forKey: Key.healthRequestCompleted) ? .completed : .notRequested
 
         if defaults.object(forKey: Key.studyMinutes) != nil {
@@ -130,6 +138,7 @@ final class TwinTrackState: ObservableObject {
         isRefreshingHealth = false
         guard !Task.isCancelled else { return }
         healthReadings = readings
+        saveCurrentPredictionIfNeeded(createdAt: now)
     }
 
     func clearHealthValues() {
@@ -189,7 +198,8 @@ final class TwinTrackState: ObservableObject {
     func saveManualInputs(
         studyMinutes: Int?,
         screenTimeMinutes: Int?,
-        previousScore: Double?
+        previousScore: Double?,
+        now: Date = Date()
     ) -> Bool {
         guard isValidDuration(studyMinutes),
               isValidDuration(screenTimeMinutes),
@@ -204,7 +214,19 @@ final class TwinTrackState: ObservableObject {
         persist(studyMinutes, key: Key.studyMinutes)
         persist(screenTimeMinutes, key: Key.screenTimeMinutes)
         persist(previousScore, key: Key.previousScore)
+        saveCurrentPredictionIfNeeded(createdAt: now)
         return true
+    }
+
+    @discardableResult
+    func clearPredictionHistory() -> Bool {
+        do {
+            try historyStore.save([])
+            predictionHistory = []
+            return true
+        } catch {
+            return false
+        }
     }
 
     var completeProfile: TwinTrackProfile? {
@@ -237,6 +259,28 @@ final class TwinTrackState: ObservableObject {
 
     private func isValidDuration(_ value: Int?) -> Bool {
         value.map { ManualDuration.parts(from: $0) != nil } ?? true
+    }
+
+    private func saveCurrentPredictionIfNeeded(createdAt: Date) {
+        // Called only after a Health refresh or Manual Inputs save commits real
+        // values. Rendering and What-If evaluation have no route into this method.
+        guard let profile = completeProfile,
+              let snapshot = PredictionSnapshot.realBaseline(
+                profile: profile,
+                createdAt: createdAt,
+                healthWindow: healthWindow
+              ),
+              predictionHistory.last.map({ !$0.hasSameSourceIdentity(as: snapshot) }) ?? true else {
+            return
+        }
+
+        let updated = (predictionHistory + [snapshot]).sorted { $0.createdAt < $1.createdAt }
+        do {
+            try historyStore.save(updated)
+            predictionHistory = updated
+        } catch {
+            // A failed local history write must not undo the real input commit.
+        }
     }
 
     private func persist(_ value: Int?, key: String) {

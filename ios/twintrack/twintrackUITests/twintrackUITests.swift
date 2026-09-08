@@ -78,4 +78,25 @@ final class twintrackUITests: XCTestCase {
         app.tabBars.buttons["Profile"].tap()
         XCTAssertTrue(app.staticTexts["Your data. Your preferences. Your control."].waitForExistence(timeout: 5))
     }
+
+    @MainActor
+    func testPredictionHistoryHonestEmptyState() throws {
+        let app = XCUIApplication()
+        app.launch()
+        app.tabBars.buttons["Profile"].tap()
+        let privacy = app.buttons["dataPrivacyButton"]
+        XCTAssertTrue(privacy.waitForExistence(timeout: 10))
+        privacy.tap()
+
+        XCTAssertTrue(app.navigationBars["Data & Privacy"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["No saved predictions"].exists)
+        XCTAssertFalse(app.buttons["clearPredictionHistoryButton"].isEnabled)
+
+        app.navigationBars.buttons.firstMatch.tap()
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(app.staticTexts["7-DAY TREND"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["No prediction history yet"].exists)
+        XCTAssertFalse(app.otherElements["predictionTrendChart"].exists)
+        XCTAssertEqual(app.tabBars.firstMatch.buttons.count, 3)
+    }
 }
