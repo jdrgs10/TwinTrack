@@ -32,3 +32,15 @@
 - Ridge boundary: a complete `TwinTrackProfile` is unavailable until all seven real inputs exist, so the Ridge engine cannot be called with fabricated HealthKit values.
 - Verification result: 7/7 new state tests passed; the 21/21 Ridge parity test and three-tab regression test also passed. A's two screenshots show the same saved values before and after relaunch.
 - A learning status: not confirmed by A.
+
+## Read-only HealthKit integration
+
+- Implementation state: verified with automated tests and A's physical-iPhone check.
+- Architecture to explain later: Apple Watch data synchronizes through Apple Health; `HealthKitService` reads the iPhone HealthKit store and supplies transient results to the existing `TwinTrackState`. There is no direct Watch connection, watchOS app, or second observable health store.
+- Exact types: `sleepAnalysis`, `stepCount`, `appleExerciseTime`, and `restingHeartRate`, requested for read access only.
+- Window rule: Steps, Exercise, and Resting Heart Rate use the previous completed local calendar day. Sleep uses noon on the preceding day through noon on the completed day, assigning the night to its waking day. Calendar arithmetic preserves time-zone and daylight-saving boundaries.
+- Aggregation rule: HealthKit cumulative statistics merge Steps and Exercise sources. Resting Heart Rate uses the completed day's actual resting estimates. Sleep counts Core, Deep, REM, and Unspecified asleep, excludes Awake and In Bed, clips to the window, and unions overlaps so each instant is counted once.
+- Missing-data rule: every metric is available, missing, or failed. A missing sample remains unavailable and never becomes zero. HealthKit's authorization completion cannot reliably prove whether read access was granted or denied.
+- Refresh rule: accessible values refresh after initial load, on foreground return, and through the manual Refresh action. Main-actor state and generation checks prevent stale results from replacing a newer refresh.
+- Verification result: HealthKit tests 22/22 pass, including 7/7 sleep tests; manual regression 7/7 pass; Ridge parity 21/21 pass; tab regression pass; physical authorization and all four query paths pass. Private evidence exists locally and is intentionally excluded from Git.
+- A learning status: not confirmed by A.

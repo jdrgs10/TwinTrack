@@ -39,28 +39,40 @@ enum PreviousScoreInput {
     }
 }
 
+@MainActor
 final class TwinTrackState: ObservableObject {
-    // HealthKit will populate these optional values in a later milestone.
-    // Until then, nil prevents the app from constructing a fake complete prediction.
-    @Published private(set) var sleepHours: Double?
-    @Published private(set) var steps: Double?
-    @Published private(set) var exerciseMinutes: Double?
-    @Published private(set) var restingHeartRate: Double?
+    // One published snapshot replaces all four values together. Computed properties
+    // preserve the existing Ridge boundary without creating duplicate health storage.
+    @Published private(set) var healthReadings = HealthReadings()
+    @Published private(set) var healthWindow: HealthDataWindow?
+    @Published private(set) var healthAccess: HealthAccessState
+    @Published private(set) var isRefreshingHealth = false
+
+    var sleepHours: Double? { healthReadings.sleep.value }
+    var steps: Double? { healthReadings.steps.value }
+    var exerciseMinutes: Double? { healthReadings.exercise.value }
+    var restingHeartRate: Double? { healthReadings.restingHeartRate.value }
 
     @Published private(set) var studyMinutes: Int?
     @Published private(set) var screenTimeMinutes: Int?
     @Published private(set) var previousScore: Double?
 
     private let defaults: UserDefaults
+    private let healthService: any HealthDataProviding
+    private var healthGeneration = 0
+    private var isHealthSceneActive = true
 
     private enum Key {
         static let studyMinutes = "twintrack.manual.study_minutes"
         static let screenTimeMinutes = "twintrack.manual.screen_time_minutes"
         static let previousScore = "twintrack.manual.previous_score"
+        static let healthRequestCompleted = "twintrack.health.fourTypeRequestCompleted"
     }
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, healthService: (any HealthDataProviding)? = nil) {
         self.defaults = defaults
+        self.healthService = healthService ?? HealthKitService()
+        healthAccess = defaults.bool(forKey: Key.healthRequestCompleted) ? .completed : .notRequested
 
         if defaults.object(forKey: Key.studyMinutes) != nil {
             studyMinutes = defaults.integer(forKey: Key.studyMinutes)
@@ -73,6 +85,71 @@ final class TwinTrackState: ObservableObject {
         if defaults.object(forKey: Key.previousScore) != nil {
             previousScore = defaults.double(forKey: Key.previousScore)
         }
+    }
+
+    func requestHealthAccess() async {
+        guard healthAccess != .requesting else { return }
+        guard healthService.isAvailable else {
+            clearHealthValues()
+            healthAccess = .unavailable
+            return
+        }
+        clearHealthValues()
+        healthAccess = .requesting
+        do {
+            try await healthService.requestAccess()
+            // Persist only that the system request completed, never a read permission
+            // decision. Denying all reads may still successfully complete this request.
+            defaults.set(true, forKey: Key.healthRequestCompleted)
+            healthAccess = .completed
+            await refreshHealth()
+        } catch {
+            healthAccess = .failed
+        }
+    }
+
+    func refreshHealth(now: Date = Date(), calendar: Calendar = .current) async {
+        guard isHealthSceneActive, !isRefreshingHealth, healthAccess != .requesting else { return }
+        guard healthService.isAvailable else {
+            clearHealthValues()
+            healthAccess = .unavailable
+            return
+        }
+        // Launch/foreground never springs an authorization sheet on the user. The
+        // Apple Health action initiates it; subsequent launches refresh accessible data.
+        guard defaults.bool(forKey: Key.healthRequestCompleted) else { return }
+        healthAccess = .completed
+        healthGeneration += 1
+        let generation = healthGeneration
+        let window = HealthDataWindow(now: now, calendar: calendar)
+        healthWindow = window
+        healthReadings = HealthReadings()
+        isRefreshingHealth = true
+        let readings = await healthService.read(window: window)
+        guard generation == healthGeneration else { return }
+        isRefreshingHealth = false
+        guard !Task.isCancelled else { return }
+        healthReadings = readings
+    }
+
+    func clearHealthValues() {
+        // Clear on scene deactivation to limit private values in inactive UI, and
+        // invalidate in-flight work so it cannot overwrite a later foreground refresh.
+        healthGeneration += 1
+        healthReadings = HealthReadings()
+        healthWindow = nil
+        isRefreshingHealth = false
+    }
+
+    func healthSceneChanged(isActive: Bool) {
+        isHealthSceneActive = isActive
+        if !isActive { clearHealthValues() }
+    }
+
+    var missingInputs: [TwinTrackFeature] {
+        let values: [Double?] = [sleepHours, steps, exerciseMinutes, restingHeartRate,
+                                 studyMinutes.map(Double.init), screenTimeMinutes.map(Double.init), previousScore]
+        return TwinTrackFeature.allCases.filter { values[$0.rawValue] == nil }
     }
 
     @discardableResult

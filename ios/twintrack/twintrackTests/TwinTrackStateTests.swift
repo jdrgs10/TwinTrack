@@ -2,14 +2,15 @@ import Foundation
 import XCTest
 @testable import twintrack
 
+@MainActor
 final class TwinTrackStateTests: XCTestCase {
-    func testStudyTimeConvertsHoursAndMinutesToTotalMinutes() {
+    func testStudyTimeConvertsHoursAndMinutesToTotalMinutes() async {
         XCTAssertEqual(ManualDuration.totalMinutes(hours: 0, minutes: 0), 0)
         XCTAssertEqual(ManualDuration.totalMinutes(hours: 1, minutes: 30), 90)
         XCTAssertEqual(ManualDuration.totalMinutes(hours: 2, minutes: 45), 165)
     }
 
-    func testScreenTimeConvertsHoursAndMinutesToTotalMinutes() {
+    func testScreenTimeConvertsHoursAndMinutesToTotalMinutes() async {
         let (state, defaults, suiteName) = makeState()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
@@ -21,7 +22,7 @@ final class TwinTrackStateTests: XCTestCase {
         XCTAssertEqual(state.screenTimeMinutes, 165)
     }
 
-    func testPreviousScoreAcceptsZeroMidpointAndOneHundred() {
+    func testPreviousScoreAcceptsZeroMidpointAndOneHundred() async {
         let (state, defaults, suiteName) = makeState()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
@@ -31,7 +32,7 @@ final class TwinTrackStateTests: XCTestCase {
         }
     }
 
-    func testPreviousScoreRejectsOutOfRangeAndNonNumericValues() {
+    func testPreviousScoreRejectsOutOfRangeAndNonNumericValues() async {
         let (state, defaults, suiteName) = makeState()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
@@ -42,7 +43,7 @@ final class TwinTrackStateTests: XCTestCase {
         XCTAssertNil(state.previousScore)
     }
 
-    func testMissingValuesRemainNilRatherThanZero() {
+    func testMissingValuesRemainNilRatherThanZero() async {
         let (state, defaults, suiteName) = makeState()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
@@ -55,7 +56,7 @@ final class TwinTrackStateTests: XCTestCase {
         XCTAssertNil(state.previousScore)
     }
 
-    func testManualValuesSurviveStateRecreation() throws {
+    func testManualValuesSurviveStateRecreation() async throws {
         let (_, defaults, suiteName) = makeState()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
@@ -70,7 +71,7 @@ final class TwinTrackStateTests: XCTestCase {
         XCTAssertEqual(recreatedState.previousScore, 81.4)
     }
 
-    func testPredictionRemainsUnavailableWithoutHealthValues() {
+    func testPredictionRemainsUnavailableWithoutHealthValues() async {
         let (state, defaults, suiteName) = makeState()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 

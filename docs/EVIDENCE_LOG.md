@@ -49,3 +49,26 @@ Integrity hashes:
 
 - `manual_inputs_verified.png`: SHA-256 `a34b72e96d56ceea47a7c06f3a4ffd91ec19bb3459acfd49c3c6972e8c8f5901`
 - `manual_inputs_persistence_verified.png`: SHA-256 `1f15375e113cd6b54e28af68994b15dc371d4e06175bf2913acfebe827d177d9`
+
+## 2026-09-08 — Read-only HealthKit integration
+
+Physical-device verification was completed manually by A. Private HealthKit evidence exists locally but is intentionally not inspected, copied into project records, uploaded to this conversation, or committed to Git because it contains personal health information.
+
+Recorded result:
+
+- HealthKit authorization flow: pass
+- Previous completed-day Steps comparison with Apple Health: pass
+- Sleep query: pass; no accessible value was expected for the selected sleep window
+- Exercise query: pass; no accessible value was expected for the selected completed day
+- Resting Heart Rate query: pass; no accessible value was expected for the selected completed day
+- Missing-data behavior: pass; unavailable metrics remained missing rather than becoming zero
+- Manual refresh for the completed-day design: pass
+- Manual-input persistence: pass
+- HealthKit synthetic tests: 22/22 pass
+- Sleep aggregation tests: 7/7 pass
+- Golden Ridge parity: 21/21 pass
+- Three-tab regression: pass
+- Warnings: 0
+- Errors: 0
+
+No evidence filename, path, hash, screenshot content, or personal health value is recorded for this private evidence.

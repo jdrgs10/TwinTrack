@@ -10,6 +10,32 @@
 
 **A learning status:** Not confirmed by A.
 
+## Read-only HealthKit integration
+
+**Question:** How does TwinTrack obtain Apple Watch health inputs?
+
+**Answer outline:** Apple Watch synchronizes its data into Apple Health. On the iPhone, `HealthKitService` requests read access to Sleep Analysis, Step Count, Apple Exercise Time, and Resting Heart Rate, then passes transient results into the existing shared `TwinTrackState`. TwinTrack does not connect directly to the Watch and does not create a watchOS app.
+
+**Question:** What time period does TwinTrack use for current health inputs?
+
+**Answer outline:** Steps, Exercise, and Resting Heart Rate use the previous completed local calendar day from midnight to midnight. Sleep uses noon on the day before that through noon on the completed day, so an overnight episode belongs to its waking day. The implementation uses calendar boundaries rather than fixed 24-hour subtraction, preserving time-zone and daylight-saving behavior.
+
+**Question:** How does TwinTrack prevent duplicate sleep or step totals?
+
+**Answer outline:** Steps use HealthKit cumulative statistics so HealthKit handles contributions from multiple sources. Sleep samples require app-side processing: TwinTrack accepts actual asleep stages, excludes Awake and In Bed, clips samples to the selected window, and calculates the union of overlapping intervals so each instant contributes once.
+
+**Question:** Why can TwinTrack say “No accessible recent value” without saying access was denied?
+
+**Answer outline:** HealthKit intentionally does not reveal read authorization decisions reliably. An empty query can mean there is no data in the selected window or that the app cannot access it. TwinTrack therefore preserves a missing value and avoids claiming a specific denial state.
+
+**Question:** How was HealthKit verified without committing private health records?
+
+**Answer outline:** Synthetic tests verify date windows, units, sleep overlap, missing values, and shared-state concurrency. A separately verified the authorization and query behavior on a physical iPhone by comparing TwinTrack with Apple Health over the displayed intervals. Private evidence exists locally but is not committed, inspected, or copied into development records.
+
+**Evidence:** HealthKit tests passed 22/22, including 7/7 sleep aggregation tests. Manual-input tests passed 7/7, frozen Ridge parity remained 21/21, the tab regression passed, and A confirmed the physical-device results. The private evidence is intentionally excluded from Git.
+
+**A learning status:** Not confirmed by A.
+
 ## Shared state and Manual Inputs
 
 **Question:** How does TwinTrack keep one source of truth across its three tabs?

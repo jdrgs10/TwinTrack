@@ -4,6 +4,7 @@ struct ProfileView: View {
     @EnvironmentObject private var state: TwinTrackState
     @Environment(\.colorScheme) private var colorScheme
     @State private var isShowingManualInputs = false
+    @State private var isShowingHealth = false
 
     private var background: Color {
         colorScheme == .dark
@@ -28,6 +29,32 @@ struct ProfileView: View {
                         .tracking(1.1)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
+
+                    Button {
+                        isShowingHealth = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "heart.fill")
+                                .foregroundStyle(.green)
+                                .frame(width: 30, height: 30)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Apple Health").font(.subheadline.weight(.medium))
+                                Text("Sleep, steps, exercise and resting heart rate")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption).foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
+                        }
+                        .padding(15)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .background(card, in: RoundedRectangle(cornerRadius: 18))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18).stroke(border, lineWidth: 1)
+                    }
 
                     Button {
                         isShowingManualInputs = true
@@ -83,6 +110,10 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .toolbarBackground(background, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
+            .sheet(isPresented: $isShowingHealth) {
+                HealthKitView()
+                    .environmentObject(state)
+            }
             .sheet(isPresented: $isShowingManualInputs) {
                 ManualInputsSheet(
                     initialStudyMinutes: state.studyMinutes,
