@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Page content, rather than a toolbar item, keeps the mark free of toolbar chrome
-/// and lets all three titles/subtitles grow naturally with Dynamic Type.
+/// Page content lets titles and subtitles grow naturally with Dynamic Type. Home
+/// can include the approved mark without forcing it into the other tab headers.
 struct PageHeader: View {
     let title: String
     let subtitle: String
+    var showsMark = true
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -14,11 +15,13 @@ struct PageHeader: View {
             : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
 
         layout {
-            Image("TwinTrackHeaderMark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 68, height: 34)
-                .accessibilityHidden(true)
+            if showsMark {
+                Image("TwinTrackHeaderMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 68, height: 34)
+                    .accessibilityHidden(true)
+            }
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(title)

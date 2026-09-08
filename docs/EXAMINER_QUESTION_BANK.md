@@ -26,9 +26,39 @@
 
 **Question:** How was the Home design kept consistent and accessible?
 
-**Answer outline:** All three primary tabs reuse a lightweight page header with the approved mark, title, and locked subtitle. Home preserves native safe areas and scrolling, changes metric cards to one column at accessibility text sizes, and keeps the final TwinTrack AI action reachable above the tab bar.
+**Answer outline:** All three primary tabs reuse a lightweight page header with a title and locked subtitle. Its optional approved mark appears only on Home. Home preserves native safe areas and scrolling, changes metric cards to one column at accessibility text sizes, and keeps the final TwinTrack AI action reachable above the tab bar.
 
 **Evidence:** Home tests passed 5/5, HealthKit tests 22/22, Ridge parity 21/21, Manual/State tests 7/7, and the repeated three-tab UI regression passed. A completed the physical-device review and approved the header/logo integration, subtitles, prediction hierarchy, pull-to-refresh, card layout, scrolling, bottom-tab clearance, and header consistency. No private screenshot was inspected or committed.
+
+**A learning status:** Not confirmed by A.
+
+## Deterministic What-If simulation
+
+**Question:** How does TwinTrack calculate a What-If result without changing current data?
+
+**Answer outline:** `WhatIfScenario` receives a value-type copy of the complete `TwinTrackProfile`. Validated scenario edits change only that copy. It cannot call shared-state setters, persistence, or HealthKit, and it is discarded on cancel or tab exit.
+
+**Question:** Does What-If contain another Ridge equation?
+
+**Answer outline:** No. The scenario applies all overrides to one copied profile and calls the same frozen `TwinTrackModel.predict` used by Home. No coefficients or StandardScaler logic are duplicated in What-If.
+
+**Question:** How is the What-If delta calculated at the model boundaries?
+
+**Answer outline:** Both baseline and scenario predictions use the production predictor's 0–100 clamping. The displayed delta is clamped scenario minus clamped baseline, so it remains correct even when either score reaches a boundary.
+
+**Question:** What happens if one current input is missing?
+
+**Answer outline:** A complete seven-input baseline is required. The UI identifies missing values and disables simulation; it never substitutes zero, estimates a value, or runs Ridge with a fabricated profile.
+
+**Question:** How does What-If support several simultaneous changes?
+
+**Answer outline:** All selected values are written to a single temporary scenario copy before one Ridge evaluation. TwinTrack does not compute separate one-variable deltas and sum them, which would be incorrect after clamping.
+
+**Question:** Why is What-If described as predictive rather than causal?
+
+**Answer outline:** The frozen model estimates statistical relationships in its training data. The UI therefore reports that the model prediction changed and explicitly says this does not prove causation or guarantee an academic outcome.
+
+**Evidence:** Seventeen deterministic What-If tests cover baseline immutability, one and multiple changes, all seven missing-baseline cases, validation, clamping, cancellation, persistence protection, unit conversion, and scenario-copy isolation. Ridge remained 21/21, HealthKit 22/22, Manual/State 7/7, Home 5/5, and UI tests 3/3. A approved the What-If UI and the final rule that only Home shows the logo.
 
 **A learning status:** Not confirmed by A.
 

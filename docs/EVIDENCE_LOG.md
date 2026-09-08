@@ -97,3 +97,34 @@ Recorded result:
 - Errors: 0
 
 This evidence records A's approval statement only. It contains no private HealthKit values, device identifiers, screenshot metadata, certificates, provisioning data, or credentials.
+
+## 2026-09-08 — Deterministic What-If and header/logo correction
+
+A completed the current visual review and approved the deterministic What-If interface. A also approved the final shared-header rule: the approved mark remains on Home and is omitted from TwinTrack AI and Profile, with correct spacing and subtitles. No screenshot was requested or inspected for this record.
+
+Recorded result:
+
+- What-If UI: pass
+- Home logo remains shown: pass
+- TwinTrack AI logo removed with natural spacing: pass
+- Profile logo removed with natural spacing: pass
+- Locked subtitles: pass
+- Complete baseline required; missing data is not fabricated
+- Temporary scenario does not modify shared state, persisted manual inputs, or HealthKit
+- Baseline and combined scenario reuse the frozen production Ridge predictor
+- Delta uses clamped scenario minus clamped baseline
+- Predictive, non-causal wording is visible
+- What-If tests: 17/17 pass
+- Golden Ridge parity: 21/21 pass
+- HealthKit tests: 22/22 pass
+- Manual/State tests: 7/7 pass
+- Home tests: 5/5 pass
+- UI tests, including repeated tab regression: 3/3 pass
+- Shared state stores: 1
+- Duplicate Ridge logic: no
+- HealthKit writes: no
+- Fake production values: no
+- Warnings: 0
+- Errors: 0
+
+This record contains A's approval statement and automated test results only. It contains no private evidence, personal HealthKit values, device identifiers, credentials, certificates, or provisioning data.

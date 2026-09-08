@@ -4,12 +4,6 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedTab = TwinTrackTab.home
 
-    private var background: Color {
-        colorScheme == .dark
-            ? Color(red: 7 / 255, green: 11 / 255, blue: 18 / 255)
-            : Color(red: 241 / 255, green: 244 / 255, blue: 248 / 255)
-    }
-
     private var accent: Color {
         colorScheme == .dark
             ? Color(red: 90 / 255, green: 200 / 255, blue: 240 / 255)
@@ -25,7 +19,7 @@ struct ContentView: View {
                 .tag(TwinTrackTab.home)
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
-            shellScreen("TwinTrack AI")
+            WhatIfView(isActive: selectedTab == .ai)
                 .tag(TwinTrackTab.ai)
                 .tabItem { Label("TwinTrack AI", systemImage: "sparkles") }
 
@@ -34,19 +28,6 @@ struct ContentView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(accent)
-    }
-
-    private func shellScreen(_ title: String) -> some View {
-        NavigationStack {
-            ScrollView {
-                PageHeader(title: title, subtitle: "Ask questions. Explore scenarios. Understand your twin.")
-            }
-            .background(background.ignoresSafeArea())
-            .navigationTitle(title)
-            .toolbar(.hidden, for: .navigationBar)
-            .toolbarBackground(background, for: .tabBar)
-            .toolbarBackground(.visible, for: .tabBar)
-        }
     }
 }
 

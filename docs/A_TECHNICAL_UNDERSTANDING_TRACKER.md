@@ -51,7 +51,23 @@
 - Architecture to explain later: `HomeView` reads the single environment-owned `TwinTrackState`. It displays the four transient HealthKit results and three persisted manual inputs without creating another data store.
 - Prediction rule: Home uses `currentPrediction`, which reaches the frozen Ridge engine only when the complete seven-value profile exists. Missing values stay visible as missing and never become fabricated prediction inputs.
 - Refresh rule: Home attaches native SwiftUI pull-to-refresh to its scroll container and directly awaits the existing `refreshHealth()` path. TwinTrack AI and Profile do not expose refresh because those tabs have no current refreshable data.
-- Header rule: Home, TwinTrack AI, and Profile reuse one lightweight `PageHeader` with the approved TwinTrack mark, their own title, and their locked subtitle. The header grows for accessibility Dynamic Type sizes.
+- Header rule: Home, TwinTrack AI, and Profile reuse one lightweight `PageHeader` with their own title and locked subtitle. Its optional mark appears only on Home. The header grows for accessibility Dynamic Type sizes.
 - Accessibility and layout rule: metric cards move from two columns to one for accessibility text sizes, content scrolls above the native tab bar, and the final TwinTrack AI action remains reachable.
 - Verification result: Home tests 5/5, HealthKit tests 22/22, Ridge parity 21/21, Manual/State tests 7/7, and repeated three-tab UI regression passed. A approved the header/logo integration, subtitles, prediction hierarchy, pull-to-refresh, card layout, scrolling, bottom-tab clearance, and three-tab header consistency on a physical iPhone. Warnings and errors were zero.
+- A learning status: not confirmed by A.
+
+## Deterministic What-If simulation
+
+- Implementation state: verified with automated simulator tests and A's visual review.
+- Architecture to explain later: `WhatIfScenario` is a temporary value type containing a copied `TwinTrackProfile`, a captured baseline prediction, and validated overrides. It has no access to `TwinTrackState` setters, `UserDefaults`, or HealthKit.
+- Complete-baseline rule: scenario creation requires the existing complete seven-input profile. If any real value is missing, the UI identifies the missing inputs and disables simulation without inserting zero or another estimate.
+- One-engine rule: the baseline and modified scenario use the existing frozen `TwinTrackModel.predict`. What-If contains no coefficients, scaling, or second prediction equation.
+- Multiple-change rule: all selected overrides are applied to one profile copy before Ridge evaluates it. Individual deltas are never calculated and added together.
+- Clamping rule: displayed delta equals the clamped scenario prediction minus the captured clamped baseline prediction, including at the 0 and 100 boundaries.
+- Validation rule: Previous Score accepts 0 through 100; Steps, Exercise, Study, Screen Time, and Sleep accept non-negative finite values; Resting Heart Rate must be positive. Uncomputably large and non-finite values are rejected without inventing restrictive scientific ranges.
+- Units rule: Sleep edits display hours/minutes and convert to `sleep_hours`; Study and Screen Time display hours/minutes and remain total model minutes. Steps, Exercise, Resting Heart Rate, and Previous Score retain their frozen model units.
+- Lifecycle rule: Cancel, reset, tab exit, view exit, or a change in current data discards the temporary scenario. Tests confirm shared values and persisted manual inputs remain unchanged, and there are no HealthKit writes.
+- Wording rule: the UI calls the result a model simulation and states that it does not prove causation or guarantee an outcome. Resting Heart Rate is identified as a weak/noisy prototype input rather than advice.
+- Header correction: the shared `PageHeader` exposes an optional mark. Home shows the approved mark; TwinTrack AI and Profile omit it. A approved the title/subtitle spacing after this correction.
+- Verification result: What-If tests 17/17, Ridge parity 21/21, HealthKit tests 22/22, Manual/State tests 7/7, Home tests 5/5, and UI tests 3/3 passed. Warnings and errors were zero. A approved the What-If UI and header/logo correction.
 - A learning status: not confirmed by A.

@@ -35,6 +35,27 @@ final class twintrackUITests: XCTestCase {
     }
 
     @MainActor
+    func testWhatIfUnavailableBaselineAndTabExit() throws {
+        let app = XCUIApplication()
+        app.launch()
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        XCTAssertTrue(app.staticTexts["pageTitle.TwinTrack AI"].waitForExistence(timeout: 5))
+        // The simulator has no complete HealthKit baseline; never seed production data.
+        let unavailable = app.otherElements["whatIfUnavailable"]
+        let unavailableText = app.staticTexts["What-If unavailable"]
+        XCTAssertTrue(unavailable.exists || unavailableText.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["whatIfRun"].exists)
+        XCTAssertFalse(app.buttons["whatIfRun"].isEnabled)
+        XCTAssertFalse(app.otherElements["whatIfResult"].exists)
+        XCTAssertTrue(app.staticTexts["whatIfDisclaimer"].exists)
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(app.staticTexts["pageTitle.Home"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        XCTAssertFalse(app.buttons["whatIfRun"].isEnabled)
+        XCTAssertEqual(app.tabBars.firstMatch.buttons.count, 3)
+    }
+
+    @MainActor
     func testHomePullToRefreshAndBottomAction() throws {
         let app = XCUIApplication()
         app.launch()

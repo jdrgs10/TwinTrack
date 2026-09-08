@@ -24,7 +24,11 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    PageHeader(title: "Profile", subtitle: "Your data. Your preferences. Your control.")
+                    PageHeader(
+                        title: "Profile",
+                        subtitle: "Your data. Your preferences. Your control.",
+                        showsMark: false
+                    )
                     VStack(alignment: .leading, spacing: 9) {
                         Text("DATA SOURCES")
                             .font(.caption2.weight(.semibold))

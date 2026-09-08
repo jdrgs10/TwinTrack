@@ -4,10 +4,10 @@
 
 | Area | Completion | Basis |
 | --- | ---: | --- |
-| Overall project | 73% | Weighted planning estimate: native app 60%, research 20%, deliverable readiness 20%. |
-| Native app | 70% | Native project, exact three-tab shell, frozen Swift Ridge engine, one shared app state, Manual Inputs, persistence, read-only HealthKit integration, and the polished Home experience are verified. Remaining product features are pending. |
+| Overall project | 80% | Weighted planning estimate: native app 60%, research 20%, deliverable readiness 20%. |
+| Native app | 80% | The native shell, frozen Ridge engine, shared state, Manual Inputs, persistence, HealthKit, polished Home, and deterministic What-If simulation are verified. Remaining product features are pending. |
 | Research | 100% | Requirements, UI handoff, model choice, frozen export, and ML audit are complete. |
-| Deliverable readiness | 55% | Source-of-truth documents and evidence records now cover the shell, Ridge parity, Manual Inputs, persistence, private physical-device HealthKit verification, and A's physical-device Home review; final report, presentation, demo, and release evidence remain. |
+| Deliverable readiness | 60% | Source-of-truth documents and evidence records now also cover deterministic What-If behavior and A's visual approval; final report, presentation, demo, and release evidence remain. |
 
 ## Native iOS milestones
 
@@ -21,7 +21,9 @@
 | Manual-input persistence | Verified | Only the three optional manual values are stored in local `UserDefaults`. Missing values remain absent rather than becoming zero. The recreation test passed, and A captured the same three values after stopping and relaunching TwinTrack. |
 | Read-only HealthKit integration | Verified | A verified the four-type authorization flow and real physical-device queries. The available completed-day Steps result matched Apple Health for the same interval; Sleep, Exercise, and Resting Heart Rate correctly remained unavailable because Apple Health had no data in their stated windows. Refresh, missing-data behavior, manual persistence, and tab regression passed. Automated HealthKit tests passed 22/22, including 7/7 sleep aggregation tests, with zero warnings and errors. Private evidence exists locally and is intentionally excluded from Git. |
 | Home real-data wiring and UI polish | Verified | Home presents the shared state's seven real inputs and only exposes the frozen Ridge prediction when the profile is complete. A approved the physical-device visual review, including the shared tab headers, approved logo integration, subtitles, prediction hierarchy, card layout, native pull-to-refresh, scrolling, and bottom-tab clearance. Automated verification passed: Home 5/5, HealthKit 22/22, Ridge 21/21, Manual/State 7/7, and repeated three-tab switching; warnings and errors were zero. |
+| Deterministic What-If simulation | Verified | A temporary value-type scenario copies a complete seven-input baseline, applies one or several validated changes, and sends the resulting profile through the same frozen `TwinTrackModel`. The displayed delta uses the two clamped production predictions. Missing baselines remain unavailable; cancel and tab exit discard the scenario without modifying shared state, persistence, or HealthKit. What-If tests passed 17/17 and A approved the native UI. |
+| Main-tab header/logo correction | Verified | The shared `PageHeader` keeps the approved mark on Home and omits it from TwinTrack AI and Profile while preserving each title and locked subtitle. A approved the resulting spacing on all three tabs. |
 
 Evidence is recorded in `docs/EVIDENCE_LOG.md`. Non-sensitive repository evidence is stored under `evidence/ridge_parity/` and `evidence/manual_inputs/`; HealthKit evidence remains private and outside Git.
 
-The next milestone is deterministic What-If. It has not started and requires A's approval.
+The next milestone is Prediction History and 7-day trends. It has not started and requires A's approval.
