@@ -10,6 +10,28 @@
 
 **A learning status:** Not confirmed by A.
 
+## Home real-data wiring and UI polish
+
+**Question:** How does Home use real app data without creating another source of truth?
+
+**Answer outline:** `HomeView` reads the one root `TwinTrackState` from the SwiftUI environment. The screen formats the four transient HealthKit results and three persisted manual inputs for display, while the shared state remains the owner of those values.
+
+**Question:** When does Home show a prediction?
+
+**Answer outline:** Home asks the shared state for `currentPrediction`. The state creates the frozen Ridge profile only when all seven real inputs exist. If any value is missing, Home names the missing inputs and does not substitute zero or another fabricated value.
+
+**Question:** How is Home refreshed?
+
+**Answer outline:** Home uses native SwiftUI pull-to-refresh on its scroll view. The refresh closure directly awaits the existing shared HealthKit refresh function, so there is one query path and the native indicator follows the real asynchronous work. TwinTrack AI and Profile do not have refresh interactions because they currently have no refreshable data.
+
+**Question:** How was the Home design kept consistent and accessible?
+
+**Answer outline:** All three primary tabs reuse a lightweight page header with the approved mark, title, and locked subtitle. Home preserves native safe areas and scrolling, changes metric cards to one column at accessibility text sizes, and keeps the final TwinTrack AI action reachable above the tab bar.
+
+**Evidence:** Home tests passed 5/5, HealthKit tests 22/22, Ridge parity 21/21, Manual/State tests 7/7, and the repeated three-tab UI regression passed. A completed the physical-device review and approved the header/logo integration, subtitles, prediction hierarchy, pull-to-refresh, card layout, scrolling, bottom-tab clearance, and header consistency. No private screenshot was inspected or committed.
+
+**A learning status:** Not confirmed by A.
+
 ## Read-only HealthKit integration
 
 **Question:** How does TwinTrack obtain Apple Watch health inputs?

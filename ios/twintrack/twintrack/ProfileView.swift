@@ -23,91 +23,96 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 9) {
-                    Text("DATA SOURCES")
-                        .font(.caption2.weight(.semibold))
-                        .tracking(1.1)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
+                VStack(spacing: 0) {
+                    PageHeader(title: "Profile", subtitle: "Your data. Your preferences. Your control.")
+                    VStack(alignment: .leading, spacing: 9) {
+                        Text("DATA SOURCES")
+                            .font(.caption2.weight(.semibold))
+                            .tracking(1.1)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
 
-                    Button {
-                        isShowingHealth = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "heart.fill")
-                                .foregroundStyle(.green)
-                                .frame(width: 30, height: 30)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Apple Health").font(.subheadline.weight(.medium))
-                                Text("Sleep, steps, exercise and resting heart rate")
+                        Button {
+                            isShowingHealth = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "heart.fill")
+                                    .foregroundStyle(.green)
+                                    .frame(width: 30, height: 30)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Apple Health").font(.subheadline.weight(.medium))
+                                    Text("Sleep, steps, exercise and resting heart rate")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
                                     .font(.caption).foregroundStyle(.secondary)
+                                    .accessibilityHidden(true)
                             }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption).foregroundStyle(.secondary)
-                                .accessibilityHidden(true)
+                            .padding(15)
+                            .contentShape(Rectangle())
                         }
-                        .padding(15)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .background(card, in: RoundedRectangle(cornerRadius: 18))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 18).stroke(border, lineWidth: 1)
-                    }
+                        .buttonStyle(.plain)
+                        .background(card, in: RoundedRectangle(cornerRadius: 18))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 18).stroke(border, lineWidth: 1)
+                        }
 
-                    Button {
-                        isShowingManualInputs = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "pencil")
-                                .font(.system(size: 15))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 30, height: 30)
-                                .background(border, in: RoundedRectangle(cornerRadius: 9))
+                        Button {
+                            isShowingManualInputs = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 30, height: 30)
+                                    .background(border, in: RoundedRectangle(cornerRadius: 9))
 
-                            VStack(alignment: .leading, spacing: 3) {
-                                HStack(spacing: 7) {
-                                    Text("Manual Inputs")
-                                        .font(.subheadline.weight(.medium))
+                                VStack(alignment: .leading, spacing: 3) {
+                                    HStack(spacing: 7) {
+                                        Text("Manual Inputs")
+                                            .font(.subheadline.weight(.medium))
 
-                                    Text("Entered in TwinTrack")
-                                        .font(.caption2.weight(.semibold))
+                                        Text("Entered in TwinTrack")
+                                            .font(.caption2.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.horizontal, 7)
+                                            .padding(.vertical, 3)
+                                            .background(border, in: Capsule())
+                                    }
+
+                                    Text(manualInputSummary)
+                                        .font(.caption)
                                         .foregroundStyle(.secondary)
-                                        .padding(.horizontal, 7)
-                                        .padding(.vertical, 3)
-                                        .background(border, in: Capsule())
                                 }
 
-                                Text(manualInputSummary)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                                    .accessibilityHidden(true)
                             }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
-                                .accessibilityHidden(true)
+                            .padding(.horizontal, 15)
+                            .padding(.vertical, 14)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 14)
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
+                        .background(card, in: RoundedRectangle(cornerRadius: 18))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(border, lineWidth: 1)
+                        }
+                        .accessibilityIdentifier("manualInputsButton")
                     }
-                    .buttonStyle(.plain)
-                    .background(card, in: RoundedRectangle(cornerRadius: 18))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(border, lineWidth: 1)
-                    }
-                    .accessibilityIdentifier("manualInputsButton")
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 28)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 18)
             }
             .background(background.ignoresSafeArea())
             .navigationTitle("Profile")
+            .toolbar(.hidden, for: .navigationBar)
             .toolbarBackground(background, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
             .sheet(isPresented: $isShowingHealth) {

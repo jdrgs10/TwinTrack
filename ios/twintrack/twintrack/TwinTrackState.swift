@@ -229,6 +229,12 @@ final class TwinTrackState: ObservableObject {
         )
     }
 
+    /// The frozen Ridge engine is reached only through a complete seven-value profile.
+    /// Missing inputs therefore cannot become fabricated prediction inputs.
+    var currentPrediction: Double? {
+        completeProfile.map(TwinTrackModel.predict)
+    }
+
     private func isValidDuration(_ value: Int?) -> Bool {
         value.map { ManualDuration.parts(from: $0) != nil } ?? true
     }

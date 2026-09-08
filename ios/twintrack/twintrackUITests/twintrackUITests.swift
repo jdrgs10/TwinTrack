@@ -13,7 +13,9 @@ final class twintrackUITests: XCTestCase {
         let tabBar = app.tabBars.firstMatch
         XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
         XCTAssertEqual(tabBar.buttons.count, 3)
-        XCTAssertTrue(app.navigationBars["Home"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["pageTitle.Home"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["pageTitle.Home"].label, "Home")
+        XCTAssertTrue(app.staticTexts["Your habits. Your data. Your academic twin."].exists)
         XCTAssertTrue(tabBar.buttons["Home"].isSelected)
 
         // Repeat the full cycle to catch navigation that works only on the first visit.
@@ -22,10 +24,37 @@ final class twintrackUITests: XCTestCase {
                 let tab = tabBar.buttons[title]
                 XCTAssertTrue(tab.exists)
                 tab.tap()
-                XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 5))
+                // Headers now live in scroll content so they can grow with Dynamic Type.
+                let header = app.staticTexts["pageTitle.\(title)"]
+                XCTAssertTrue(header.waitForExistence(timeout: 5))
+                XCTAssertEqual(header.label, title)
                 XCTAssertTrue(tab.isSelected)
                 XCTAssertEqual(tabBar.buttons.count, 3)
             }
         }
+    }
+
+    @MainActor
+    func testHomePullToRefreshAndBottomAction() throws {
+        let app = XCUIApplication()
+        app.launch()
+        let home = app.scrollViews["homeScrollView"]
+        XCTAssertTrue(home.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["Refresh"].exists)
+        home.swipeDown()
+        XCTAssertTrue(app.staticTexts["pageTitle.Home"].exists)
+
+        let openAI = app.buttons["openTwinTrackAI"]
+        for _ in 0..<8 {
+            if openAI.isHittable { break }
+            home.swipeUp()
+        }
+        XCTAssertTrue(openAI.isHittable, "The last Home button must be reachable above the tab bar.")
+        openAI.tap()
+        XCTAssertTrue(app.staticTexts["pageTitle.TwinTrack AI"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tabBars.buttons["TwinTrack AI"].isSelected)
+        XCTAssertTrue(app.staticTexts["Ask questions. Explore scenarios. Understand your twin."].exists)
+        app.tabBars.buttons["Profile"].tap()
+        XCTAssertTrue(app.staticTexts["Your data. Your preferences. Your control."].waitForExistence(timeout: 5))
     }
 }

@@ -4,10 +4,10 @@
 
 | Area | Completion | Basis |
 | --- | ---: | --- |
-| Overall project | 66% | Weighted planning estimate: native app 60%, research 20%, deliverable readiness 20%. |
-| Native app | 60% | Native project, exact three-tab shell, frozen Swift Ridge engine, one shared app state, Manual Inputs, persistence, and read-only HealthKit integration are verified. Home wiring and remaining product features are pending. |
+| Overall project | 73% | Weighted planning estimate: native app 60%, research 20%, deliverable readiness 20%. |
+| Native app | 70% | Native project, exact three-tab shell, frozen Swift Ridge engine, one shared app state, Manual Inputs, persistence, read-only HealthKit integration, and the polished Home experience are verified. Remaining product features are pending. |
 | Research | 100% | Requirements, UI handoff, model choice, frozen export, and ML audit are complete. |
-| Deliverable readiness | 50% | Source-of-truth documents and evidence records now cover the shell, Ridge parity, Manual Inputs, persistence, and private physical-device HealthKit verification; final report, presentation, demo, and release evidence remain. |
+| Deliverable readiness | 55% | Source-of-truth documents and evidence records now cover the shell, Ridge parity, Manual Inputs, persistence, private physical-device HealthKit verification, and A's physical-device Home review; final report, presentation, demo, and release evidence remain. |
 
 ## Native iOS milestones
 
@@ -20,7 +20,8 @@
 | Manual Inputs | Verified | Study Time and Screen Time use native Hours/Minutes wheels and store total minutes. Previous Score accepts only numeric values from 0 through 100. Seven focused state tests passed, and A's simulator evidence shows Study Time `2h 48m`, Screen Time `4h 15m`, and Previous Score `82`. |
 | Manual-input persistence | Verified | Only the three optional manual values are stored in local `UserDefaults`. Missing values remain absent rather than becoming zero. The recreation test passed, and A captured the same three values after stopping and relaunching TwinTrack. |
 | Read-only HealthKit integration | Verified | A verified the four-type authorization flow and real physical-device queries. The available completed-day Steps result matched Apple Health for the same interval; Sleep, Exercise, and Resting Heart Rate correctly remained unavailable because Apple Health had no data in their stated windows. Refresh, missing-data behavior, manual persistence, and tab regression passed. Automated HealthKit tests passed 22/22, including 7/7 sleep aggregation tests, with zero warnings and errors. Private evidence exists locally and is intentionally excluded from Git. |
+| Home real-data wiring and UI polish | Verified | Home presents the shared state's seven real inputs and only exposes the frozen Ridge prediction when the profile is complete. A approved the physical-device visual review, including the shared tab headers, approved logo integration, subtitles, prediction hierarchy, card layout, native pull-to-refresh, scrolling, and bottom-tab clearance. Automated verification passed: Home 5/5, HealthKit 22/22, Ridge 21/21, Manual/State 7/7, and repeated three-tab switching; warnings and errors were zero. |
 
 Evidence is recorded in `docs/EVIDENCE_LOG.md`. Non-sensitive repository evidence is stored under `evidence/ridge_parity/` and `evidence/manual_inputs/`; HealthKit evidence remains private and outside Git.
 
-The next milestone is Home real-data wiring. It has not started and requires A's approval.
+The next milestone is deterministic What-If. It has not started and requires A's approval.

@@ -41,6 +41,17 @@
 - Window rule: Steps, Exercise, and Resting Heart Rate use the previous completed local calendar day. Sleep uses noon on the preceding day through noon on the completed day, assigning the night to its waking day. Calendar arithmetic preserves time-zone and daylight-saving boundaries.
 - Aggregation rule: HealthKit cumulative statistics merge Steps and Exercise sources. Resting Heart Rate uses the completed day's actual resting estimates. Sleep counts Core, Deep, REM, and Unspecified asleep, excludes Awake and In Bed, clips to the window, and unions overlaps so each instant is counted once.
 - Missing-data rule: every metric is available, missing, or failed. A missing sample remains unavailable and never becomes zero. HealthKit's authorization completion cannot reliably prove whether read access was granted or denied.
-- Refresh rule: accessible values refresh after initial load, on foreground return, and through the manual Refresh action. Main-actor state and generation checks prevent stale results from replacing a newer refresh.
+- Refresh rule: accessible values refresh after initial load, on foreground return, and through Home's native pull-to-refresh interaction. That gesture awaits the existing shared refresh function; it does not create a second query path. Main-actor state and generation checks prevent stale results from replacing a newer refresh.
 - Verification result: HealthKit tests 22/22 pass, including 7/7 sleep tests; manual regression 7/7 pass; Ridge parity 21/21 pass; tab regression pass; physical authorization and all four query paths pass. Private evidence exists locally and is intentionally excluded from Git.
+- A learning status: not confirmed by A.
+
+## Home real-data wiring and UI polish
+
+- Implementation state: verified with automated simulator tests and A's physical-device visual review.
+- Architecture to explain later: `HomeView` reads the single environment-owned `TwinTrackState`. It displays the four transient HealthKit results and three persisted manual inputs without creating another data store.
+- Prediction rule: Home uses `currentPrediction`, which reaches the frozen Ridge engine only when the complete seven-value profile exists. Missing values stay visible as missing and never become fabricated prediction inputs.
+- Refresh rule: Home attaches native SwiftUI pull-to-refresh to its scroll container and directly awaits the existing `refreshHealth()` path. TwinTrack AI and Profile do not expose refresh because those tabs have no current refreshable data.
+- Header rule: Home, TwinTrack AI, and Profile reuse one lightweight `PageHeader` with the approved TwinTrack mark, their own title, and their locked subtitle. The header grows for accessibility Dynamic Type sizes.
+- Accessibility and layout rule: metric cards move from two columns to one for accessibility text sizes, content scrolls above the native tab bar, and the final TwinTrack AI action remains reachable.
+- Verification result: Home tests 5/5, HealthKit tests 22/22, Ridge parity 21/21, Manual/State tests 7/7, and repeated three-tab UI regression passed. A approved the header/logo integration, subtitles, prediction hierarchy, pull-to-refresh, card layout, scrolling, bottom-tab clearance, and three-tab header consistency on a physical iPhone. Warnings and errors were zero.
 - A learning status: not confirmed by A.

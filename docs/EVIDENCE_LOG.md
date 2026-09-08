@@ -72,3 +72,28 @@ Recorded result:
 - Errors: 0
 
 No evidence filename, path, hash, screenshot content, or personal health value is recorded for this private evidence.
+
+## 2026-09-08 — Home real-data wiring and UI polish
+
+A completed the Home visual review manually on a physical iPhone. No device screenshot was requested, inspected, copied into project records, or committed.
+
+Recorded result:
+
+- Home visual approval: pass
+- Header and approved-logo integration: pass
+- Locked subtitles: pass
+- Prediction-card hierarchy: pass
+- Native pull-to-refresh: pass
+- Card spacing and layout: pass
+- Scrolling and bottom-tab clearance: pass
+- Three-tab header consistency: pass
+- Home tests: 5/5 pass
+- HealthKit tests: 22/22 pass
+- Golden Ridge parity: 21/21 pass
+- Manual/State tests: 7/7 pass
+- Repeated three-tab regression: pass
+- Shared state stores: 1
+- Warnings: 0
+- Errors: 0
+
+This evidence records A's approval statement only. It contains no private HealthKit values, device identifiers, screenshot metadata, certificates, provisioning data, or credentials.

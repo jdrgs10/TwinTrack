@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @State private var selectedTab = TwinTrackTab.home
 
     private var background: Color {
         colorScheme == .dark
@@ -17,14 +18,19 @@ struct ContentView: View {
 
     var body: some View {
         // The locked navigation has exactly three tabs; iOS owns selection and safe areas.
-        TabView {
-            shellScreen("Home")
+        TabView(selection: $selectedTab) {
+            HomeView {
+                selectedTab = .ai
+            }
+                .tag(TwinTrackTab.home)
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
             shellScreen("TwinTrack AI")
+                .tag(TwinTrackTab.ai)
                 .tabItem { Label("TwinTrack AI", systemImage: "sparkles") }
 
             ProfileView()
+                .tag(TwinTrackTab.profile)
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(accent)
@@ -32,13 +38,22 @@ struct ContentView: View {
 
     private func shellScreen(_ title: String) -> some View {
         NavigationStack {
-            background
-                .ignoresSafeArea()
-                .navigationTitle(title)
-                .toolbarBackground(background, for: .tabBar)
-                .toolbarBackground(.visible, for: .tabBar)
+            ScrollView {
+                PageHeader(title: title, subtitle: "Ask questions. Explore scenarios. Understand your twin.")
+            }
+            .background(background.ignoresSafeArea())
+            .navigationTitle(title)
+            .toolbar(.hidden, for: .navigationBar)
+            .toolbarBackground(background, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
         }
     }
+}
+
+private enum TwinTrackTab: Hashable {
+    case home
+    case ai
+    case profile
 }
 
 #Preview("Light") {
