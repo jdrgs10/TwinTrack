@@ -536,7 +536,7 @@ struct DataPrivacyView: View {
                             Text(snapshot.createdAt, format: .dateTime.month(.abbreviated).day().year().hour().minute())
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text("7 real inputs\(snapshot.healthWindow == nil ? "" : " · completed Health window")")
+                            Text("7 real inputs\(snapshot.healthWindow == nil ? "" : " · Health source periods")")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }

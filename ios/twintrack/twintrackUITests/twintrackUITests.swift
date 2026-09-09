@@ -17,6 +17,8 @@ final class twintrackUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["pageTitle.Home"].label, "Home")
         XCTAssertTrue(app.staticTexts["Your habits. Your data. Your academic twin."].exists)
         XCTAssertTrue(tabBar.buttons["Home"].isSelected)
+        XCTAssertFalse(app.staticTexts["pageTitle.TwinTrack AI"].exists)
+        XCTAssertFalse(app.staticTexts["pageTitle.Profile"].exists)
 
         // Repeat the full cycle to catch navigation that works only on the first visit.
         for _ in 0..<3 {
@@ -30,6 +32,10 @@ final class twintrackUITests: XCTestCase {
                 XCTAssertEqual(header.label, title)
                 XCTAssertTrue(tab.isSelected)
                 XCTAssertEqual(tabBar.buttons.count, 3)
+                for hiddenTitle in ["Home", "TwinTrack AI", "Profile"] where hiddenTitle != title {
+                    XCTAssertFalse(app.staticTexts["pageTitle.\(hiddenTitle)"].exists,
+                                   "Only the selected tab page should be active.")
+                }
             }
         }
     }

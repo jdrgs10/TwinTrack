@@ -97,6 +97,12 @@ final class TwinTrackState: ObservableObject {
 
     func requestHealthAccess() async {
         guard healthAccess != .requesting else { return }
+        // Completed setup is not a read-permission verdict. Reuse refresh without
+        // clearing values or presenting the authorization workflow again.
+        if defaults.bool(forKey: Key.healthRequestCompleted) {
+            await refreshHealth()
+            return
+        }
         guard healthService.isAvailable else {
             clearHealthValues()
             healthAccess = .unavailable
@@ -130,13 +136,14 @@ final class TwinTrackState: ObservableObject {
         healthGeneration += 1
         let generation = healthGeneration
         let window = HealthDataWindow(now: now, calendar: calendar)
-        healthWindow = window
-        healthReadings = HealthReadings()
         isRefreshingHealth = true
         let readings = await healthService.read(window: window)
         guard generation == healthGeneration else { return }
-        isRefreshingHealth = false
+        defer { isRefreshingHealth = false }
         guard !Task.isCancelled else { return }
+        // Keep the last committed values and their source window while awaiting
+        // queries. Commit all four results together, with no intervening suspension.
+        healthWindow = window
         healthReadings = readings
         saveCurrentPredictionIfNeeded(createdAt: now)
     }
@@ -268,7 +275,8 @@ final class TwinTrackState: ObservableObject {
               let snapshot = PredictionSnapshot.realBaseline(
                 profile: profile,
                 createdAt: createdAt,
-                healthWindow: healthWindow
+                healthWindow: healthWindow,
+                restingHeartRateSampleDate: healthReadings.restingHeartRateSampleDate
               ),
               predictionHistory.last.map({ !$0.hasSameSourceIdentity(as: snapshot) }) ?? true else {
             return

@@ -12,9 +12,9 @@ struct ContentView: View {
 
     var body: some View {
         // The locked navigation has exactly three tabs; iOS owns selection and safe areas.
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
             HomeView {
-                selectedTab = .ai
+                select(.ai)
             }
                 .tag(TwinTrackTab.home)
                 .tabItem { Label("Home", systemImage: "house.fill") }
@@ -28,6 +28,18 @@ struct ContentView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(accent)
+    }
+
+    private var tabSelection: Binding<TwinTrackTab> {
+        Binding(get: { selectedTab }, set: select)
+    }
+
+    private func select(_ tab: TwinTrackTab) {
+        var transaction = Transaction(animation: nil)
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            selectedTab = tab
+        }
     }
 }
 

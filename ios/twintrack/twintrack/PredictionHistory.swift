@@ -45,17 +45,32 @@ struct PredictionHealthWindow: Codable, Equatable, Sendable {
     let sleepStart: Date
     let sleepEnd: Date
     let timeZoneIdentifier: String
+    // Missing on legacy snapshots: their RHR used the completed-day average.
+    let semanticsVersion: Int?
+    let restingHeartRateSampleDate: Date?
 
-    init(_ window: HealthDataWindow) {
+    init(_ window: HealthDataWindow, restingHeartRateSampleDate: Date? = nil) {
         dayStart = window.day.start
         dayEnd = window.day.end
         sleepStart = window.sleep.start
         sleepEnd = window.sleep.end
         timeZoneIdentifier = window.timeZone.identifier
+        semanticsVersion = 2
+        self.restingHeartRateSampleDate = restingHeartRateSampleDate
     }
 
     var isValid: Bool {
         dayStart < dayEnd && sleepStart < sleepEnd && !timeZoneIdentifier.isEmpty
+            && (restingHeartRateSampleDate?.timeIntervalSinceReferenceDate.isFinite ?? true)
+    }
+
+    func hasSameSourceIdentity(as other: Self) -> Bool {
+        guard semanticsVersion == 2, other.semanticsVersion == 2 else { return self == other }
+        // A morning query ends at now. That advancing cutoff alone is not a new
+        // source when the inputs, overnight period, activity day and RHR sample match.
+        return dayStart == other.dayStart && dayEnd == other.dayEnd
+            && sleepStart == other.sleepStart && timeZoneIdentifier == other.timeZoneIdentifier
+            && restingHeartRateSampleDate == other.restingHeartRateSampleDate
     }
 }
 
@@ -85,7 +100,8 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
     static func realBaseline(
         profile: TwinTrackProfile,
         createdAt: Date,
-        healthWindow: HealthDataWindow?
+        healthWindow: HealthDataWindow?,
+        restingHeartRateSampleDate: Date? = nil
     ) -> PredictionSnapshot? {
         let inputs = PredictionInputs(profile: profile)
         let prediction = TwinTrackModel.predict(profile)
@@ -98,7 +114,9 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
 
         let storedHealthWindow: PredictionHealthWindow?
         if let healthWindow {
-            storedHealthWindow = PredictionHealthWindow(healthWindow)
+            storedHealthWindow = PredictionHealthWindow(
+                healthWindow, restingHeartRateSampleDate: restingHeartRateSampleDate
+            )
         } else {
             storedHealthWindow = nil
         }
@@ -121,8 +139,13 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
 
     func hasSameSourceIdentity(as other: PredictionSnapshot) -> Bool {
         // Timestamp and derived prediction are deliberately excluded. The real
-        // inputs and completed Health windows define whether a snapshot is new.
-        inputs == other.inputs && healthWindow == other.healthWindow
+        // inputs and Health source metadata define whether a snapshot is new.
+        guard inputs == other.inputs else { return false }
+        switch (healthWindow, other.healthWindow) {
+        case (nil, nil): return true
+        case let (window?, otherWindow?): return window.hasSameSourceIdentity(as: otherWindow)
+        default: return false
+        }
     }
 }
 

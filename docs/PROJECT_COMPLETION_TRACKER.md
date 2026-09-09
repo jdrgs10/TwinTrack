@@ -4,10 +4,10 @@
 
 | Area | Completion | Basis |
 | --- | ---: | --- |
-| Overall project | 80% | Weighted planning estimate: native app 60%, research 20%, deliverable readiness 20%. |
-| Native app | 80% | The native shell, frozen Ridge engine, shared state, Manual Inputs, persistence, HealthKit, polished Home, and deterministic What-If simulation are verified. Remaining product features are pending. |
+| Overall project | 88% | Weighted planning estimate: native app 60%, research 20%, deliverable readiness 20%. |
+| Native app | 90% | The native shell, frozen Ridge engine, shared state, Manual Inputs, persistence, HealthKit timing/refresh behavior, polished Home, deterministic What-If, prediction history, and 7-day trends are verified. Apple Foundation Models and final polish remain. |
 | Research | 100% | Requirements, UI handoff, model choice, frozen export, and ML audit are complete. |
-| Deliverable readiness | 60% | Source-of-truth documents and evidence records now also cover deterministic What-If behavior and A's visual approval; final report, presentation, demo, and release evidence remain. |
+| Deliverable readiness | 70% | Source-of-truth documents and evidence records cover the verified native milestones through History and the HealthKit refresh physical retest. Final report, presentation, demo, release evidence, and final polish remain. |
 
 ## Native iOS milestones
 
@@ -23,7 +23,11 @@
 | Home real-data wiring and UI polish | Verified | Home presents the shared state's seven real inputs and only exposes the frozen Ridge prediction when the profile is complete. A approved the physical-device visual review, including the shared tab headers, approved logo integration, subtitles, prediction hierarchy, card layout, native pull-to-refresh, scrolling, and bottom-tab clearance. Automated verification passed: Home 5/5, HealthKit 22/22, Ridge 21/21, Manual/State 7/7, and repeated three-tab switching; warnings and errors were zero. |
 | Deterministic What-If simulation | Verified | A temporary value-type scenario copies a complete seven-input baseline, applies one or several validated changes, and sends the resulting profile through the same frozen `TwinTrackModel`. The displayed delta uses the two clamped production predictions. Missing baselines remain unavailable; cancel and tab exit discard the scenario without modifying shared state, persistence, or HealthKit. What-If tests passed 17/17 and A approved the native UI. |
 | Main-tab header/logo correction | Verified | The shared `PageHeader` keeps the approved mark on Home and omits it from TwinTrack AI and Profile while preserving each title and locked subtitle. A approved the resulting spacing on all three tabs. |
+| Prediction History and 7-day trends | Verified | Real baseline snapshots are immutable and locally persisted after eligible Health or Manual Inputs commits. Duplicate prevention uses the seven inputs and Health source metadata. The chart shows at most the latest real snapshot per local day over seven calendar days, never fabricates missing points, uses a fixed 0–100 scale, and opens an exact read-only snapshot detail. History tests passed 28/28 and the implementation is committed in `2a0d640` and `ebb1c9c`. |
+| HealthKit timing semantics | Verified | Sleep uses yesterday local noon through the earlier of now and today noon; Steps and Exercise use the previous completed local day; Resting Heart Rate uses the latest finite positive sample within 72 elapsed hours with its timestamp retained. Backward-compatible history metadata preserves existing snapshots. |
+| HealthKit refresh-state and tab-transition fix | Verified | A's physical retest confirmed stable Health values, no repeated access request, preserved manual inputs, working pull-to-refresh, and clean Home/TwinTrack AI/Profile switching without overlap or ghosting. Automated verification passed 97/97 with HealthKit 35/35, UI 4/4, Ridge 21/21, and zero warnings/errors. |
+| Native refresh-spinner visibility | Deferred polish | Refresh works and is non-blocking, but A does not yet clearly see the native indicator during the gesture. Do not pursue this until the final UI/polish milestone. |
 
 Evidence is recorded in `docs/EVIDENCE_LOG.md`. Non-sensitive repository evidence is stored under `evidence/ridge_parity/` and `evidence/manual_inputs/`; HealthKit evidence remains private and outside Git.
 
-The next milestone is Prediction History and 7-day trends. It has not started and requires A's approval.
+The next milestone is Apple Foundation Models. It requires A's approval before implementation begins.

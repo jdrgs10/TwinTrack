@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import HealthKit
 import XCTest
@@ -75,13 +76,13 @@ final class HealthKitTests: XCTestCase {
         calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour))!
     }
 
-    func testWindowsUsePreviousCalendarDayAndItsWakingNight() async {
+    func testTuesdayMorningUsesPreviousActivityDayAndCurrentOvernightSleep() async {
         let calendar = calendar("Asia/Dubai")
         let window = HealthDataWindow(now: date(2026, 9, 8, 10, in: calendar), calendar: calendar)
         XCTAssertEqual(window.day.start, date(2026, 9, 7, 0, in: calendar))
         XCTAssertEqual(window.day.end, date(2026, 9, 8, 0, in: calendar))
-        XCTAssertEqual(window.sleep.start, date(2026, 9, 6, 12, in: calendar))
-        XCTAssertEqual(window.sleep.end, date(2026, 9, 7, 12, in: calendar))
+        XCTAssertEqual(window.sleep.start, date(2026, 9, 7, 12, in: calendar))
+        XCTAssertEqual(window.sleep.end, date(2026, 9, 8, 10, in: calendar))
     }
 
     func testWindowsRollAtMidnightAndYearBoundary() async {
@@ -101,8 +102,8 @@ final class HealthKitTests: XCTestCase {
 
     func testSleepWindowsRespectDSTAndActualElapsedHours() async {
         let calendar = calendar("America/New_York")
-        let spring = HealthDataWindow(now: date(2026, 3, 9, 8, in: calendar), calendar: calendar)
-        let autumn = HealthDataWindow(now: date(2026, 11, 2, 8, in: calendar), calendar: calendar)
+        let spring = HealthDataWindow(now: date(2026, 3, 8, 13, in: calendar), calendar: calendar)
+        let autumn = HealthDataWindow(now: date(2026, 11, 1, 13, in: calendar), calendar: calendar)
         XCTAssertEqual(spring.sleep.duration, 23 * 3600)
         XCTAssertEqual(autumn.sleep.duration, 25 * 3600)
         let samples = [SleepInterval(start: date(2026, 3, 7, 23, in: calendar),
@@ -118,6 +119,107 @@ final class HealthKitTests: XCTestCase {
         XCTAssertNotEqual(dubai.day, newYork.day)
         XCTAssertEqual(dubai.timeZone.identifier, "Asia/Dubai")
         XCTAssertEqual(newYork.timeZone.identifier, "America/New_York")
+    }
+
+    func testTuesdayNoonAndAfternoonCapSleepAtTodaysLocalNoon() {
+        let calendar = calendar("Asia/Dubai")
+        for hour in [12, 16, 23] {
+            let window = HealthDataWindow(now: date(2026, 9, 8, hour, in: calendar), calendar: calendar)
+            XCTAssertEqual(window.sleep.start, date(2026, 9, 7, 12, in: calendar))
+            XCTAssertEqual(window.sleep.end, date(2026, 9, 8, 12, in: calendar))
+            XCTAssertEqual(window.day.start, date(2026, 9, 7, 0, in: calendar))
+            XCTAssertEqual(window.day.end, date(2026, 9, 8, 0, in: calendar))
+        }
+    }
+
+    func testFreshSleepCrossesMidnightAndClipsAtMorningRefresh() {
+        let calendar = calendar("Asia/Dubai")
+        let window = HealthDataWindow(now: date(2026, 9, 8, 8, in: calendar), calendar: calendar)
+        let samples = [SleepInterval(
+            start: date(2026, 9, 7, 23, in: calendar),
+            end: date(2026, 9, 8, 9, in: calendar),
+            category: HKCategoryValueSleepAnalysis.asleepCore.rawValue
+        )]
+        XCTAssertEqual(SleepAggregation.hours(in: window.sleep, samples: samples), 9)
+    }
+
+    func testMorningSleepAndRHRWindowsAcrossDST() {
+        let calendar = calendar("America/New_York")
+        let spring = HealthDataWindow(now: date(2026, 3, 8, 8, in: calendar), calendar: calendar)
+        let autumn = HealthDataWindow(now: date(2026, 11, 1, 8, in: calendar), calendar: calendar)
+        XCTAssertEqual(spring.sleep.duration, 19 * 3600)
+        XCTAssertEqual(autumn.sleep.duration, 21 * 3600)
+        XCTAssertEqual(spring.restingHeartRate.duration, 72 * 3600)
+        XCTAssertEqual(autumn.restingHeartRate.duration, 72 * 3600)
+    }
+
+    func testLatestValidRestingSampleSelectedAndTimestampRetained() {
+        let window = HealthDataWindow(now: origin, calendar: calendar("UTC")).restingHeartRate
+        let older = RestingHeartRateReading(bpm: 63, date: origin.addingTimeInterval(-48 * 3600))
+        let latest = RestingHeartRateReading(bpm: 67, date: origin.addingTimeInterval(-3600))
+        XCTAssertEqual(RestingHeartRateSelection.latest(in: window, samples: [latest, older]), latest)
+        XCTAssertEqual(RestingHeartRateSelection.latest(in: window, samples: [older, latest]), latest)
+    }
+
+    func testInvalidNewestRestingSamplesDoNotHideOlderValidValue() {
+        let window = HealthDataWindow(now: origin, calendar: calendar("UTC")).restingHeartRate
+        let valid = RestingHeartRateReading(bpm: 63, date: origin.addingTimeInterval(-3600))
+        let invalid = [0.0, -1, .nan, .infinity].map { RestingHeartRateReading(bpm: $0, date: origin) }
+        XCTAssertEqual(RestingHeartRateSelection.latest(in: window, samples: invalid + [valid]), valid)
+        XCTAssertNil(RestingHeartRateSelection.latest(in: window, samples: invalid))
+    }
+
+    func testRestingRecencyIncludesExactly72HoursAndNowButRejectsOlderAndFuture() {
+        let window = HealthDataWindow(now: origin, calendar: calendar("UTC")).restingHeartRate
+        let cutoff = RestingHeartRateReading(bpm: 63, date: origin.addingTimeInterval(-72 * 3600))
+        let current = RestingHeartRateReading(bpm: 66, date: origin)
+        XCTAssertEqual(RestingHeartRateSelection.latest(in: window, samples: [cutoff]), cutoff)
+        XCTAssertEqual(RestingHeartRateSelection.latest(in: window, samples: [cutoff, current]), current)
+        XCTAssertNil(RestingHeartRateSelection.latest(in: window, samples: [
+            RestingHeartRateReading(bpm: 60, date: window.start.addingTimeInterval(-1)),
+            RestingHeartRateReading(bpm: 62, date: origin.addingTimeInterval(1)),
+        ]))
+        XCTAssertNil(RestingHeartRateSelection.latest(in: window, samples: []))
+    }
+
+    func testRestingTimestampTiesAreOrderIndependent() {
+        let window = HealthDataWindow(now: origin, calendar: calendar("UTC")).restingHeartRate
+        let first = RestingHeartRateReading(bpm: 63, date: origin)
+        let second = RestingHeartRateReading(bpm: 65, date: origin)
+        XCTAssertEqual(RestingHeartRateSelection.latest(in: window, samples: [first, second]), second)
+        XCTAssertEqual(RestingHeartRateSelection.latest(in: window, samples: [second, first]), second)
+    }
+
+    func testLaunchAndForegroundRefreshUseUpdatedSharedWindows() async {
+        let (defaults, name) = defaults()
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(true, forKey: "twintrack.health.fourTypeRequestCompleted")
+        let service = TestHealthService()
+        let state = TwinTrackState(defaults: defaults, healthService: service)
+        let calendar = calendar("Asia/Dubai")
+        let morning = date(2026, 9, 8, 8, in: calendar)
+        await state.refreshHealth(now: morning, calendar: calendar)
+        XCTAssertEqual(service.windows.last?.sleep.end, morning)
+        XCTAssertEqual(service.windows.last?.day.end, date(2026, 9, 8, 0, in: calendar))
+        state.healthSceneChanged(isActive: false)
+        state.healthSceneChanged(isActive: true)
+        await state.refreshHealth(now: date(2026, 9, 8, 15, in: calendar), calendar: calendar)
+        XCTAssertEqual(service.reads, 2)
+        XCTAssertEqual(service.windows.last?.sleep.end, date(2026, 9, 8, 12, in: calendar))
+    }
+
+    func testRestingTimestampUpdatesAndClearsWithSharedReadings() async {
+        let (defaults, name) = defaults()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let service = TestHealthService()
+        service.result = HealthReadings(restingHeartRate: .available(64), restingHeartRateSampleDate: origin)
+        let state = TwinTrackState(defaults: defaults, healthService: service)
+        await state.requestHealthAccess()
+        XCTAssertEqual(state.healthReadings.restingHeartRateSampleDate, origin)
+        service.result = HealthReadings()
+        await state.refreshHealth()
+        XCTAssertNil(state.restingHeartRate)
+        XCTAssertNil(state.healthReadings.restingHeartRateSampleDate)
     }
 
     func testQuantityConversionsAndMissingUnits() async {
@@ -269,6 +371,143 @@ final class HealthKitTests: XCTestCase {
         XCTAssertEqual(state.steps, 1234)
         XCTAssertFalse(state.isRefreshingHealth)
     }
+
+    func testRefreshPreservesCommittedStateUntilAllResultsArrive() async throws {
+        let (defaults, name) = defaults()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let service = TestHealthService()
+        let original = HealthReadings(sleep: .available(7), steps: .available(5000),
+                                      exercise: .available(30), restingHeartRate: .available(60),
+                                      restingHeartRateSampleDate: origin)
+        service.result = original
+        let state = TwinTrackState(defaults: defaults, healthService: service)
+        state.saveManualInputs(studyMinutes: 90, screenTimeMinutes: 180, previousScore: 75)
+        await state.requestHealthAccess()
+        let originalWindow = state.healthWindow
+        let historyCount = state.predictionHistory.count
+        let refreshDate = origin.addingTimeInterval(86400)
+        let refreshCalendar = calendar("UTC")
+        var published: [HealthReadings] = []
+        let observation = state.$healthReadings.sink { published.append($0) }
+        defer { observation.cancel() }
+
+        service.holdNextRead = true
+        let refresh = Task { await state.refreshHealth(now: refreshDate, calendar: refreshCalendar) }
+        for _ in 0..<1000 {
+            if service.pending != nil { break }
+            await Task.yield()
+        }
+        let pending = try XCTUnwrap(service.pending)
+        XCTAssertTrue(state.isRefreshingHealth)
+        XCTAssertEqual(state.healthReadings, original)
+        XCTAssertEqual(state.healthWindow, originalWindow)
+        XCTAssertEqual(state.healthAccess, .completed)
+        XCTAssertEqual(state.studyMinutes, 90)
+        XCTAssertEqual(state.screenTimeMinutes, 180)
+        XCTAssertEqual(state.previousScore, 75)
+        XCTAssertEqual(state.predictionHistory.count, historyCount)
+        XCTAssertEqual(published, [original])
+
+        let updated = HealthReadings(sleep: .available(8), steps: .available(6000),
+                                     exercise: .available(40), restingHeartRate: .available(62),
+                                     restingHeartRateSampleDate: refreshDate)
+        pending.resume(returning: updated)
+        service.pending = nil
+        await refresh.value
+        XCTAssertEqual(published, [original, updated], "No empty or partial health snapshot may be published.")
+        XCTAssertEqual(state.healthWindow, HealthDataWindow(now: refreshDate, calendar: refreshCalendar))
+        XCTAssertEqual(state.healthReadings, updated)
+        XCTAssertEqual(state.healthAccess, .completed)
+        XCTAssertFalse(state.isRefreshingHealth)
+        XCTAssertEqual(service.requests, 1)
+        XCTAssertEqual(state.studyMinutes, 90)
+        XCTAssertEqual(state.screenTimeMinutes, 180)
+        XCTAssertEqual(state.previousScore, 75)
+        XCTAssertEqual(state.predictionHistory.count, historyCount + 1)
+    }
+
+    func testCancelledRefreshPreservesCommittedReadingsWindowAndSetup() async throws {
+        let (defaults, name) = defaults()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let service = TestHealthService()
+        service.result = HealthReadings(steps: .available(5000))
+        let state = TwinTrackState(defaults: defaults, healthService: service)
+        await state.requestHealthAccess()
+        let original = state.healthReadings
+        let window = state.healthWindow
+        let history = state.predictionHistory
+        service.holdNextRead = true
+        let refresh = Task { await state.refreshHealth(now: origin) }
+        for _ in 0..<1000 {
+            if service.pending != nil { break }
+            await Task.yield()
+        }
+        let pending = try XCTUnwrap(service.pending)
+        refresh.cancel()
+        pending.resume(returning: HealthReadings())
+        service.pending = nil
+        await refresh.value
+        XCTAssertEqual(state.healthReadings, original)
+        XCTAssertEqual(state.healthWindow, window)
+        XCTAssertEqual(state.healthAccess, .completed)
+        XCTAssertEqual(state.predictionHistory, history)
+        XCTAssertFalse(state.isRefreshingHealth)
+        service.result = HealthReadings(steps: .available(6000))
+        await state.refreshHealth()
+        XCTAssertEqual(state.steps, 6000, "A cancelled refresh must not block the next refresh.")
+        XCTAssertEqual(service.requests, 1)
+    }
+
+    func testUnavailableMetricDoesNotEraseOtherResultsOrResetSetup() async {
+        let (defaults, name) = defaults()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let service = TestHealthService()
+        service.result = HealthReadings(sleep: .available(7), steps: .available(5000),
+                                       exercise: .available(30), restingHeartRate: .available(60))
+        let state = TwinTrackState(defaults: defaults, healthService: service)
+        await state.requestHealthAccess()
+        for unavailable in [HealthMetricResult.missing, .failed] {
+            service.result = HealthReadings(sleep: unavailable, steps: .available(6000),
+                                           exercise: .available(0), restingHeartRate: .available(62))
+            await state.refreshHealth()
+            XCTAssertNil(state.sleepHours)
+            XCTAssertEqual(state.healthReadings.sleep, unavailable)
+            XCTAssertEqual(state.steps, 6000)
+            XCTAssertEqual(state.exerciseMinutes, 0, "Measured zero remains distinct from missing.")
+            XCTAssertEqual(state.restingHeartRate, 62)
+            XCTAssertEqual(state.healthAccess, .completed)
+        }
+        service.result = HealthReadings()
+        await state.refreshHealth()
+        XCTAssertEqual(state.healthReadings, HealthReadings())
+        XCTAssertEqual(state.healthAccess, .completed)
+        XCTAssertEqual(service.requests, 1)
+    }
+
+    func testCompletedSetupRefreshesWithoutRequestingAuthorizationAgain() async {
+        let (defaults, name) = defaults()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let service = TestHealthService()
+        let state = TwinTrackState(defaults: defaults, healthService: service)
+        state.saveManualInputs(studyMinutes: 90, screenTimeMinutes: 180, previousScore: 75)
+        await state.requestHealthAccess()
+        service.shouldFailRequest = true
+        await state.requestHealthAccess()
+        await state.refreshHealth()
+        state.healthSceneChanged(isActive: false)
+        XCTAssertEqual(state.healthAccess, .completed)
+        state.healthSceneChanged(isActive: true)
+        await state.refreshHealth()
+        let recreated = TwinTrackState(defaults: defaults, healthService: service)
+        XCTAssertEqual(recreated.healthAccess, .completed)
+        await recreated.refreshHealth()
+        XCTAssertEqual(service.requests, 1, "Repeated setup, launch, foreground and pull refresh must not reauthorize.")
+        XCTAssertEqual(service.reads, 5)
+        XCTAssertEqual(recreated.healthAccess, .completed)
+        XCTAssertEqual(recreated.studyMinutes, 90)
+        XCTAssertEqual(recreated.screenTimeMinutes, 180)
+        XCTAssertEqual(recreated.previousScore, 75)
+    }
 }
 
 /// Only tests supply synthetic health values. This provider never enters production.
@@ -277,6 +516,7 @@ private final class TestHealthService: HealthDataProviding {
     var isAvailable = true
     var requests = 0
     var reads = 0
+    var windows: [HealthDataWindow] = []
     var shouldFailRequest = false
     var result = HealthReadings()
     var holdNextRead = false
@@ -289,6 +529,7 @@ private final class TestHealthService: HealthDataProviding {
 
     func read(window: HealthDataWindow) async -> HealthReadings {
         reads += 1
+        windows.append(window)
         if holdNextRead {
             holdNextRead = false
             return await withCheckedContinuation { pending = $0 }

@@ -4,7 +4,7 @@
 
 **Question:** How did you implement and verify TwinTrack's main navigation?
 
-**Answer outline:** TwinTrack uses one native SwiftUI `TabView` with exactly Home, TwinTrack AI, and Profile. Each tab has its own basic navigation container. A UI test verifies there are exactly three tab buttons, checks the title and selected state for every tab, and repeats the complete switching sequence three times in the iPhone Simulator.
+**Answer outline:** TwinTrack uses one native SwiftUI `TabView` with exactly Home, TwinTrack AI, and Profile. Each tab has its own navigation container. The selection transaction disables content animation so outgoing and incoming pages are not briefly composited. A UI test verifies exactly three buttons, the title and selection, absence of the two inactive page headers, and three repeated switching cycles.
 
 **Evidence:** `testThreeTabShell` passed in Xcode 26.6 using the iPhone 17 Pro Simulator on 2026-09-07 with no reported warnings or errors.
 
@@ -22,7 +22,7 @@
 
 **Question:** How is Home refreshed?
 
-**Answer outline:** Home uses native SwiftUI pull-to-refresh on its scroll view. The refresh closure directly awaits the existing shared HealthKit refresh function, so there is one query path and the native indicator follows the real asynchronous work. TwinTrack AI and Profile do not have refresh interactions because they currently have no refreshable data.
+**Answer outline:** Home uses native SwiftUI pull-to-refresh on its scroll view. The closure awaits the one shared HealthKit refresh method and a short minimum presentation interval. Health results commit as soon as queries finish; the interval affects only the native refresh interaction. Existing readings remain visible while local queries run and are replaced atomically. Indicator visibility is recorded as deferred final polish.
 
 **Question:** How was the Home design kept consistent and accessible?
 
@@ -70,7 +70,7 @@
 
 **Question:** What time period does TwinTrack use for current health inputs?
 
-**Answer outline:** Steps, Exercise, and Resting Heart Rate use the previous completed local calendar day from midnight to midnight. Sleep uses noon on the day before that through noon on the completed day, so an overnight episode belongs to its waking day. The implementation uses calendar boundaries rather than fixed 24-hour subtraction, preserving time-zone and daylight-saving behavior.
+**Answer outline:** Steps and Exercise use the previous completed local calendar day. Sleep uses yesterday local noon through the earlier of now and today local noon, so the latest overnight sleep can appear during the morning. Resting Heart Rate uses the latest finite positive sample within 72 elapsed hours and retains its timestamp. Local calendar arithmetic preserves time-zone and daylight-saving behavior for sleep and activity.
 
 **Question:** How does TwinTrack prevent duplicate sleep or step totals?
 
@@ -85,6 +85,38 @@
 **Answer outline:** Synthetic tests verify date windows, units, sleep overlap, missing values, and shared-state concurrency. A separately verified the authorization and query behavior on a physical iPhone by comparing TwinTrack with Apple Health over the displayed intervals. Private evidence exists locally but is not committed, inspected, or copied into development records.
 
 **Evidence:** HealthKit tests passed 22/22, including 7/7 sleep aggregation tests. Manual-input tests passed 7/7, frozen Ridge parity remained 21/21, the tab regression passed, and A confirmed the physical-device results. The private evidence is intentionally excluded from Git.
+
+**A learning status:** Not confirmed by A.
+
+## Prediction History and 7-day trends
+
+**Question:** When does TwinTrack save a prediction snapshot?
+
+**Answer outline:** Only after a successful real Health refresh commit or Manual Inputs Save establishes all seven real inputs. Rendering Home, changing tabs, recomputing display output, and running What-If cannot create a normal history snapshot.
+
+**Question:** How does the seven-day chart handle missing days and several predictions on one day?
+
+**Answer outline:** It builds seven local calendar-day positions, leaves days without real snapshots empty, and uses the latest legitimate snapshot from each day for the chart. Full history retains every legitimate same-day snapshot. Values use one fixed 0–100 scale with no interpolation, averaging, or carry-forward.
+
+**Question:** Can reviewing or clearing history alter current inputs?
+
+**Answer outline:** Opening a chart detail reads the exact immutable snapshot represented by that bar and cannot edit current state or create another prediction. Clear Prediction History removes only history after destructive confirmation; manual inputs, HealthKit state, model configuration, and What-If state remain intact.
+
+**Evidence:** History tests passed 28/28. The complete suite passed 97/97 after the Health refresh and tab-transition corrections.
+
+**A learning status:** Not confirmed by A.
+
+## Refresh-state and tab-transition correction
+
+**Question:** How does refresh avoid blanking Health values or repeating authorization?
+
+**Answer outline:** TwinTrack retains the last committed readings and source window while the four queries run into a local result. After cancellation and stale-generation checks, it commits the window and complete readings together. A persisted setup-completed flag records only that the authorization request was presented; normal launch, foreground, and pull refresh never request authorization again or infer denial from missing data.
+
+**Question:** How was tab ghosting removed?
+
+**Answer outline:** The app keeps the same native three-tab architecture but disables animation on the selection transaction, so only the selected page content is visually active. A physically confirmed smooth switching without overlap or ghosting.
+
+**Evidence:** Xcode build passed; 97/97 automated tests passed with 0 warnings and 0 errors. A physically confirmed refresh function, stable Health values, no repeat access request, persisted manual inputs, and clean transitions. Spinner visibility remains a non-blocking final-polish item.
 
 **A learning status:** Not confirmed by A.
 

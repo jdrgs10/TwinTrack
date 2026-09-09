@@ -128,3 +128,30 @@ Recorded result:
 - Errors: 0
 
 This record contains A's approval statement and automated test results only. It contains no private evidence, personal HealthKit values, device identifiers, credentials, certificates, or provisioning data.
+
+## 2026-09-09 — HealthKit timing, refresh-state, and tab-transition verification
+
+A completed the physical-device retest and supplied only non-sensitive PASS/FAIL results. No screenshot, video, personal HealthKit value, device identifier, or signing information was requested or inspected.
+
+Recorded result:
+
+- HealthKit refresh function: pass
+- HealthKit values remain stable through refresh: pass
+- Repeated Apple Health access request: absent; pass
+- Manual-input persistence: pass
+- Home ↔ TwinTrack AI ↔ Profile transitions: pass
+- Overlapping or ghosted tab content: absent; pass
+- Native refresh-spinner visibility: deferred non-blocking final-polish item
+- Xcode build: pass
+- Complete automated suite: 97/97 pass
+- HealthKit tests: 35/35 pass
+- Ridge golden parity: 21/21 pass
+- Manual/State tests: 7/7 pass
+- Home tests: 5/5 pass
+- What-If tests: 17/17 pass
+- History tests: 28/28 pass
+- Tab/UI tests: 4/4 pass
+- Warnings: 0
+- Errors: 0
+
+This evidence verifies the HealthKit refresh-state and tab-transition milestone. Spinner visibility is explicitly deferred as aesthetic polish and is not represented as passing. Private physical-device evidence remains outside Git.

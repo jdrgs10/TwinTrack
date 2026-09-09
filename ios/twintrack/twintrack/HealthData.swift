@@ -1,23 +1,25 @@
 import Foundation
 import HealthKit
 
-/// A completed-day baseline, not today's partial activity or an arbitrary latest sample.
+/// Each health feature has its own explicit source period, captured by one refresh.
 struct HealthDataWindow: Equatable, Sendable {
     let day: DateInterval
     let sleep: DateInterval
+    let restingHeartRate: DateInterval
     let timeZone: TimeZone
 
     init(now: Date, calendar: Calendar) {
         let today = calendar.startOfDay(for: now)
         let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
-        let previousDay = calendar.date(byAdding: .day, value: -1, to: yesterday)!
         day = DateInterval(start: yesterday, end: today)
-        // Noon-to-noon assigns overnight sleep to its waking day. Calendar arithmetic
-        // preserves local wall-clock boundaries on 23/25-hour days; never subtract 86400.
+        // Before noon include the night ending this morning as soon as it syncs.
+        // Calendar noon boundaries preserve local time across 23/25-hour days.
         sleep = DateInterval(
-            start: calendar.date(bySettingHour: 12, minute: 0, second: 0, of: previousDay)!,
-            end: calendar.date(bySettingHour: 12, minute: 0, second: 0, of: yesterday)!
+            start: calendar.date(bySettingHour: 12, minute: 0, second: 0, of: yesterday)!,
+            end: min(now, calendar.date(bySettingHour: 12, minute: 0, second: 0, of: today)!)
         )
+        // RHR recency is 72 elapsed hours, not three local calendar days.
+        restingHeartRate = DateInterval(start: now.addingTimeInterval(-72 * 3600), end: now)
         timeZone = calendar.timeZone
     }
 }
@@ -39,6 +41,7 @@ struct HealthReadings: Equatable, Sendable {
     var steps: HealthMetricResult = .missing
     var exercise: HealthMetricResult = .missing
     var restingHeartRate: HealthMetricResult = .missing
+    var restingHeartRateSampleDate: Date?
 }
 
 struct SleepInterval: Sendable {
@@ -109,4 +112,25 @@ protocol HealthDataProviding {
     var isAvailable: Bool { get }
     func requestAccess() async throws
     func read(window: HealthDataWindow) async -> HealthReadings
+}
+
+/// Only the value and measurement timestamp cross the query boundary; no sample/device IDs.
+struct RestingHeartRateReading: Equatable, Sendable {
+    let bpm: Double
+    let date: Date
+}
+
+enum RestingHeartRateSelection {
+    nonisolated static func latest(
+        in window: DateInterval,
+        samples: [RestingHeartRateReading]
+    ) -> RestingHeartRateReading? {
+        samples.filter {
+            $0.bpm.isFinite && $0.bpm > 0
+                && $0.date >= window.start && $0.date <= window.end
+        }.max {
+            // Equal timestamps have a deterministic value tie-break, independent of query order.
+            $0.date == $1.date ? $0.bpm < $1.bpm : $0.date < $1.date
+        }
+    }
 }

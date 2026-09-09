@@ -31,9 +31,14 @@ struct HomeView: View {
             }
             .accessibilityIdentifier("homeScrollView")
             .refreshable {
-                // Native refresh lifetime follows the existing shared query; no timer,
-                // polling, or Home-owned copy of HealthKit state is needed.
+                let clock = ContinuousClock()
+                let started = clock.now
                 await state.refreshHealth()
+                let minimumPresentation = Duration.milliseconds(400)
+                let elapsed = started.duration(to: clock.now)
+                if elapsed < minimumPresentation {
+                    try? await Task.sleep(for: minimumPresentation - elapsed)
+                }
             }
             .scrollBounceBehavior(.always)
             .background(palette.background.ignoresSafeArea())
@@ -190,7 +195,7 @@ struct HomeView: View {
     }
 
     private var inputWindowCaption: some View {
-        Text("Health: previous completed day")
+        Text("Health source periods vary")
             .font(.caption2)
             .foregroundStyle(palette.tertiaryText)
     }
@@ -262,7 +267,7 @@ struct HomeView: View {
     ) -> some View {
         HomeMetricCard(
             title: title,
-            value: state.isRefreshingHealth ? nil : value(result.value),
+            value: value(result.value),
             unavailable: state.isRefreshingHealth
                 ? "Refreshing…"
                 : (result == .failed ? "Query failed" : "No accessible recent value"),

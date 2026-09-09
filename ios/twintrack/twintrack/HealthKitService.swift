@@ -27,8 +27,11 @@ final class HealthKitService: HealthDataProviding {
         let sleep = await readSleep(window.sleep)
         let steps = await readQuantity(.stepCount, window: window.day, options: .cumulativeSum)
         let exercise = await readQuantity(.appleExerciseTime, window: window.day, options: .cumulativeSum)
-        let resting = await readQuantity(.restingHeartRate, window: window.day, options: .discreteAverage)
-        return HealthReadings(sleep: sleep, steps: steps, exercise: exercise, restingHeartRate: resting)
+        let resting = await readRestingHeartRate(window.restingHeartRate)
+        return HealthReadings(
+            sleep: sleep, steps: steps, exercise: exercise,
+            restingHeartRate: resting.result, restingHeartRateSampleDate: resting.date
+        )
     }
 
     private func readQuantity(
@@ -57,16 +60,40 @@ final class HealthKitService: HealthDataProviding {
             case .appleExerciseTime:
                 value = HealthUnits.exerciseMinutes(statistics?.sumQuantity())
             default:
-                // Only actual restingHeartRate estimates, never ordinary/sedentary HR.
-                // Average the completed day's estimates using HealthKit statistics.
-                value = HealthUnits.restingBPM(statistics?.averageQuantity())
+                return .failed
             }
             guard let value else { return .missing }
-            guard value.isFinite, value >= 0,
-                  identifier != .restingHeartRate || value > 0 else { return .failed }
+            guard value.isFinite, value >= 0 else { return .failed }
             return .available(value)
         } catch {
             return Self.queryFailure(error)
+        }
+    }
+
+    private func readRestingHeartRate(
+        _ window: DateInterval
+    ) async -> (result: HealthMetricResult, date: Date?) {
+        // Use explicit inclusive start-date membership, also checked by the selector.
+        // Do not limit to one result: an invalid newest sample must not hide a valid older one.
+        let predicate = NSPredicate(
+            format: "%K >= %@ AND %K <= %@",
+            HKPredicateKeyPathStartDate, window.start as NSDate,
+            HKPredicateKeyPathStartDate, window.end as NSDate
+        )
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.restingHeartRate), predicate: predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+        do {
+            let samples = try await descriptor.result(for: store)
+            let latest = RestingHeartRateSelection.latest(in: window, samples: samples.compactMap {
+                guard let bpm = HealthUnits.restingBPM($0.quantity) else { return nil }
+                return RestingHeartRateReading(bpm: bpm, date: $0.startDate)
+            })
+            guard let latest else { return (.missing, nil) }
+            return (.available(latest.bpm), latest.date)
+        } catch {
+            return (Self.queryFailure(error), nil)
         }
     }
 

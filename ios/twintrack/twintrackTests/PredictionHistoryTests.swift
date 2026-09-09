@@ -451,6 +451,54 @@ final class PredictionHistoryTests: XCTestCase {
         XCTAssertTrue(UserDefaultsPredictionHistoryStore(defaults: defaults).load().isEmpty)
     }
 
+    func testLegacyHealthWindowDecodesWithoutRewritingItsPeriods() throws {
+        let json = Data("""
+        {"dayStart":1000,"dayEnd":2000,"sleepStart":500,"sleepEnd":1500,"timeZoneIdentifier":"UTC"}
+        """.utf8)
+        let old = try JSONDecoder().decode(PredictionHealthWindow.self, from: json)
+        XCTAssertNil(old.semanticsVersion)
+        XCTAssertNil(old.restingHeartRateSampleDate)
+        XCTAssertEqual(old.sleepEnd, Date(timeIntervalSinceReferenceDate: 1500))
+        XCTAssertTrue(old.isValid)
+        XCTAssertEqual(try JSONDecoder().decode(PredictionHealthWindow.self, from: JSONEncoder().encode(old)), old)
+    }
+
+    func testMorningRefreshCutoffAloneDoesNotDuplicateHistory() async {
+        let fixture = makeFixture()
+        defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        fixture.defaults.set(true, forKey: "twintrack.health.fourTypeRequestCompleted")
+        XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        for hour in [8, 9, 12, 15] {
+            await fixture.state.refreshHealth(now: date(2026, 9, 8, hour, calendar: calendar), calendar: calendar)
+        }
+        XCTAssertEqual(fixture.state.predictionHistory.count, 1)
+        XCTAssertEqual(fixture.state.predictionHistory.first?.healthWindow?.sleepEnd,
+                       date(2026, 9, 8, 8, calendar: calendar))
+    }
+
+    func testNewSleepValueAndNewRestingSampleCreateImmutableSnapshots() async throws {
+        let fixture = makeFixture()
+        defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        let morning = date(2026, 9, 8, 8, calendar: calendar)
+        fixture.defaults.set(true, forKey: "twintrack.health.fourTypeRequestCompleted")
+        fixture.service.readings.restingHeartRateSampleDate = morning.addingTimeInterval(-3600)
+        XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        await fixture.state.refreshHealth(now: morning, calendar: calendar)
+        let first = try XCTUnwrap(fixture.state.predictionHistory.first)
+        XCTAssertEqual(first.healthWindow?.semanticsVersion, 2)
+        XCTAssertEqual(first.healthWindow?.restingHeartRateSampleDate, morning.addingTimeInterval(-3600))
+        fixture.service.readings.sleep = .available(7.5)
+        await fixture.state.refreshHealth(now: morning.addingTimeInterval(3600), calendar: calendar)
+        fixture.service.readings.restingHeartRateSampleDate = morning
+        await fixture.state.refreshHealth(now: morning.addingTimeInterval(7200), calendar: calendar)
+        XCTAssertEqual(fixture.state.predictionHistory.count, 3)
+        XCTAssertEqual(fixture.state.predictionHistory.first, first)
+        let recreated = TwinTrackState(defaults: fixture.defaults, healthService: fixture.service)
+        XCTAssertEqual(recreated.predictionHistory, fixture.state.predictionHistory)
+    }
+
     private func makeFixture() -> (
         state: TwinTrackState,
         service: HistoryTestHealthService,
