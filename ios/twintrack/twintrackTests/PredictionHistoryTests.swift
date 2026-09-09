@@ -195,6 +195,166 @@ final class PredictionHistoryTests: XCTestCase {
         XCTAssertEqual(novemberThird.timeIntervalSince(novemberSecond), 25 * 60 * 60)
     }
 
+    func testSevenLocalDaySlotsUseRequestedLabelsAndChronologicalMapping() {
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        let now = date(2026, 9, 6, 12, calendar: calendar)
+        let days = PredictionHistoryTrend.days(now: now, calendar: calendar)
+        let snapshots = [
+            snapshot(at: date(2026, 9, 1, 8, calendar: calendar), score: 71),
+            snapshot(at: date(2026, 9, 5, 21, calendar: calendar), score: 82),
+        ]
+        let points = PredictionHistoryTrend.points(from: snapshots, now: now, calendar: calendar)
+        let slots = PredictionTrendPresentation.slots(days: days, points: points)
+
+        XCTAssertEqual(slots.count, 7)
+        XCTAssertEqual(slots.map { PredictionTrendPresentation.dayLabel($0.day, calendar: calendar) },
+                       ["M", "T", "W", "Th", "F", "S", "Su"])
+        XCTAssertEqual(slots.compactMap(\.point?.snapshot.prediction), [71, 82])
+        XCTAssertEqual(slots[1].point?.snapshot, snapshots[0])
+        XCTAssertEqual(slots[5].point?.snapshot, snapshots[1])
+    }
+
+    func testMissingDaySlotsNeverReceiveFabricatedPredictionOrSelection() throws {
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        let now = date(2026, 9, 6, 12, calendar: calendar)
+        let snapshot = snapshot(at: date(2026, 9, 4, 10, calendar: calendar), score: 78)
+        let points = PredictionHistoryTrend.points(from: [snapshot], now: now, calendar: calendar)
+        let slots = PredictionTrendPresentation.slots(
+            days: PredictionHistoryTrend.days(now: now, calendar: calendar),
+            points: points
+        )
+
+        XCTAssertEqual(slots.compactMap(\.point).count, 1)
+        XCTAssertEqual(slots.filter { $0.point == nil }.count, 6)
+        let missing = try XCTUnwrap(slots.first(where: { $0.point == nil }))
+        XCTAssertNil(missing.point?.snapshot)
+    }
+
+    func testBarHeightUsesOneConsistentZeroToOneHundredScale() {
+        XCTAssertEqual(PredictionTrendPresentation.barHeight(prediction: 0), 0)
+        XCTAssertEqual(PredictionTrendPresentation.barHeight(prediction: 50), 36)
+        XCTAssertEqual(PredictionTrendPresentation.barHeight(prediction: 80), 57.6, accuracy: 1e-12)
+        XCTAssertEqual(PredictionTrendPresentation.barHeight(prediction: 82), 59.04, accuracy: 1e-12)
+        XCTAssertEqual(PredictionTrendPresentation.barHeight(prediction: 100), 72)
+        XCTAssertEqual(PredictionTrendPresentation.barHeight(prediction: -1), 0)
+        XCTAssertEqual(PredictionTrendPresentation.barHeight(prediction: 101), 72)
+    }
+
+    func testSelectingRealBarReturnsExactImmutableSnapshotAndDefaultsToLatest() {
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        let first = snapshot(at: date(2026, 9, 4, 9, calendar: calendar), score: 74)
+        let latest = snapshot(at: date(2026, 9, 6, 18, calendar: calendar), score: 83)
+        let points = PredictionHistoryTrend.points(
+            from: [first, latest],
+            now: date(2026, 9, 6, 20, calendar: calendar),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(PredictionTrendPresentation.selectedPoint(id: nil, points: points)?.snapshot, latest)
+        XCTAssertEqual(
+            PredictionTrendPresentation.selectedPoint(id: first.id, points: points)?.snapshot,
+            first
+        )
+    }
+
+    func testDetailRowsDisplayExactSevenSavedInputs() {
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        let profile = TwinTrackProfile(
+            sleepHours: 7.5,
+            steps: 7840,
+            exerciseMinutes: 31,
+            restingHeartRate: 64,
+            studyMinutes: 130,
+            screenTimeMinutes: 185,
+            previousScore: 82
+        )
+        let saved = snapshot(
+            at: date(2026, 9, 6, 18, calendar: calendar),
+            score: 84.2,
+            profile: profile
+        )
+        let rows = PredictionHistoryDetail.rows(snapshot: saved)
+
+        XCTAssertEqual(rows, [
+            PredictionHistoryDetailRow(id: "sleep", label: "Sleep", value: "7h 30m"),
+            PredictionHistoryDetailRow(id: "steps", label: "Steps", value: "7,840"),
+            PredictionHistoryDetailRow(id: "exercise", label: "Exercise", value: "31 min"),
+            PredictionHistoryDetailRow(id: "restingHeartRate", label: "Resting Heart Rate", value: "64 bpm"),
+            PredictionHistoryDetailRow(id: "study", label: "Study", value: "2h 10m"),
+            PredictionHistoryDetailRow(id: "screenTime", label: "Screen Time", value: "3h 5m"),
+            PredictionHistoryDetailRow(id: "previousScore", label: "Previous Score", value: "82"),
+        ])
+        XCTAssertEqual(saved.inputs, PredictionInputs(profile: profile))
+    }
+
+    func testPreparingAndClosingReadOnlyDetailDoesNotMutateCurrentStateOrHistory() async throws {
+        let fixture = makeFixture()
+        defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
+        XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        await fixture.state.requestHealthAccess()
+        let saved = try XCTUnwrap(fixture.state.predictionHistory.only)
+        let currentValues = [
+            fixture.state.sleepHours,
+            fixture.state.steps,
+            fixture.state.exerciseMinutes,
+            fixture.state.restingHeartRate,
+            fixture.state.studyMinutes.map(Double.init),
+            fixture.state.screenTimeMinutes.map(Double.init),
+            fixture.state.previousScore,
+        ]
+        let historyBefore = fixture.state.predictionHistory
+
+        _ = PredictionHistoryDetail.rows(snapshot: saved)
+        _ = PredictionHistoryDetailView(snapshot: saved)
+
+        XCTAssertEqual([
+            fixture.state.sleepHours,
+            fixture.state.steps,
+            fixture.state.exerciseMinutes,
+            fixture.state.restingHeartRate,
+            fixture.state.studyMinutes.map(Double.init),
+            fixture.state.screenTimeMinutes.map(Double.init),
+            fixture.state.previousScore,
+        ], currentValues)
+        XCTAssertEqual(fixture.state.predictionHistory, historyBefore)
+        XCTAssertEqual(fixture.state.predictionHistory.count, 1)
+    }
+
+    func testTrendDeltaUsesEarliestAndLatestRealPointsOnly() {
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        let now = date(2026, 9, 6, 20, calendar: calendar)
+        let points = PredictionHistoryTrend.points(from: [
+            snapshot(at: date(2026, 9, 1, 9, calendar: calendar), score: 79.3),
+            snapshot(at: date(2026, 9, 3, 9, calendar: calendar), score: 40),
+            snapshot(at: date(2026, 9, 6, 9, calendar: calendar), score: 84.2),
+        ], now: now, calendar: calendar)
+
+        let summary = PredictionTrendPresentation.summary(points: points)
+        XCTAssertEqual(summary.description, "Prediction increased across available days")
+        XCTAssertEqual(try XCTUnwrap(summary.delta), 4.9, accuracy: 1e-12)
+    }
+
+    func testInsufficientAndStableHistoryProduceHonestTrendStates() {
+        let calendar = calendar(timeZone: "Asia/Dubai")
+        let now = date(2026, 9, 6, 20, calendar: calendar)
+        let onePoint = PredictionHistoryTrend.points(from: [
+            snapshot(at: date(2026, 9, 6, 9, calendar: calendar), score: 80),
+        ], now: now, calendar: calendar)
+        XCTAssertEqual(
+            PredictionTrendPresentation.summary(points: onePoint),
+            PredictionTrendSummary(description: "Insufficient history for a trend", delta: nil)
+        )
+
+        let stable = PredictionHistoryTrend.points(from: [
+            snapshot(at: date(2026, 9, 3, 9, calendar: calendar), score: 80),
+            snapshot(at: date(2026, 9, 6, 9, calendar: calendar), score: 80.04),
+        ], now: now, calendar: calendar)
+        XCTAssertEqual(
+            PredictionTrendPresentation.summary(points: stable).description,
+            "Prediction remained relatively stable"
+        )
+    }
+
     func testSameDayKeepsAllHistoryButTrendUsesLatestSnapshot() async throws {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
@@ -316,19 +476,23 @@ final class PredictionHistoryTests: XCTestCase {
         return readings
     }
 
-    private func snapshot(at date: Date, score: Double) -> PredictionSnapshot {
+    private func snapshot(
+        at date: Date,
+        score: Double,
+        profile: TwinTrackProfile = TwinTrackProfile(
+            sleepHours: 7,
+            steps: 6500,
+            exerciseMinutes: 30,
+            restingHeartRate: 68,
+            studyMinutes: 120,
+            screenTimeMinutes: 240,
+            previousScore: 75
+        )
+    ) -> PredictionSnapshot {
         PredictionSnapshot(
             createdAt: date,
             prediction: score,
-            inputs: PredictionInputs(profile: TwinTrackProfile(
-                sleepHours: 7,
-                steps: 6500,
-                exerciseMinutes: 30,
-                restingHeartRate: 68,
-                studyMinutes: 120,
-                screenTimeMinutes: 240,
-                previousScore: 75
-            )),
+            inputs: PredictionInputs(profile: profile),
             healthWindow: nil
         )
     }
