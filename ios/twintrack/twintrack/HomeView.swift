@@ -33,6 +33,7 @@ struct HomeView: View {
             .refreshable {
                 await state.refreshHealth()
             }
+            .tint(palette.accent)
             .scrollBounceBehavior(.always)
             .background(palette.background.ignoresSafeArea())
             .navigationTitle("Home")
@@ -57,7 +58,19 @@ struct HomeView: View {
             .accessibilityValue(state.healthAccess.rawValue)
 
             Spacer()
-            if state.isRefreshingHealth { Text("Refreshing…").font(.footnote) }
+            if state.isRefreshingHealth {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(palette.accent)
+                    Text("Refreshing…")
+                        .font(.footnote)
+                }
+                .foregroundStyle(palette.primaryText)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Refreshing Apple Health")
+                .accessibilityIdentifier("homeRefreshIndicator")
+            }
         }
         .padding(.horizontal, 20)
     }

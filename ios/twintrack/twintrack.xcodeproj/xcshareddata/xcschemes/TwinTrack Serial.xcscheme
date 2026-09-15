@@ -1,36 +1,105 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Scheme LastUpgradeVersion="2660" version="1.3">
-   <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
+<Scheme
+   LastUpgradeVersion = "2660"
+   version = "1.3">
+   <BuildAction
+      parallelizeBuildables = "YES"
+      buildImplicitDependencies = "YES">
       <BuildActionEntries>
-         <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
-            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="EEC2B198304EF47A0081F065" BuildableName="twintrack.app" BlueprintName="twintrack" ReferencedContainer="container:twintrack.xcodeproj"/>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "EEC2B198304EF47A0081F065"
+               BuildableName = "twintrack.app"
+               BlueprintName = "twintrack"
+               ReferencedContainer = "container:twintrack.xcodeproj">
+            </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
-   <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
+   <TestAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
-         <TestableReference skipped="NO" parallelizable="NO">
-            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="EEC2B1A5304EF47D0081F065" BuildableName="twintrackTests.xctest" BlueprintName="twintrackTests" ReferencedContainer="container:twintrack.xcodeproj"/>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "EEC2B1A5304EF47D0081F065"
+               BuildableName = "twintrackTests.xctest"
+               BlueprintName = "twintrackTests"
+               ReferencedContainer = "container:twintrack.xcodeproj">
+            </BuildableReference>
          </TestableReference>
-         <TestableReference skipped="NO" parallelizable="NO">
-            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="EEC2B1AF304EF47D0081F065" BuildableName="twintrackUITests.xctest" BlueprintName="twintrackUITests" ReferencedContainer="container:twintrack.xcodeproj"/>
-            <!-- A captures evidence manually; this scheme runs the functional UI suite. -->
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "EEC2B1AF304EF47D0081F065"
+               BuildableName = "twintrackUITests.xctest"
+               BlueprintName = "twintrackUITests"
+               ReferencedContainer = "container:twintrack.xcodeproj">
+            </BuildableReference>
             <SelectedTests>
-               <Test Identifier="twintrackUITests"/>
+               <Test
+                  Identifier = "twintrackUITests">
+               </Test>
             </SelectedTests>
          </TestableReference>
       </Testables>
    </TestAction>
-   <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES">
-      <BuildableProductRunnable runnableDebuggingMode="0">
-         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="EEC2B198304EF47A0081F065" BuildableName="twintrack.app" BlueprintName="twintrack" ReferencedContainer="container:twintrack.xcodeproj"/>
+   <LaunchAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      launchStyle = "0"
+      useCustomWorkingDirectory = "NO"
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
+      allowLocationSimulation = "YES"
+      queueDebuggingEnabled = "No">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "EEC2B198304EF47A0081F065"
+            BuildableName = "twintrack.app"
+            BlueprintName = "twintrack"
+            ReferencedContainer = "container:twintrack.xcodeproj">
+         </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
-   <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
-      <BuildableProductRunnable runnableDebuggingMode="0">
-         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="EEC2B198304EF47A0081F065" BuildableName="twintrack.app" BlueprintName="twintrack" ReferencedContainer="container:twintrack.xcodeproj"/>
+   <ProfileAction
+      buildConfiguration = "Release"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      debugDocumentVersioning = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "EEC2B198304EF47A0081F065"
+            BuildableName = "twintrack.app"
+            BlueprintName = "twintrack"
+            ReferencedContainer = "container:twintrack.xcodeproj">
+         </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
-   <AnalyzeAction buildConfiguration="Debug"/>
-   <ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"/>
+   <AnalyzeAction
+      buildConfiguration = "Debug">
+   </AnalyzeAction>
+   <ArchiveAction
+      buildConfiguration = "Release"
+      revealArchiveInOrganizer = "YES">
+   </ArchiveAction>
 </Scheme>
