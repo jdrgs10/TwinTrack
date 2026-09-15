@@ -137,13 +137,19 @@ final class twintrackUITests: XCTestCase {
         let initialHeader = app.staticTexts["pageTitle.Home"]
         XCTAssertTrue(initialHeader.waitForExistence(timeout: 5))
         let systemAppearance = try XCTUnwrap(initialHeader.value as? String)
-        func choose(_ title: String) {
+        func appearancePicker() -> XCUIElement {
             app.tabBars.buttons["Profile"].tap()
             let picker = app.segmentedControls["appearancePicker"]
-            for _ in 0..<3 { if picker.isHittable { break }; app.swipeUp() }
+            for _ in 0..<8 { if picker.isHittable { break }; app.swipeUp() }
             XCTAssertTrue(picker.waitForExistence(timeout: 5))
-            picker.buttons[title].tap()
-            XCTAssertTrue(picker.buttons[title].isSelected)
+            XCTAssertTrue(picker.isHittable)
+            return picker
+        }
+        func choose(_ title: String) {
+            let option = appearancePicker().buttons[title]
+            XCTAssertTrue(option.waitForExistence(timeout: 5))
+            option.tap()
+            XCTAssertTrue(option.isSelected)
         }
         func checkTabs(_ expected: String) {
             for tab in ["Home", "TwinTrack AI", "Profile"] {
@@ -156,28 +162,101 @@ final class twintrackUITests: XCTestCase {
             }
             XCTAssertEqual(app.tabBars.firstMatch.buttons.count, 3)
         }
-        app.tabBars.buttons["Profile"].tap()
-        XCTAssertTrue(app.segmentedControls["appearancePicker"].buttons["System"].isSelected)
+        XCTAssertTrue(appearancePicker().buttons["System"].isSelected)
         for mode in ["Light", "Dark"] {
             choose(mode)
             checkTabs("\(mode) appearance")
             app.terminate(); app.launch()
             checkTabs("\(mode) appearance")
-            XCTAssertTrue(app.segmentedControls["appearancePicker"].buttons[mode].isSelected)
+            XCTAssertTrue(appearancePicker().buttons[mode].isSelected)
         }
         choose("System")
         checkTabs(systemAppearance)
         app.terminate(); app.launch()
         checkTabs(systemAppearance)
-        XCTAssertTrue(app.segmentedControls["appearancePicker"].buttons["System"].isSelected)
+        XCTAssertTrue(appearancePicker().buttons["System"].isSelected)
         // System intentionally has no forced scheme; the unit test checks nil.
-        app.buttons["manualInputsButton"].tap()
+        let manualInputs = app.buttons["manualInputsButton"]
+        for _ in 0..<6 { if manualInputs.isHittable { break }; app.swipeDown() }
+        XCTAssertTrue(manualInputs.isHittable)
+        manualInputs.tap()
         XCTAssertTrue(app.navigationBars["Manual Inputs"].waitForExistence(timeout: 5))
         app.buttons["Cancel"].tap()
         app.tabBars.buttons["TwinTrack AI"].tap()
         app.buttons["assistantLibrary"].tap()
         XCTAssertTrue(app.navigationBars["Chat Library"].waitForExistence(timeout: 5))
         app.buttons["Done"].tap()
+    }
+
+    @MainActor
+    func testProfileEditCancelSaveRelaunchAndApprovedDestinations() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-profile-ui-tests", UUID().uuidString]
+        app.launch()
+        app.tabBars.buttons["Profile"].tap()
+
+        XCTAssertEqual(app.staticTexts["profileDisplayName"].label, "Student")
+        app.buttons["editProfileButton"].tap()
+        let name = app.textFields["profileNameField"]
+        let grade = app.textFields["profileGradeField"]
+        name.tap()
+        name.typeText("Synthetic Student")
+        grade.tap()
+        grade.typeText("Grade 12")
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(app.staticTexts["profileDisplayName"].label, "Student")
+
+        app.buttons["editProfileButton"].tap()
+        app.textFields["profileNameField"].tap()
+        app.textFields["profileNameField"].typeText("Synthetic Student")
+        app.textFields["profileGradeField"].tap()
+        app.textFields["profileGradeField"].typeText("Grade 12")
+        app.buttons["saveProfileButton"].tap()
+        XCTAssertEqual(app.staticTexts["profileDisplayName"].label, "Synthetic Student")
+        XCTAssertEqual(app.staticTexts["profileDisplayGrade"].label, "Grade 12")
+
+        app.terminate()
+        app.launch()
+        app.tabBars.buttons["Profile"].tap()
+        XCTAssertEqual(app.staticTexts["profileDisplayName"].label, "Synthetic Student")
+        XCTAssertEqual(app.staticTexts["profileDisplayGrade"].label, "Grade 12")
+        app.buttons["editProfileButton"].tap()
+        XCTAssertTrue(app.buttons["profilePhotoPicker"].exists)
+        XCTAssertFalse(app.buttons["removeProfilePhotoButton"].exists)
+        app.buttons["Cancel"].tap()
+
+        let about = app.buttons["profileDetail.about"]
+        for _ in 0..<10 { if about.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(about.isHittable)
+        about.tap()
+        XCTAssertTrue(app.staticTexts["Understand your habits. Build a better routine."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["More than a predicted score"].exists)
+        XCTAssertTrue(app.staticTexts["Developed as a Grade 12 graduation project."].exists)
+        app.navigationBars["About TwinTrack AI"].buttons.firstMatch.tap()
+        XCTAssertFalse(app.staticTexts["DRAFT"].exists)
+
+        let methodology = app.buttons["predictionMethodologyButton"]
+        for _ in 0..<8 { if methodology.isHittable { break }; app.swipeDown() }
+        XCTAssertTrue(methodology.isHittable)
+        methodology.tap()
+        XCTAssertTrue(app.navigationBars["Prediction Methodology"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Seven inputs"].exists)
+        app.navigationBars["Prediction Methodology"].buttons.firstMatch.tap()
+
+        let privacy = app.buttons["dataPrivacyButton"]
+        XCTAssertTrue(privacy.waitForExistence(timeout: 5))
+        privacy.tap()
+        XCTAssertTrue(app.navigationBars["Data & Privacy"].waitForExistence(timeout: 5))
+        let storedData = app.buttons["viewStoredDataButton"]
+        for _ in 0..<8 { if storedData.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(storedData.waitForExistence(timeout: 5))
+        XCTAssertTrue(storedData.isHittable)
+        XCTAssertTrue(app.staticTexts["No saved predictions"].exists)
+        XCTAssertFalse(app.buttons["clearPredictionHistoryButton"].isEnabled)
+        storedData.tap()
+        XCTAssertTrue(app.navigationBars["Stored Data"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["No saved predictions"].exists)
+        XCTAssertEqual(app.tabBars.firstMatch.buttons.count, 3)
     }
 
     @MainActor
@@ -342,13 +421,20 @@ final class twintrackUITests: XCTestCase {
     @MainActor
     func testPredictionHistoryHonestEmptyState() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-profile-ui-tests", UUID().uuidString]
         app.launch()
         app.tabBars.buttons["Profile"].tap()
         let privacy = app.buttons["dataPrivacyButton"]
+        for _ in 0..<6 { if privacy.isHittable { break }; app.swipeUp() }
         XCTAssertTrue(privacy.waitForExistence(timeout: 10))
+        XCTAssertTrue(privacy.isHittable)
         privacy.tap()
 
         XCTAssertTrue(app.navigationBars["Data & Privacy"].waitForExistence(timeout: 5))
+        let storedData = app.buttons["viewStoredDataButton"]
+        for _ in 0..<8 { if storedData.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(storedData.waitForExistence(timeout: 5))
+        XCTAssertTrue(storedData.isHittable)
         XCTAssertTrue(app.staticTexts["No saved predictions"].exists)
         XCTAssertFalse(app.buttons["clearPredictionHistoryButton"].isEnabled)
 

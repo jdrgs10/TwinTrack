@@ -15,10 +15,17 @@ struct twintrackApp: App {
 
     private static func makeState() -> TwinTrackState {
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--synthetic-duration-ui-tests") {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--synthetic-duration-ui-tests") {
             let name = "TwinTrack.DurationUITestFixture"
             let defaults = UserDefaults(suiteName: name)!
             defaults.removePersistentDomain(forName: name)
+            return TwinTrackState(defaults: defaults)
+        }
+        if let index = arguments.firstIndex(of: "--synthetic-profile-ui-tests"),
+           arguments.indices.contains(index + 1),
+           let id = UUID(uuidString: arguments[index + 1]),
+           let defaults = UserDefaults(suiteName: "TwinTrack.ProfileUITests.\(id.uuidString)") {
             return TwinTrackState(defaults: defaults)
         }
 #endif

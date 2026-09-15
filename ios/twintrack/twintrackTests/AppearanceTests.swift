@@ -63,6 +63,44 @@ final class AppearanceTests: XCTestCase {
         XCTAssertGreaterThan(light.size.height, 0)
     }
 
+    func testProfileImagePersistsChangesAndCanBeRemoved() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ProfileImageTests.\(UUID().uuidString)", isDirectory: true)
+        let file = directory.appendingPathComponent("profile-image.jpg")
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let first = try XCTUnwrap(ProfileImageStorage.normalizedJPEG(from: syntheticImageData(color: .red)))
+        let second = try XCTUnwrap(ProfileImageStorage.normalizedJPEG(from: syntheticImageData(color: .blue)))
+        XCTAssertNotEqual(first, second)
+
+        try ProfileImageStorage.save(first, to: file)
+        XCTAssertEqual(ProfileImageStorage.load(from: file), first)
+        try ProfileImageStorage.save(second, to: file)
+        XCTAssertEqual(ProfileImageStorage.load(from: file), second)
+        try ProfileImageStorage.save(nil, to: file)
+        XCTAssertNil(ProfileImageStorage.load(from: file))
+    }
+
+    func testInvalidOrCorruptedProfileImageFallsBackSafely() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ProfileImageTests.\(UUID().uuidString)", isDirectory: true)
+        let file = directory.appendingPathComponent("profile-image.jpg")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try Data("not an image".utf8).write(to: file)
+
+        XCTAssertNil(ProfileImageStorage.load(from: file))
+        XCTAssertThrowsError(try ProfileImageStorage.save(Data("invalid".utf8), to: file))
+    }
+
+    private func syntheticImageData(color: UIColor) -> Data {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8))
+        return renderer.image { context in
+            context.cgContext.setFillColor(color.cgColor)
+            context.cgContext.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
+        }.pngData()!
+    }
+
     private func withDefaults(_ body: (UserDefaults) -> Void) {
         let name = "AppearanceTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!

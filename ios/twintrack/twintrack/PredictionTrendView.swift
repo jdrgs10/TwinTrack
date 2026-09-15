@@ -513,53 +513,66 @@ struct DataPrivacyView: View {
 
     var body: some View {
         List {
-            Section {
-                if state.predictionHistory.isEmpty {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("No saved predictions")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Use Run Prediction on Home to save a complete real prediction.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                    .accessibilityIdentifier("predictionHistoryEmptyState")
-                } else {
-                    ForEach(state.predictionHistory.reversed()) { snapshot in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(alignment: .firstTextBaseline) {
-                                Text("Predicted score")
-                                    .font(.subheadline.weight(.medium))
-                                Spacer()
-                                Text(HomeDisplay.prediction(snapshot.prediction))
-                                    .font(.title3.weight(.semibold).monospacedDigit())
-                            }
-                            Text(snapshot.createdAt, format: .dateTime.month(.abbreviated).day().year().hour().minute())
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("7 real inputs\(snapshot.healthWindow == nil ? "" : " · Health source periods")")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                            Text(snapshot.provenance == "explicitRun.v1" ? "Explicit prediction run" : "Legacy prediction event")
-                                .font(.caption2).foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 4)
-                        .privacySensitive()
-                        .accessibilityElement(children: .combine)
-                    }
-                }
-            } header: {
-                Text("Prediction History")
-            } footer: {
-                Text("Stored locally; system backups may include prediction history. What-If results are never included.")
+            Section("What TwinTrack Uses") {
+                privacyDescription(
+                    title: "From Apple Health",
+                    text: "Summarized sleep, steps, exercise and resting-heart-rate values for the documented windows, read with your permission. Raw Health samples are not saved in TwinTrack storage."
+                )
+                privacyDescription(
+                    title: "Manual Inputs",
+                    text: "Study time, screen time and previous score are entered by you and stored as app preferences."
+                )
+                privacyDescription(
+                    title: "Profile",
+                    text: "Name and grade are local preferences. An optional profile image is stored in protected local app storage and excluded from system backup. Profile details are not prediction inputs."
+                )
+                privacyDescription(
+                    title: "Predictions and Chats",
+                    text: "Explicit prediction runs can be saved in Prediction History. What-If results are not added there. Saved conversations are kept separately in protected local storage and excluded from backup."
+                )
+                privacyDescription(
+                    title: "Foundation Models and Tools",
+                    text: "For a personalized request, current summarized TwinTrack values and relevant conversation content may be provided to Apple's on-device Foundation Models framework. Numerical predictions remain separate and are calculated by the local Ridge model."
+                )
+                privacyDescription(
+                    title: "External Services",
+                    text: "The current app has no TwinTrack account, server backend, cloud sync or analytics. System backups may include some app preferences and prediction history; saved chats and the optional profile image are excluded from backup."
+                )
             }
 
-            Section("Data Controls") {
+            Section("Your Data") {
+                NavigationLink {
+                    StoredPredictionDataView()
+                } label: {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("View Stored Data")
+                        Text(
+                            state.predictionHistory.isEmpty
+                                ? "No saved predictions"
+                                : PredictionHistoryDisplay.historySummary(state.predictionHistory.count)
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier(
+                            state.predictionHistory.isEmpty ? "predictionHistoryEmptyState" : "predictionHistoryCount"
+                        )
+                    }
+                }
+                .accessibilityIdentifier("viewStoredDataButton")
+
                 Button("Clear Prediction History", role: .destructive) {
                     isConfirmingClear = true
                 }
                 .disabled(state.predictionHistory.isEmpty)
                 .accessibilityIdentifier("clearPredictionHistoryButton")
+
+                NavigationLink {
+                    ProfileDetailView(destination: .privacyPolicy)
+                } label: {
+                    Text("Privacy Policy")
+                }
             }
+
             Section("Saved Chats") {
                 Text("Manage saved conversations in TwinTrack AI → Chat Library. Chats are stored locally and excluded from system backup.")
                 Text("Clearing Prediction History does not delete chats or their historical cards. Delete a chat separately to remove those cards.")
@@ -581,6 +594,72 @@ struct DataPrivacyView: View {
         } message: {
             Text("This removes prediction history only. Your chats, manual inputs and Health state stay unchanged.")
         }
+    }
+
+    private var background: Color {
+        colorScheme == .dark
+            ? Color(red: 7 / 255, green: 11 / 255, blue: 18 / 255)
+            : Color(red: 241 / 255, green: 244 / 255, blue: 248 / 255)
+    }
+
+    private func privacyDescription(title: String, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.subheadline.weight(.semibold))
+            Text(text).font(.footnote).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 3)
+    }
+}
+
+private struct StoredPredictionDataView: View {
+    @EnvironmentObject private var state: TwinTrackState
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        List {
+            Section {
+                if state.predictionHistory.isEmpty {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("No saved predictions")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Use Run Prediction on Home to save a complete real prediction.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    ForEach(state.predictionHistory.reversed()) { snapshot in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .firstTextBaseline) {
+                                Text("Predicted score").font(.subheadline.weight(.medium))
+                                Spacer()
+                                Text(HomeDisplay.prediction(snapshot.prediction))
+                                    .font(.title3.weight(.semibold).monospacedDigit())
+                            }
+                            Text(snapshot.createdAt, format: .dateTime.month(.abbreviated).day().year().hour().minute())
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("7 real inputs\(snapshot.healthWindow == nil ? "" : " · Health source periods")")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                            Text(snapshot.provenance == "explicitRun.v1" ? "Explicit prediction run" : "Legacy prediction event")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                        .privacySensitive()
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+            } header: {
+                Text("Prediction History")
+            } footer: {
+                Text("Stored locally; system backups may include prediction history. What-If results are never included.")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(background.ignoresSafeArea())
+        .navigationTitle("Stored Data")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var background: Color {

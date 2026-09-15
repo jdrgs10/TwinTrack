@@ -1,5 +1,25 @@
 # TwinTrack assistant evaluation
 
+## Working assistant baseline — 2026-09-15
+
+“User-reported physical testing: Foundation Models behavior now works.”
+
+The device, exact installed build identifier, prompts, per-prompt outcomes, attempt count, and private transcript details were not recorded with that statement. The current source separately reports build marker FMQ-2026-09-15-E and Git commit 11da98dca5cc585065465fceb3e14e21960a69bc on branch ios-development. This does not establish that commit or marker as the exact binary A tested.
+
+This baseline protects the current general conversation and health-guidance behavior, refusal recovery, saved-chat provenance, Watch-reading versus prediction versus What-If routing, validated references, and deterministic Swift tools. The protected implementation files are AssistantConversation.swift, AssistantGuidance.swift, AssistantProvenance.swift, AssistantReplyReview.swift, AssistantResultCard.swift, AssistantRouting.swift, AssistantTools.swift, ConversationLibrary.swift, FoundationAssistantService.swift, FoundationModelRuntime.swift, and TwinTrackAIView.swift. The essential Profile UI milestone does not edit these files.
+
+## Essential UI completion and V2 decision preparation — 2026-09-15
+
+The approved three-tab structure remains **Home | TwinTrack AI | Profile**. Home, manual inputs, prediction, What-If, history, chat, honest missing-data handling, and light/dark behavior were already implemented. The confirmed essential gap was the incomplete Profile journey.
+
+The Profile tab now provides locally persisted display name and grade-level editing with Cancel/Save behavior; approved Apple Health and Manual Inputs entry points; Ridge and on-device assistant information; pushed Health Permissions, Appearance, Data & Privacy, Methodology, About, model-information, draft legal, and prediction-disclaimer destinations; and a read-only Stored Data view for prediction history. Clear Prediction History keeps its existing destructive confirmation and affects prediction history only. Profile identity values are preferences, not prediction inputs. No HealthKit value is fabricated, and the seven-input production contract is unchanged.
+
+Focused UI checks passed for profile Cancel/Save/relaunch and approved destinations (**1/1**), appearance across all three tabs and relaunches (**1/1**), and the honest empty prediction-history state (**1/1**). The final consolidated Xcode run passed **246/246**: **233/233 unit tests** and **13/13 UI tests**, with **0 failed** and **0 skipped**; the template launch-performance test remains excluded from the test plan. Ridge golden parity separately passed **21/21**, maximum absolute error **2.8421709430404007e-14**, tolerance **9.9999999999999995e-07**. Explicit Xcode Analyze and final app Build both passed. Compiler warnings: **0**. Analyzer warnings/errors: **0/0**. Build errors: **0**. The UI-test console emitted one CoreSimulator runtime warning type about a duplicate accessibility class; it is separate from compiler/analyzer results and no test failed.
+
+The current source provenance is branch `ios-development`, commit `11da98dca5cc585065465fceb3e14e21960a69bc`, and assistant marker `FMQ-2026-09-15-E`. Automated simulator tests do not establish physical-device presentation. A physical review is still required for the changed Profile screens. No protected assistant source, frozen Ridge parameter, golden output, or feature-order file was edited.
+
+`docs/V2_MODEL_DECISION_DRAFT.md` records V1 as the deployed seven-input Ridge reference and separates available synthetic evidence from missing research. No completed V2 report or brief was found. No model was trained, selected, exported, or integrated in this milestone.
+
 ## Severity-aware health-routing correction E — 2026-09-15
 
 Fresh physical-test marker: **FMQ-2026-09-15-E**. D already identifies the UAE 998 correction, so this distinct follow-up uses E rather than reusing D. Physical behavior for E remains **NOT VERIFIED**; no physical device, private health/chat data, screenshot, account, identifier or signing material was accessed.

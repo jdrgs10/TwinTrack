@@ -1,5 +1,23 @@
 # Evidence Log
 
+## Working Foundation Models baseline reported by A — 2026-09-15
+
+“User-reported physical testing: Foundation Models behavior now works.”
+
+Evidence limits: the device, exact installed build identifier, prompts, detailed outcomes, number of attempts, and private transcript are not recorded. Current repository provenance is recorded separately: branch ios-development, commit 11da98dca5cc585065465fceb3e14e21960a69bc, and source build marker FMQ-2026-09-15-E. This record does not claim that the current source is the exact physical-test binary.
+
+The protected assistant checkpoint comprises the conversation, guidance, provenance, reply review, result-card, routing, tools, local chat library, Foundation Models service/runtime, and TwinTrack AI view files. The subsequent essential Profile UI work does not edit those files. No private chat, HealthKit record, screenshot, device identifier, account, credential, certificate, or signing material was inspected or added.
+
+## Essential UI and V2-decision preparation — 2026-09-15
+
+Scope: complete the confirmed Profile UI gaps without changing the protected assistant or deployed model, and prepare a decision draft before any V2 experiment. Implemented local Profile identity editing with Cancel/Save and relaunch persistence; approved source, prediction/AI, privacy, appearance, methodology, About, model, draft legal, and disclaimer destinations; pushed Health Permissions; and a read-only Stored Data prediction-history view. Existing three-tab navigation, state, manual-input wheels, prediction/What-If behavior, chat history, and destructive history-clear boundary remain in place.
+
+Focused UI results: profile edit/persistence/destinations **1/1 PASS**; light/dark/system behavior and relaunch persistence **1/1 PASS**; prediction-history honest empty state **1/1 PASS**. Final consolidated Xcode result: **246/246 PASS**, comprising **233/233 unit** and **13/13 UI**, **0 failed**, **0 skipped**; one template launch-performance test is excluded by the existing test plan. Standalone Ridge golden parity: **21/21 PASS**, maximum absolute error **2.8421709430404007e-14**, tolerance **9.9999999999999995e-07**. Explicit Xcode Analyze: **PASS**, **0 analyzer warnings/errors**. Explicit app build: **PASS**, **0 compiler warnings**, **0 build errors**. The UI test process logged one distinct CoreSimulator duplicate-accessibility-class runtime warning; this did not fail a test and is not a source warning.
+
+Protected assistant implementation and frozen Ridge/model artifacts remain outside the UI diff. No private screenshot, physical device, real HealthKit value, account, identifier, credential, certificate, signing material, chat archive, DerivedData, or simulator data was added. Xcode's local user-interface state changed while running the authorized tests and is excluded from the recommended commit. Physical-device UI status: **NOT VERIFIED** for these new Profile screens.
+
+The new `V2_MODEL_DECISION_DRAFT.md` records the actual V1 schema and measurements, available and missing evidence, the required V1/seven-input/six-input/baseline comparison, and decisions needed before candidate generation. No completed V2 report or research brief was found; no V2 weights were invented or produced.
+
 ## Severity-aware health-routing correction E — 2026-09-15
 
 Build/reply marker: **FMQ-2026-09-15-E** because D already identifies the UAE-number pass. Physical E result: **NOT VERIFIED**.

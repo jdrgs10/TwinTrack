@@ -1,62 +1,65 @@
 import SwiftUI
+import UIKit
 
 /// Read-only source periods and availability for the shared current health inputs.
 struct HealthKitView: View {
     @EnvironmentObject private var state: TwinTrackState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text("TwinTrack requests read access to these Apple Health data types. Nothing is written back to Health.")
-                    Text(state.healthAccess.rawValue).foregroundStyle(.secondary)
-                    if state.healthAccess == .notRequested || state.healthAccess == .failed || state.healthAccess == .requesting {
-                        Button("Request Apple Health Access") {
-                            Task { await state.requestHealthAccess() }
-                        }
-                        .disabled(state.healthAccess == .requesting || state.isRefreshingHealth)
+        List {
+            Section {
+                Text("TwinTrack requests read access to these Apple Health data types. Nothing is written back to Health.")
+                Text(state.healthAccess.rawValue).foregroundStyle(.secondary)
+                if state.healthAccess == .notRequested || state.healthAccess == .failed || state.healthAccess == .requesting {
+                    Button("Request Apple Health Access") {
+                        Task { await state.requestHealthAccess() }
                     }
-                    Button("Refresh") { Task { await state.refreshHealth() } }
-                        .disabled(state.healthAccess != .completed || state.isRefreshingHealth)
-                    if state.isRefreshingHealth { ProgressView("Refreshing…") }
+                    .disabled(state.healthAccess == .requesting || state.isRefreshingHealth)
                 }
-
-                Section("Health source periods") {
-                    if let window = state.healthWindow {
-                        Text("Steps / Exercise — previous completed day: \(intervalText(window.day, zone: window.timeZone))")
-                        Text("Last sleep: \(intervalText(window.sleep, zone: window.timeZone))")
-                        Text("Resting Heart Rate — latest available within: \(intervalText(window.restingHeartRate, zone: window.timeZone))")
-                        if let date = state.healthReadings.restingHeartRateSampleDate {
-                            Text("Resting Heart Rate sample: \(date.formatted(.dateTime.month().day().year().hour().minute()))")
-                                .privacySensitive()
-                        }
-                    }
-                    Text("Last sleep uses yesterday noon to now before noon, or to today noon afterwards. Steps and Exercise use the previous completed day. Resting Heart Rate uses the latest valid sample within 72 hours.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                Button("Refresh") { Task { await state.refreshHealth() } }
+                    .disabled(state.healthAccess != .completed || state.isRefreshingHealth)
+                if state.isRefreshingHealth { ProgressView("Refreshing…") }
+                Button("Manage in Settings") {
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    openURL(url)
                 }
-
-                Section("Included in access request") {
-                    metric("Sleep", result: state.healthReadings.sleep, unit: "hours")
-                    metric("Steps", result: state.healthReadings.steps, unit: "steps")
-                    metric("Exercise", result: state.healthReadings.exercise, unit: "minutes")
-                    metric("Resting Heart Rate", result: state.healthReadings.restingHeartRate, unit: "bpm")
-                }
-
-                Section {
-                    if !state.missingInputs.isEmpty {
-                        Text("Prediction unavailable — missing: \(state.missingInputs.map { label($0) }.joined(separator: ", ")).")
-                    } else {
-                        Text("All seven inputs are available for the current prediction.")
-                    }
-                    Text("No accessible recent value can mean missing data or limited access. It does not prove read access was denied. Permissions can be reviewed in Apple Health.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
+                .accessibilityIdentifier("manageHealthInSettingsButton")
             }
-            .navigationTitle("Apple Health")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+
+            Section("Health source periods") {
+                if let window = state.healthWindow {
+                    Text("Steps / Exercise — previous completed day: \(intervalText(window.day, zone: window.timeZone))")
+                    Text("Last sleep: \(intervalText(window.sleep, zone: window.timeZone))")
+                    Text("Resting Heart Rate — latest available within: \(intervalText(window.restingHeartRate, zone: window.timeZone))")
+                    if let date = state.healthReadings.restingHeartRateSampleDate {
+                        Text("Resting Heart Rate sample: \(date.formatted(.dateTime.month().day().year().hour().minute()))")
+                            .privacySensitive()
+                    }
+                }
+                Text("Last sleep uses yesterday noon to now before noon, or to today noon afterwards. Steps and Exercise use the previous completed day. Resting Heart Rate uses the latest valid sample within 72 hours.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+
+            Section("Included in access request") {
+                metric("Sleep", result: state.healthReadings.sleep, unit: "hours")
+                metric("Steps", result: state.healthReadings.steps, unit: "steps")
+                metric("Exercise", result: state.healthReadings.exercise, unit: "minutes")
+                metric("Resting Heart Rate", result: state.healthReadings.restingHeartRate, unit: "bpm")
+            }
+
+            Section {
+                if !state.missingInputs.isEmpty {
+                    Text("Prediction unavailable — missing: \(state.missingInputs.map { label($0) }.joined(separator: ", ")).")
+                } else {
+                    Text("All seven inputs are available for the current prediction.")
+                }
+                Text("No accessible recent value can mean missing data or limited access. It does not prove read access was denied. Permissions can be reviewed in Apple Health.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
         }
+        .navigationTitle("Health Permissions")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func metric(_ title: String, result: HealthMetricResult, unit: String) -> some View {
