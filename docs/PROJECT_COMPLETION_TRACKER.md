@@ -1,12 +1,26 @@
 # Project Completion Tracker
 
+## Assistant quality pass B — 2026-09-14
+
+Focused Foundation Models guidance/output/source/refusal fixes passed the final build and **225/225 automated tests (213 unit + 12 UI)**. Final compiler warnings/errors: **0/0**; debugger warnings: **1**. EVIDENCE_LOG preserves the earlier 222/225 run and three unchanged passing UI reruns. Build marker `FMQ-2026-09-14-B`; fresh physical model quality remains NOT VERIFIED. See ASSISTANT_EVALUATION and EVIDENCE_LOG for exact evidence and A's test matrix. Existing completed core milestones are preserved. No new learning confirmation or completion percentage is recorded.
+
+Deferred until a separately approved UI milestone: softer accessible dark composer focus border, jump-to-latest, Chat Library visual polish and local favorites/stars.
+
+## Current reliability checkpoints — 2026-09-11
+
+| Checkpoint | Status | Evidence |
+| --- | --- | --- |
+| 1 — Explicit prediction lifecycle | VERIFIED, preserved | A confirmed 136/136. This continuation did not reimplement checkpoint 1. |
+| 2 — Compact chat shell and local library | Automated verification PASS | Final complete Xcode suite 153/153: 146 unit tests and 7 UI tests. Build passed; Xcode warnings/errors 0. Includes actual app relaunch, rename/delete/Cancel, both New Chat paths, keyboard dismissal, and current-state/historical-card isolation. Physical visual approval remains A's review. |
+| 3 — Integrated reliability, chat polish, duration controls and Appearance | AUTOMATED PASS; ready for A physical review; NOT physically VERIFIED | Final Xcode build PASS, 190/190 tests (180 unit + 10 UI), one debugger warning and zero errors. Reliability gate passed 171/171. Minimal real simulator model sessions passed 4/4; original food path reproduced toolFailure. Updated physical model quality, UI, duration controls and Appearance await A. |
+
 ## Progress summary
 
 | Area | Completion | Basis |
 | --- | ---: | --- |
-| Overall project | 88% | Weighted planning estimate: native app 60%, research 20%, deliverable readiness 20%. |
-| Native app | 90% | The native shell, frozen Ridge engine, shared state, Manual Inputs, persistence, HealthKit timing/refresh behavior, polished Home, deterministic What-If, prediction history, and 7-day trends are verified. Apple Foundation Models and final polish remain. |
-| Research | 100% | Requirements, UI handoff, model choice, frozen export, and ML audit are complete. |
+| Overall project | Reassessment pending | Previous 88% was a planning estimate using native app 60%, research 20%, and deliverables 20%. The expanded research/reliability scope requires reassessment; checkpoint 2 does not establish a new percentage. |
+| Native app | 90% | Verified milestone estimate remains unchanged pending A's Foundation Models runtime review. The assistant is implemented and its automated boundaries pass; physical conversational/tool evaluation and final polish remain. |
+| Research | Reassessment pending | The earlier 100% covered requirements, handoff, frozen export, and audit only. Further agreed research and actual-model evaluation remain unfinished. |
 | Deliverable readiness | 70% | Source-of-truth documents and evidence records cover the verified native milestones through History and the HealthKit refresh physical retest. Final report, presentation, demo, release evidence, and final polish remain. |
 
 ## Native iOS milestones
@@ -23,11 +37,15 @@
 | Home real-data wiring and UI polish | Verified | Home presents the shared state's seven real inputs and only exposes the frozen Ridge prediction when the profile is complete. A approved the physical-device visual review, including the shared tab headers, approved logo integration, subtitles, prediction hierarchy, card layout, native pull-to-refresh, scrolling, and bottom-tab clearance. Automated verification passed: Home 5/5, HealthKit 22/22, Ridge 21/21, Manual/State 7/7, and repeated three-tab switching; warnings and errors were zero. |
 | Deterministic What-If simulation | Verified | A temporary value-type scenario copies a complete seven-input baseline, applies one or several validated changes, and sends the resulting profile through the same frozen `TwinTrackModel`. The displayed delta uses the two clamped production predictions. Missing baselines remain unavailable; cancel and tab exit discard the scenario without modifying shared state, persistence, or HealthKit. What-If tests passed 17/17 and A approved the native UI. |
 | Main-tab header/logo correction | Verified | The shared `PageHeader` keeps the approved mark on Home and omits it from TwinTrack AI and Profile while preserving each title and locked subtitle. A approved the resulting spacing on all three tabs. |
-| Prediction History and 7-day trends | Verified | Real baseline snapshots are immutable and locally persisted after eligible Health or Manual Inputs commits. Duplicate prevention uses the seven inputs and Health source metadata. The chart shows at most the latest real snapshot per local day over seven calendar days, never fabricates missing points, uses a fixed 0–100 scale, and opens an exact read-only snapshot detail. History tests passed 28/28 and the implementation is committed in `2a0d640` and `ebb1c9c`. |
+| Prediction History and 7-day trends | Verified | Real baseline snapshots remain immutable and locally persisted. Verified reliability checkpoint 1 supersedes automatic saves: only explicit Run Prediction creates new events; legacy events remain readable. Duplicate prevention uses the seven inputs and Health source metadata. The chart shows at most the latest real snapshot per local day over seven calendar days, never fabricates missing points, uses a fixed 0–100 scale, and opens an exact read-only snapshot detail. History tests passed 28/28 and the implementation is committed in `2a0d640` and `ebb1c9c`. |
 | HealthKit timing semantics | Verified | Sleep uses yesterday local noon through the earlier of now and today noon; Steps and Exercise use the previous completed local day; Resting Heart Rate uses the latest finite positive sample within 72 elapsed hours with its timestamp retained. Backward-compatible history metadata preserves existing snapshots. |
 | HealthKit refresh-state and tab-transition fix | Verified | A's physical retest confirmed stable Health values, no repeated access request, preserved manual inputs, working pull-to-refresh, and clean Home/TwinTrack AI/Profile switching without overlap or ghosting. Automated verification passed 97/97 with HealthKit 35/35, UI 4/4, Ridge 21/21, and zero warnings/errors. |
 | Native refresh-spinner visibility | Deferred polish | Refresh works and is non-blocking, but A does not yet clearly see the native indicator during the gesture. Do not pursue this until the final UI/polish milestone. |
+| Initial Foundation Models integration: availability/chat lifecycle | Automated verification passed; physical review pending | Basic adapter compiled before tools. Availability reasons, baseline-independent conversation plumbing, cancellation/late output, retry, recovery, context limits, and reset pass with mocks. Actual on-device generation and conversational quality are not yet verified. |
+| Initial Foundation Models integration: three deterministic tools | Automated verification passed; physical review pending | Swift current-state, What-If, and history tools use one immutable request snapshot. Unit/range/evidence checks, missing data, trusted numeric cards, history gaps, and source periods pass. Live tool selection and argument extraction remain pending. |
+| Initial Foundation Models integration: risk/disclosure policy | Automated policy checks passed; physical review pending | Wellness fixtures remain conversational; symptom/urgent reply-kind fixtures receive appropriate non-diagnostic guidance; relevant model questions disclose synthetic training/limitations without repeating it on ordinary scenarios. Live model classification and wording require A's evaluation. |
+| Foundation Models complete milestone | Ready for physical review; NOT VERIFIED | Initial integration run: 129/129, comprising Assistant 31/31, HealthKit 35/35, Manual/State 7/7, Home 5/5, What-If 17/17, History 28/28, one Ridge test covering 21/21 golden profiles, and Tab/UI 5/5. Warnings/errors: 0. Thirty representative prompts are documented with physical results pending. |
 
 Evidence is recorded in `docs/EVIDENCE_LOG.md`. Non-sensitive repository evidence is stored under `evidence/ridge_parity/` and `evidence/manual_inputs/`; HealthKit evidence remains private and outside Git.
 
-The next milestone is Apple Foundation Models. It requires A's approval before implementation begins.
+Next: stop for A’s physical review after the integrated automated suite passes. No new milestone begins automatically. Deferred spinner polish and History visual checks remain deferred. Privacy/destination handling for this continuation is recorded in EVIDENCE_LOG.

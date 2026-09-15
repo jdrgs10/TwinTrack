@@ -57,6 +57,9 @@ final class TwinTrackState: ObservableObject {
     @Published private(set) var screenTimeMinutes: Int?
     @Published private(set) var previousScore: Double?
     @Published private(set) var predictionHistory: [PredictionSnapshot]
+    @Published private(set) var lastPrediction: PredictionSnapshot?
+    @Published private(set) var predictionIssue: String?
+    private var historyReadable = true
 
     private let defaults: UserDefaults
     private let healthService: any HealthDataProviding
@@ -79,7 +82,15 @@ final class TwinTrackState: ObservableObject {
         self.defaults = defaults
         self.healthService = healthService ?? HealthKitService()
         self.historyStore = historyStore ?? UserDefaultsPredictionHistoryStore(defaults: defaults)
-        predictionHistory = self.historyStore.load()
+        do {
+            let loaded = try self.historyStore.load()
+            predictionHistory = loaded
+            lastPrediction = loaded.last
+        } catch {
+            predictionHistory = []
+            historyReadable = false
+            predictionIssue = "Saved history could not be read. It has not been replaced."
+        }
         healthAccess = defaults.bool(forKey: Key.healthRequestCompleted) ? .completed : .notRequested
 
         if defaults.object(forKey: Key.studyMinutes) != nil {
@@ -145,7 +156,6 @@ final class TwinTrackState: ObservableObject {
         // queries. Commit all four results together, with no intervening suspension.
         healthWindow = window
         healthReadings = readings
-        saveCurrentPredictionIfNeeded(createdAt: now)
     }
 
     func clearHealthValues() {
@@ -221,12 +231,12 @@ final class TwinTrackState: ObservableObject {
         persist(studyMinutes, key: Key.studyMinutes)
         persist(screenTimeMinutes, key: Key.screenTimeMinutes)
         persist(previousScore, key: Key.previousScore)
-        saveCurrentPredictionIfNeeded(createdAt: now)
         return true
     }
 
     @discardableResult
     func clearPredictionHistory() -> Bool {
+        guard historyReadable else { return false }
         do {
             try historyStore.save([])
             predictionHistory = []
@@ -258,37 +268,54 @@ final class TwinTrackState: ObservableObject {
         )
     }
 
-    /// The frozen Ridge engine is reached only through a complete seven-value profile.
-    /// Missing inputs therefore cannot become fabricated prediction inputs.
+    /// Reading state never executes Ridge. Only an eligible explicit run is current.
     var currentPrediction: Double? {
-        completeProfile.map(TwinTrackModel.predict)
+        predictionStatus() == .fresh ? lastPrediction?.prediction : nil
+    }
+
+    func predictionStatus(now: Date = Date(), calendar: Calendar = .current) -> PredictionStatus {
+        if isRefreshingHealth { return .refreshing }
+        guard let profile = completeProfile else { return .missing }
+        guard TwinTrackFeature.allCases.allSatisfy({ WhatIfScenario.isValid(WhatIfScenario.value($0, in: profile), for: $0) }),
+              let window = healthWindow else { return .needsRefresh }
+        let expected = HealthDataWindow(now: now, calendar: calendar)
+        guard window.day == expected.day, window.sleep.start == expected.sleep.start,
+              window.timeZone == expected.timeZone else { return .needsRefresh }
+        if let sampleDate = healthReadings.restingHeartRateSampleDate,
+           !(expected.restingHeartRate.start...expected.restingHeartRate.end).contains(sampleDate) { return .needsRefresh }
+        guard let lastPrediction else { return .ready }
+        let source = PredictionHealthWindow(window, restingHeartRateSampleDate: healthReadings.restingHeartRateSampleDate)
+        return lastPrediction.provenance == "explicitRun.v1"
+            && lastPrediction.inputs == PredictionInputs(profile: profile)
+            && lastPrediction.healthWindow?.hasSameSourceIdentity(as: source) == true ? .fresh : .stale
+    }
+
+    @discardableResult
+    func runPrediction(now: Date = Date(), calendar: Calendar = .current) -> Bool {
+        let status = predictionStatus(now: now, calendar: calendar)
+        guard [.ready, .fresh, .stale].contains(status), historyReadable else { return false }
+        // This synchronous main-actor action cannot see half a Health commit or
+        // overlap another tap. An equivalent run is reused even after Clear History.
+        if status == .fresh { return true }
+        guard let profile = completeProfile,
+              let snapshot = PredictionSnapshot.realBaseline(profile: profile, createdAt: now,
+                healthWindow: healthWindow, restingHeartRateSampleDate: healthReadings.restingHeartRateSampleDate,
+                provenance: "explicitRun.v1") else { return false }
+        do {
+            let updated = (predictionHistory + [snapshot]).sorted { $0.createdAt < $1.createdAt }
+            try historyStore.save(updated)
+            predictionHistory = updated
+            lastPrediction = snapshot
+            predictionIssue = nil
+            return true
+        } catch {
+            predictionIssue = "Prediction could not be saved. Your existing history is unchanged. Try Run Prediction again."
+            return false
+        }
     }
 
     private func isValidDuration(_ value: Int?) -> Bool {
         value.map { ManualDuration.parts(from: $0) != nil } ?? true
-    }
-
-    private func saveCurrentPredictionIfNeeded(createdAt: Date) {
-        // Called only after a Health refresh or Manual Inputs save commits real
-        // values. Rendering and What-If evaluation have no route into this method.
-        guard let profile = completeProfile,
-              let snapshot = PredictionSnapshot.realBaseline(
-                profile: profile,
-                createdAt: createdAt,
-                healthWindow: healthWindow,
-                restingHeartRateSampleDate: healthReadings.restingHeartRateSampleDate
-              ),
-              predictionHistory.last.map({ !$0.hasSameSourceIdentity(as: snapshot) }) ?? true else {
-            return
-        }
-
-        let updated = (predictionHistory + [snapshot]).sorted { $0.createdAt < $1.createdAt }
-        do {
-            try historyStore.save(updated)
-            predictionHistory = updated
-        } catch {
-            // A failed local history write must not undo the real input commit.
-        }
     }
 
     private func persist(_ value: Int?, key: String) {

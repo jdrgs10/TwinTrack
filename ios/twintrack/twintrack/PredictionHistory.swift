@@ -82,26 +82,31 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
     let prediction: Double
     let inputs: PredictionInputs
     let healthWindow: PredictionHealthWindow?
+    // Absent means a legacy event; never relabel it as an explicit user run.
+    let provenance: String?
 
     init(
         id: UUID = UUID(),
         createdAt: Date,
         prediction: Double,
         inputs: PredictionInputs,
-        healthWindow: PredictionHealthWindow?
+        healthWindow: PredictionHealthWindow?,
+        provenance: String? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
         self.prediction = prediction
         self.inputs = inputs
         self.healthWindow = healthWindow
+        self.provenance = provenance
     }
 
     static func realBaseline(
         profile: TwinTrackProfile,
         createdAt: Date,
         healthWindow: HealthDataWindow?,
-        restingHeartRateSampleDate: Date? = nil
+        restingHeartRateSampleDate: Date? = nil,
+        provenance: String? = nil
     ) -> PredictionSnapshot? {
         let inputs = PredictionInputs(profile: profile)
         let prediction = TwinTrackModel.predict(profile)
@@ -125,7 +130,8 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
             createdAt: createdAt,
             prediction: prediction,
             inputs: inputs,
-            healthWindow: storedHealthWindow
+            healthWindow: storedHealthWindow,
+            provenance: provenance
         )
     }
 
@@ -150,7 +156,7 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
 }
 
 protocol PredictionHistoryPersisting {
-    func load() -> [PredictionSnapshot]
+    func load() throws -> [PredictionSnapshot]
     func save(_ snapshots: [PredictionSnapshot]) throws
 }
 
@@ -166,13 +172,12 @@ struct UserDefaultsPredictionHistoryStore: PredictionHistoryPersisting {
         self.key = key
     }
 
-    func load() -> [PredictionSnapshot] {
-        guard let data = defaults.data(forKey: key),
-              let decoded = try? JSONDecoder().decode([PredictionSnapshot].self, from: data) else {
-            return []
-        }
-
-        return decoded.filter(\.isValid).sorted { $0.createdAt < $1.createdAt }
+    func load() throws -> [PredictionSnapshot] {
+        guard let stored = defaults.object(forKey: key) else { return [] }
+        guard let data = stored as? Data else { throw PredictionStorageError.unreadable }
+        let decoded = try JSONDecoder().decode([PredictionSnapshot].self, from: data)
+        guard decoded.allSatisfy(\.isValid) else { throw PredictionStorageError.unreadable }
+        return decoded.sorted { $0.createdAt < $1.createdAt }
     }
 
     func save(_ snapshots: [PredictionSnapshot]) throws {
@@ -183,6 +188,12 @@ struct UserDefaultsPredictionHistoryStore: PredictionHistoryPersisting {
 
         defaults.set(try JSONEncoder().encode(snapshots), forKey: key)
     }
+}
+
+enum PredictionStorageError: Error { case unreadable }
+
+enum PredictionStatus: Equatable, Sendable {
+    case missing, refreshing, needsRefresh, ready, fresh, stale
 }
 
 struct PredictionTrendPoint: Equatable, Sendable {

@@ -9,15 +9,48 @@ import SwiftUI
 
 @main
 struct twintrackApp: App {
-    @StateObject private var twinTrackState = TwinTrackState()
+    @StateObject private var twinTrackState = Self.makeState()
+    @StateObject private var appearance = AppearancePreferences.forApp()
     @Environment(\.scenePhase) private var scenePhase
+
+    private static func makeState() -> TwinTrackState {
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--synthetic-duration-ui-tests") {
+            let name = "TwinTrack.DurationUITestFixture"
+            let defaults = UserDefaults(suiteName: name)!
+            defaults.removePersistentDomain(forName: name)
+            return TwinTrackState(defaults: defaults)
+        }
+#endif
+        return TwinTrackState()
+    }
+
+    @ViewBuilder private var appContent: some View {
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--synthetic-duration-ui-tests") {
+            DurationPickerTestFixture()
+        } else { ContentView() }
+#else
+        ContentView()
+#endif
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            appContent
                 .environmentObject(twinTrackState)
-                .task { await twinTrackState.refreshHealth() }
+                .environment(\.appearanceSelection, $appearance.selection)
+                .preferredColorScheme(appearance.selection.colorScheme)
+                .task {
+#if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("--synthetic-duration-ui-tests") { return }
+#endif
+                    await twinTrackState.refreshHealth()
+                }
                 .onChange(of: scenePhase) { _, phase in
+#if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("--synthetic-duration-ui-tests") { return }
+#endif
                     twinTrackState.healthSceneChanged(isActive: phase == .active)
                     if phase == .active {
                         Task { await twinTrackState.refreshHealth() }

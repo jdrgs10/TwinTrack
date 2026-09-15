@@ -1,5 +1,47 @@
 # A Technical Understanding Tracker
 
+## Assistant quality pass B — 2026-09-14
+
+Focused Foundation Models guidance/output/source/refusal fixes passed the final build and **225/225 automated tests (213 unit + 12 UI)**. Final compiler warnings/errors: **0/0**; debugger warnings: **1**. EVIDENCE_LOG preserves the earlier 222/225 run and three unchanged passing UI reruns. Build marker `FMQ-2026-09-14-B`; fresh physical model quality remains NOT VERIFIED. See ASSISTANT_EVALUATION and EVIDENCE_LOG for exact evidence and A's test matrix. Existing completed core milestones are preserved. No new learning confirmation or completion percentage is recorded.
+
+Deferred until a separately approved UI milestone: softer accessible dark composer focus border, jump-to-latest, Chat Library visual polish and local favorites/stars.
+
+## Integrated reliability / interface update — 2026-09-11
+
+- The original explicit-prediction and local-library checkpoints are preserved. The reliability gate passed 171/171; final integrated build and 190/190 tests passed (180 unit + 10 UI), with one debugger warning and zero errors. EVIDENCE_LOG records the evidence and limits.
+- A real simulator diagnostic passed four fixed prompts without tools or a global guided schema. The same food prompt on the original integration returned only the sanitized category `toolFailure`. The earlier physical failure's exact cause is not established.
+- General chat now uses plain Foundation Models text with bounded recent context. Clear app operations route through Swift. “6 more hours” is an increase, “another hour” is an increase by one hour, and ordinary sleep/time statements remain conversation. All numbers in personalized cards come from existing Swift state/calculations/history.
+- Error categories, one context-only recovery attempt and cancellation are explicit; refusal is never automatically retried. Full saved chats are not truncated to the model's short context budget.
+- Compact welcome/composer, a named Manual What-If action and inline errors preserve the existing keyboard/navigation lifecycle.
+- One shared duration-wheel UI serves Manual Inputs and temporary What-If editors. Set/Increase/Decrease are explicit; units, Cancel and precise unchanged values remain protected.
+- One persisted root Appearance preference supplies System/Light/Dark to all tabs and presentations. It is separate from, and cannot overwrite, the single production input state.
+- Physical model quality, safety responses, screen appearance and duration usability remain pending A's review. **Nothing newly marked learned; understanding not confirmed by A.**
+
+
+## Reliability checkpoints 1–2
+
+- Checkpoint 1 remains VERIFIED at its original 136/136 checkpoint; no reimplementation.
+- Checkpoint 2 automated result: build PASS, 153/153 total, including 15 new chat-library unit tests and two new UI tests. Xcode warnings/errors: 0.
+- Compact shell: fixed Library/title/New Chat header, empty-only welcome/subtitle, direct composer sliders action, interactive keyboard dismissal and explicit keyboard escape. Both New Chat entry points clear the active draft.
+- Storage: versioned local Application Support archive, atomic complete-protection writes and backup exclusion. Unsupported/corrupt archives remain untouched. No raw samples, request snapshots, hidden tool transcripts, or debug errors are stored.
+- Isolation: old cards stay historical; reopening cannot mutate TwinTrackState. New requests capture current inputs. Chat deletion and Clear Prediction History are independent. Cancellation/deletion/New Chat reject late responses.
+- Relaunch evidence: the UI test stops and launches the app with a separate synthetic library, reopens the renamed chat, then verifies Cancel and confirmed deletion.
+- Limits: physical visual approval and actual locked-device encryption behavior are not proven by simulator tests. Foundation Models reliability remains checkpoint 3, awaiting approval.
+- A learning status: **not confirmed by A**.
+
+## Apple Foundation Models — initial integration
+
+- Initial integration status: Xcode build and 129/129 automated tests passed, including 31 assistant checks and all core regressions. Actual model runtime/physical UI approval remains pending.
+- Conversation boundary: `AssistantConversation` manages visible chat messages and a protected local library. One authoritative `TwinTrackState` remains. New Chat preserves prior nonempty chats; reopening historical cards never restores inputs. New requests capture current inputs. No external LLM or cloud chat sync was added.
+- Framework boundary: `FoundationAssistantService` maps the installed SDK's availability and generation APIs through a mockable protocol. Cancellation invalidates late responses; retry retains the original snapshot; context limits offer conversation reset.
+- Tool boundary: exactly `readCurrentTwin`, `runWhatIf`, and `readPredictionHistory`. All use one captured committed snapshot. They cannot refresh/authorize HealthKit, mutate manual inputs, save scenarios, edit history, or change Ridge.
+- Numerical boundary: Swift alone constructs current/scenario/history cards. What-If delegates to the existing engine. Generated personalized prose is omitted when cards exist; generated text never supplies card numbers.
+- Validation boundary: Swift checks exact feature, operation, unit, finite value, range, and supporting quotation. Ambiguity/unsupported evidence asks clarification. Source dates preserve the committed Health time zone after travel.
+- Response boundary: ordinary wellness does not require all seven inputs; symptom and urgent response kinds have non-diagnostic help policies. Relevant model questions disclose synthetic production training and research limitations; ordinary scenarios avoid repeated disclosure.
+- Verification distinction: mocks prove lifecycle and policy behavior, direct tool tests prove deterministic boundaries, and simulator UI tests prove navigation/fallback. Only A's compatible iPhone can verify actual model interpretation, generated quality, safety routing, and visual acceptance.
+- References for later explanation: `FOUNDATION_MODELS_IMPLEMENTATION.md`, `ASSISTANT_EVALUATION.md`.
+- A learning status: **not confirmed by A**. No code teaching or learned-status update has occurred.
+
 ## Three-tab SwiftUI shell
 
 - Implementation state: verified in the iPhone 17 Pro Simulator.
@@ -50,7 +92,7 @@
 
 - Implementation state: verified with automated simulator tests and A's physical-device visual review.
 - Architecture to explain later: `HomeView` reads the single environment-owned `TwinTrackState`. It displays the four transient HealthKit results and three persisted manual inputs without creating another data store.
-- Prediction rule: Home uses `currentPrediction`, which reaches the frozen Ridge engine only when the complete seven-value profile exists. Missing values stay visible as missing and never become fabricated prediction inputs.
+- Prediction rule (superseded by verified reliability checkpoint 1): only explicit Run Prediction evaluates and saves a complete current baseline. Home display reads the last run/status without calculating. Missing inputs never become fabricated values.
 - Refresh rule: Home attaches native SwiftUI pull-to-refresh to its scroll container and directly awaits the existing `refreshHealth()` path. A short minimum presentation interval keeps the native refresh interaction alive without delaying the state commit. A confirmed the refresh function; indicator visibility remains deferred final polish.
 - Header rule: Home, TwinTrack AI, and Profile reuse one lightweight `PageHeader` with their own title and locked subtitle. Its optional mark appears only on Home. The header grows for accessibility Dynamic Type sizes.
 - Accessibility and layout rule: metric cards move from two columns to one for accessibility text sizes, content scrolls above the native tab bar, and the final TwinTrack AI action remains reachable.
@@ -60,7 +102,7 @@
 ## Prediction History and 7-day trends
 
 - Implementation state: verified and committed.
-- Save rule: a real snapshot is eligible only after an actual Health refresh commit or Manual Inputs Save creates a complete seven-input baseline. Rendering, tab changes, display recomputation, and What-If never save history.
+- Save rule (superseded by verified reliability checkpoint 1): explicit Run Prediction is required. Health refresh, Manual Inputs Save, rendering, tab changes, display recomputation, and What-If never save real prediction history.
 - Identity rule: duplicate comparison uses the seven actual input values and relevant Health source metadata, excluding creation time and treating prediction as derived consistency evidence.
 - Immutability rule: every legitimate snapshot remains in full history. Loading or viewing a snapshot never changes current state, stored history, HealthKit, or manual inputs.
 - Seven-day rule: the chart uses local calendar days from start of today minus six days through start of tomorrow, shows the latest legitimate snapshot per day, and leaves missing days empty without interpolation or carry-forward.

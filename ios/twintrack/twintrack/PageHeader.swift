@@ -31,6 +31,7 @@ struct PageHeader: View {
                         : Color(red: 15 / 255, green: 27 / 255, blue: 45 / 255))
                     .accessibilityAddTraits(.isHeader)
                     .accessibilityIdentifier("pageTitle.\(title)")
+                    .appearanceTestValue()
                 Text(subtitle)
                     .font(.footnote)
                     .foregroundStyle(colorScheme == .dark

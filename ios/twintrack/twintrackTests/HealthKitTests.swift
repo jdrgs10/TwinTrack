@@ -423,7 +423,8 @@ final class HealthKitTests: XCTestCase {
         XCTAssertEqual(state.studyMinutes, 90)
         XCTAssertEqual(state.screenTimeMinutes, 180)
         XCTAssertEqual(state.previousScore, 75)
-        XCTAssertEqual(state.predictionHistory.count, historyCount + 1)
+        // Refresh commits readings only; explicit Run Prediction now owns history.
+        XCTAssertEqual(state.predictionHistory.count, historyCount)
     }
 
     func testCancelledRefreshPreservesCommittedReadingsWindowAndSetup() async throws {

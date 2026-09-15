@@ -1,5 +1,70 @@
 # Examiner Question Bank
 
+## Assistant quality pass B — 2026-09-14
+
+Focused Foundation Models guidance/output/source/refusal fixes passed the final build and **225/225 automated tests (213 unit + 12 UI)**. Final compiler warnings/errors: **0/0**; debugger warnings: **1**. EVIDENCE_LOG preserves the earlier 222/225 run and three unchanged passing UI reruns. Build marker `FMQ-2026-09-14-B`; fresh physical model quality remains NOT VERIFIED. See ASSISTANT_EVALUATION and EVIDENCE_LOG for exact evidence and A's test matrix. Existing completed core milestones are preserved. No new learning confirmation or completion percentage is recorded.
+
+Deferred until a separately approved UI milestone: softer accessible dark composer focus border, jump-to-latest, Chat Library visual polish and local favorites/stars.
+
+Questions for later review (not marked learned): Where can general sleep prose be falsely blocked? How do reported values differ from HealthKit measurements? Why is a verified reference not validation of the generated answer? Why does parity not measure grade accuracy? How can a benign topic recover while a later refused-task continuation keeps safeguards? Why must saved replies retain their original provenance?
+
+Current integrated automated evidence: **190/190 tests**, build PASS, one debugger warning and zero errors. Actual minimal simulator model sessions passed 4/4; updated physical response quality remains pending A. This records implementation evidence, not confirmed learning or real-world Ridge validity.
+
+## Integrated assistant reliability, duration and appearance — 2026-09-11
+
+**Question:** What evidence distinguishes a model problem from an integration problem?
+
+**Answer outline:** Four fixed prompts passed fresh text-only sessions in the simulator. The original food-question integration returned `toolFailure` on a controlled empty-snapshot comparison. That identifies a simulator tool-path failure, not the exact earlier physical exception. No private prompt, response or underlying error was recorded. Final physical quality/safety still needs A's evaluation.
+
+**Question:** How can ordinary conversation remain natural without letting a model invent authoritative scores?
+
+**Answer outline:** Ordinary chat uses plain text with concise instructions and no app tools/global response schema. Only clear app intent routes to captured current state, stored history or the existing What-If engine. Swift parses permitted features/operations/units and renders numerical cards itself. Ordinary numbers/times are allowed; recognizable invented personalized numerical claims are rejected as defense in depth. Arbitrary model wording still needs physical/adversarial review.
+
+**Question:** How are “6 more hours,” old context and errors handled?
+
+**Answer outline:** The parser recognizes a six-hour increase, while range validation remains distinct from ambiguity. Recent text context is bounded and excludes cards; the full archive remains intact. A context-limit error can retry once with the latest message only. Typed SDK categories remain distinct, safety is never automatically retried, and cancellation tokens prevent late output leaking into another chat.
+
+**Question:** How do the new time controls and appearance preserve the architecture?
+
+**Answer outline:** One reusable Hours/Minutes view edits duration drafts. Set/increase/decrease convert into the unchanged seven model units and existing scenario validation; Cancel never calls the update callback. One root appearance preference drives inherited scheme changes; Profile edits that same binding. Approved Home logo variants resolve through the asset catalog. There is no second production input store or per-screen theme preference.
+
+**A learning status:** Not confirmed by A. Automated evidence and physical-review status are maintained separately in EVIDENCE_LOG.
+
+
+## On-device assistant and deterministic tools
+
+**Question:** What does Foundation Models own, and what does Swift own?
+
+**Answer outline:** Foundation Models interprets conversational intent and produces general responses. Three Swift tools read the committed twin, run the existing deterministic What-If engine, and read immutable history. Only Swift creates the numeric result cards. The model never supplies card values, changes inputs, or calculates Ridge predictions.
+
+**Question:** What happens if HealthKit refreshes while a scenario request is running?
+
+**Answer outline:** Send captures one value snapshot before any suspension. Every tool in that request, including retries, uses the same captured profile and metadata. Baseline, scenario, delta, and source details therefore agree. The tools have no setters or HealthKit query path.
+
+**Question:** How are ambiguous natural-language changes handled?
+
+**Answer outline:** The model requests typed arguments, then Swift checks the seven permitted feature keys, operation, compatible unit, finite amount, existing range, unique features, and exact supporting quotation. Unsupported or unclear evidence produces clarification. Natural-language extraction is still evaluated on the actual model; typed schemas alone do not prove semantic correctness.
+
+**Question:** Why are generated explanations omitted beside numeric cards in this version?
+
+**Answer outline:** Swift renders the trustworthy values directly. Omitting unrestricted accompanying personalized prose prevents a generated score or delta from contradicting the card. Optional personalized explanations can be considered separately; they are not necessary for the approved minimum assistant surface.
+
+**Question:** How do availability, privacy, and recovery work?
+
+**Answer outline:** The app distinguishes unsupported device, disabled Apple Intelligence, model-not-ready, and generic unavailable states. Core screens and manual What-If remain usable. Chat uses the on-device framework and a protected local library, with no external LLM API. Stop/tab exit/background cancels generation and rejects late output. In-memory Retry uses the original snapshot; reopened interrupted requests require an explicit current-input retry. New Chat resets the active conversation only.
+
+**Question:** Does a passing automated symptom test prove that the model recognizes urgent symptoms?
+
+**Answer outline:** No. It proves the Swift policy for a supplied reply kind. A must separately evaluate the physical model's classification and response quality using synthetic prompts. General wellness should remain helpful without a forced disclaimer; symptoms must avoid diagnosis and urgent cases need appropriate professional-help guidance. Apple guardrails are respected.
+
+**Question:** When should the assistant disclose synthetic training?
+
+**Answer outline:** On relevant questions about training, data, methodology, reliability, or scientific limitations. It explains that production Ridge uses synthetic student profiles, real-data studies are separate evidence, and parity does not establish real-world predictive validity. Ordinary scenario cards use concise model wording without a repeated training paragraph.
+
+**Evidence:** 31/31 assistant automated tests and 129/129 complete simulator tests. Thirty prompt evaluation rows distinguish mock/direct-tool checks from physical model results, which remain pending.
+
+**A learning status:** Not confirmed by A.
+
 ## Native navigation
 
 **Question:** How did you implement and verify TwinTrack's main navigation?
@@ -18,11 +83,11 @@
 
 **Question:** When does Home show a prediction?
 
-**Answer outline:** Home asks the shared state for `currentPrediction`. The state creates the frozen Ridge profile only when all seven real inputs exist. If any value is missing, Home names the missing inputs and does not substitute zero or another fabricated value.
+**Answer outline:** Home displays the last explicit prediction run and its freshness status. Run Prediction requires seven real inputs and current eligible source periods. Display reads never evaluate Ridge. Missing inputs remain missing; older results are identified as previous results.
 
 **Question:** How is Home refreshed?
 
-**Answer outline:** Home uses native SwiftUI pull-to-refresh on its scroll view. The closure awaits the one shared HealthKit refresh method and a short minimum presentation interval. Health results commit as soon as queries finish; the interval affects only the native refresh interaction. Existing readings remain visible while local queries run and are replaced atomically. Indicator visibility is recorded as deferred final polish.
+**Answer outline:** Home uses native SwiftUI pull-to-refresh and awaits the one shared HealthKit refresh method. Checkpoint 1 removed the artificial minimum delay. Existing readings remain visible while local queries run and are replaced atomically. Indicator visibility remains deferred final polish.
 
 **Question:** How was the Home design kept consistent and accessible?
 
@@ -92,7 +157,7 @@
 
 **Question:** When does TwinTrack save a prediction snapshot?
 
-**Answer outline:** Only after a successful real Health refresh commit or Manual Inputs Save establishes all seven real inputs. Rendering Home, changing tabs, recomputing display output, and running What-If cannot create a normal history snapshot.
+**Answer outline:** The verified reliability checkpoint 1 supersedes automatic saving: only explicit Run Prediction validates the current complete baseline, evaluates Ridge, and saves an immutable event. Health refresh, Manual Inputs Save, rendering, tab changes, and What-If do not create real prediction history. Legacy events remain readable with their original identity.
 
 **Question:** How does the seven-day chart handle missing days and several predictions on one day?
 
@@ -163,3 +228,29 @@
 **Evidence:** `ridge_21_of_21_parity_pass.png` records the readable parity result, and `ridge_parity_xcode_context.png` records the wider TwinTrack/Xcode test context.
 
 **A learning status:** Not confirmed by A.
+
+## Checkpoint 2 — local chat library and compact shell
+
+**Question:** Can opening a saved chat restore old health inputs or predictions into the app?
+
+**Answer outline:** No. Saved messages and cards are historical values with no state mutation interface. Opening does not call the model or tools. A new personalized request captures a new snapshot from the one authoritative TwinTrackState.
+
+**Question:** What is stored, and how are failures handled?
+
+**Answer outline:** A versioned local Application Support archive stores visible messages/cards, IDs, titles, dates, and a completion enum. Atomic protected writes and backup exclusion are configured. Raw HealthKit samples, request snapshots, hidden tool transcripts, and debug errors are not archived. Invalid or future-version files are preserved, and failed writes prevent silently abandoning unsaved messages.
+
+**Question:** What happens when a response arrives after New Chat or deletion?
+
+**Answer outline:** A generation token and task cancellation invalidate that response. It cannot appear in the new chat or recreate a deleted record. Interrupted requests reopened after relaunch require an explicit retry with current inputs because their old request snapshot was not persisted.
+
+**Question:** How do chat deletion and Clear Prediction History interact?
+
+**Answer outline:** They are independent. Deleting a chat removes its messages and historical cards only. Clearing Prediction History leaves chats intact. Both destructive actions require their own confirmation.
+
+**Question:** How can the user leave chat while the keyboard is open?
+
+**Answer outline:** The conversation scroll view dismisses the keyboard interactively. A visible Dismiss keyboard action also works with very short content. The composer respects keyboard safe areas; the existing three global tabs remain the only main navigation.
+
+**A learning status:** Not confirmed by A. These are reference answers for later explanation.
+
+**Checkpoint 2 automated evidence:** Final complete Xcode suite 153/153 (15 new library unit tests and two new UI tests), warnings/errors 0. Actual synthetic app relaunch and both New Chat entry points pass. This does not mark A as having learned the code or establish live model response quality.

@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class PredictionHistoryTests: XCTestCase {
-    func testHealthRefreshCreatesSnapshotOnlyAfterCompleteRealBaseline() async throws {
+    func testExplicitRunCreatesSnapshotOnlyAfterCompleteRealBaseline() async throws {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
 
@@ -13,9 +13,11 @@ final class PredictionHistoryTests: XCTestCase {
             screenTimeMinutes: 240,
             previousScore: 75
         ))
+        fixture.state.runFixturePrediction()
         XCTAssertTrue(fixture.state.predictionHistory.isEmpty)
 
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
 
         let snapshot = try XCTUnwrap(fixture.state.predictionHistory.only)
         let profile = try XCTUnwrap(fixture.state.completeProfile)
@@ -24,19 +26,21 @@ final class PredictionHistoryTests: XCTestCase {
         XCTAssertNotNil(snapshot.healthWindow)
     }
 
-    func testManualSaveCreatesSnapshotAfterHealthEstablishedBaseline() async throws {
+    func testExplicitRunAfterManualSaveRecordsItsRunTime() async throws {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
         XCTAssertTrue(fixture.state.predictionHistory.isEmpty)
 
-        let time = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let time = fixture.state.healthWindow!.restingHeartRate.end
         XCTAssertTrue(fixture.state.saveManualInputs(
             studyMinutes: 120,
             screenTimeMinutes: 240,
             previousScore: 75,
             now: time
         ))
+        fixture.state.runFixturePrediction()
 
         XCTAssertEqual(fixture.state.predictionHistory.only?.createdAt, time)
     }
@@ -51,8 +55,10 @@ final class PredictionHistoryTests: XCTestCase {
                 screenTimeMinutes: missing == .screenTimeMinutes ? nil : 240,
                 previousScore: missing == .previousScore ? nil : 75
             ))
+            fixture.state.runFixturePrediction()
 
             await fixture.state.requestHealthAccess()
+            fixture.state.runFixturePrediction()
 
             XCTAssertTrue(fixture.state.predictionHistory.isEmpty, missing.key)
         }
@@ -62,7 +68,9 @@ final class PredictionHistoryTests: XCTestCase {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
         let original = try XCTUnwrap(fixture.state.predictionHistory.only)
 
         XCTAssertTrue(fixture.state.setStudyTime(hours: 3, minutes: 0))
@@ -75,7 +83,9 @@ final class PredictionHistoryTests: XCTestCase {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
         let before = fixture.state.predictionHistory
 
         var scenario = try WhatIfScenario(baseline: fixture.state.completeProfile)
@@ -95,18 +105,22 @@ final class PredictionHistoryTests: XCTestCase {
         XCTAssertTrue(fixture.state.saveManualInputs(
             studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75, now: now
         ))
+        fixture.state.runFixturePrediction()
 
         await fixture.state.refreshHealth(now: now, calendar: calendar)
+        fixture.state.runFixturePrediction()
         await fixture.state.refreshHealth(
             now: date(2026, 9, 8, 18, calendar: calendar),
             calendar: calendar
         )
+        fixture.state.runFixturePrediction()
         XCTAssertTrue(fixture.state.saveManualInputs(
             studyMinutes: 120,
             screenTimeMinutes: 240,
             previousScore: 75,
             now: date(2026, 9, 8, 19, calendar: calendar)
         ))
+        fixture.state.runFixturePrediction()
 
         XCTAssertEqual(fixture.state.predictionHistory.count, 1)
     }
@@ -115,10 +129,14 @@ final class PredictionHistoryTests: XCTestCase {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
 
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 180, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
 
         XCTAssertEqual(fixture.state.predictionHistory.count, 3)
     }
@@ -127,7 +145,9 @@ final class PredictionHistoryTests: XCTestCase {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
         let saved = try XCTUnwrap(fixture.state.predictionHistory.only)
 
         let recreated = TwinTrackState(defaults: fixture.defaults, healthService: fixture.service)
@@ -291,7 +311,9 @@ final class PredictionHistoryTests: XCTestCase {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
         let saved = try XCTUnwrap(fixture.state.predictionHistory.only)
         let currentValues = [
             fixture.state.sleepHours,
@@ -363,12 +385,15 @@ final class PredictionHistoryTests: XCTestCase {
         let evening = date(2026, 9, 8, 18, calendar: calendar)
         fixture.defaults.set(true, forKey: "twintrack.health.fourTypeRequestCompleted")
         await fixture.state.refreshHealth(now: morning, calendar: calendar)
+        fixture.state.runFixturePrediction()
         XCTAssertTrue(fixture.state.saveManualInputs(
             studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75, now: morning
         ))
+        fixture.state.runFixturePrediction()
         XCTAssertTrue(fixture.state.saveManualInputs(
             studyMinutes: 180, screenTimeMinutes: 240, previousScore: 75, now: evening
         ))
+        fixture.state.runFixturePrediction()
 
         XCTAssertEqual(fixture.state.predictionHistory.count, 2)
         let points = PredictionHistoryTrend.points(
@@ -390,15 +415,18 @@ final class PredictionHistoryTests: XCTestCase {
             screenTimeMinutes: 240,
             previousScore: 75
         ))
+        fixture.state.runFixturePrediction()
 
         await fixture.state.refreshHealth(
             now: date(2026, 9, 8, 12, calendar: calendar),
             calendar: calendar
         )
+        fixture.state.runFixturePrediction()
         await fixture.state.refreshHealth(
             now: date(2026, 9, 9, 12, calendar: calendar),
             calendar: calendar
         )
+        fixture.state.runFixturePrediction()
 
         XCTAssertEqual(fixture.state.predictionHistory.count, 2)
         XCTAssertEqual(
@@ -415,7 +443,9 @@ final class PredictionHistoryTests: XCTestCase {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
         let beforeCancel = fixture.state.predictionHistory
 
         // The confirmation dialog's Cancel action deliberately performs no mutation.
@@ -436,19 +466,21 @@ final class PredictionHistoryTests: XCTestCase {
         let fixture = makeFixture()
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         await fixture.state.requestHealthAccess()
+        fixture.state.runFixturePrediction()
         let snapshot = try XCTUnwrap(fixture.state.predictionHistory.only)
 
         XCTAssertEqual(snapshot.prediction, TwinTrackModel.predict(snapshot.inputs.profile), accuracy: 1e-12)
     }
 
-    func testInvalidPersistedHistoryIsIgnored() throws {
+    func testInvalidPersistedHistoryIsReportedWithoutErasing() throws {
         let name = "PredictionHistoryTests.invalid.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
         defaults.set(Data("not-json".utf8), forKey: "twintrack.prediction.history.v1")
 
-        XCTAssertTrue(UserDefaultsPredictionHistoryStore(defaults: defaults).load().isEmpty)
+        XCTAssertThrowsError(try UserDefaultsPredictionHistoryStore(defaults: defaults).load())
     }
 
     func testLegacyHealthWindowDecodesWithoutRewritingItsPeriods() throws {
@@ -469,8 +501,10 @@ final class PredictionHistoryTests: XCTestCase {
         let calendar = calendar(timeZone: "Asia/Dubai")
         fixture.defaults.set(true, forKey: "twintrack.health.fourTypeRequestCompleted")
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         for hour in [8, 9, 12, 15] {
             await fixture.state.refreshHealth(now: date(2026, 9, 8, hour, calendar: calendar), calendar: calendar)
+            fixture.state.runFixturePrediction()
         }
         XCTAssertEqual(fixture.state.predictionHistory.count, 1)
         XCTAssertEqual(fixture.state.predictionHistory.first?.healthWindow?.sleepEnd,
@@ -485,14 +519,18 @@ final class PredictionHistoryTests: XCTestCase {
         fixture.defaults.set(true, forKey: "twintrack.health.fourTypeRequestCompleted")
         fixture.service.readings.restingHeartRateSampleDate = morning.addingTimeInterval(-3600)
         XCTAssertTrue(fixture.state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75))
+        fixture.state.runFixturePrediction()
         await fixture.state.refreshHealth(now: morning, calendar: calendar)
+        fixture.state.runFixturePrediction()
         let first = try XCTUnwrap(fixture.state.predictionHistory.first)
         XCTAssertEqual(first.healthWindow?.semanticsVersion, 2)
         XCTAssertEqual(first.healthWindow?.restingHeartRateSampleDate, morning.addingTimeInterval(-3600))
         fixture.service.readings.sleep = .available(7.5)
         await fixture.state.refreshHealth(now: morning.addingTimeInterval(3600), calendar: calendar)
+        fixture.state.runFixturePrediction()
         fixture.service.readings.restingHeartRateSampleDate = morning
         await fixture.state.refreshHealth(now: morning.addingTimeInterval(7200), calendar: calendar)
+        fixture.state.runFixturePrediction()
         XCTAssertEqual(fixture.state.predictionHistory.count, 3)
         XCTAssertEqual(fixture.state.predictionHistory.first, first)
         let recreated = TwinTrackState(defaults: fixture.defaults, healthService: fixture.service)
@@ -586,4 +624,17 @@ private final class HistoryTestHealthService: HealthDataProviding {
 
 private extension Array {
     var only: Element? { count == 1 ? first : nil }
+}
+
+// Existing history scenarios now explicitly run after their fixture commits.
+// Production refresh/save paths never create history.
+@MainActor
+extension TwinTrackState {
+    func runFixturePrediction() {
+        guard let window = healthWindow else { return }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = window.timeZone
+        let now = max(window.restingHeartRate.end, lastPrediction?.createdAt.addingTimeInterval(0.001) ?? window.restingHeartRate.end)
+        runPrediction(now: now, calendar: calendar)
+    }
 }

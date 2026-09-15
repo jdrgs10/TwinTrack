@@ -22,7 +22,7 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     PageHeader(title: "Home", subtitle: "Your habits. Your data. Your academic twin.")
                     healthStatus
-                    predictionHero
+                    TimelineView(.periodic(from: .now, by: 60)) { _ in predictionHero }
                     inputSection
                     PredictionTrendView(snapshots: state.predictionHistory)
                     insightCard
@@ -31,14 +31,7 @@ struct HomeView: View {
             }
             .accessibilityIdentifier("homeScrollView")
             .refreshable {
-                let clock = ContinuousClock()
-                let started = clock.now
                 await state.refreshHealth()
-                let minimumPresentation = Duration.milliseconds(400)
-                let elapsed = started.duration(to: clock.now)
-                if elapsed < minimumPresentation {
-                    try? await Task.sleep(for: minimumPresentation - elapsed)
-                }
             }
             .scrollBounceBehavior(.always)
             .background(palette.background.ignoresSafeArea())
@@ -64,6 +57,7 @@ struct HomeView: View {
             .accessibilityValue(state.healthAccess.rawValue)
 
             Spacer()
+            if state.isRefreshingHealth { Text("Refreshing…").font(.footnote) }
         }
         .padding(.horizontal, 20)
     }
@@ -76,7 +70,11 @@ struct HomeView: View {
                 .foregroundStyle(palette.accentText)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let prediction = state.currentPrediction {
+            if let saved = state.lastPrediction {
+                Text(state.predictionStatus() == .fresh ? "Current explicit run" : "Previous · Inputs changed or awaiting refresh")
+                    .font(.footnote).foregroundStyle(palette.secondaryText)
+                Text(saved.createdAt, format: .dateTime.month().day().hour().minute()).font(.caption)
+                let prediction = saved.prediction
                 HStack(alignment: .lastTextBaseline, spacing: 10) {
                     Text(HomeDisplay.prediction(prediction))
                         .font(.system(size: scoreSize, weight: .semibold))
@@ -95,14 +93,28 @@ struct HomeView: View {
                     .accessibilityValue("\(HomeDisplay.prediction(prediction)) out of 100")
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Prediction unavailable")
+                    Text(state.missingInputs.isEmpty ? "Ready to predict" : "Prediction unavailable")
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(palette.heroText)
-                    Text("Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))")
+                    Text(state.missingInputs.isEmpty ? "Run Prediction when your current inputs are ready." : "Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))")
                         .font(.footnote)
                         .foregroundStyle(palette.secondaryText)
                 }
             }
+
+            if !state.missingInputs.isEmpty, state.lastPrediction != nil {
+                Text("Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))").font(.footnote)
+            }
+            if state.predictionStatus() == .needsRefresh {
+                Text("Refresh Apple Health to establish current source periods.").font(.footnote)
+            }
+            if state.predictionStatus() != .fresh {
+                Button(state.lastPrediction == nil ? "Run Prediction" : "Run Prediction Again") { state.runPrediction() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(![PredictionStatus.ready, .stale].contains(state.predictionStatus()))
+                    .accessibilityIdentifier("runPrediction")
+            }
+            if let issue = state.predictionIssue { Text(issue).font(.footnote) }
 
             Text("Ridge Regression • 7 inputs • On-device")
                 .font(.caption)
@@ -119,7 +131,7 @@ struct HomeView: View {
         .padding(.horizontal, 16)
         .padding(.top, 14)
         .privacySensitive()
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
     }
 
     private var inputSection: some View {
@@ -212,7 +224,7 @@ struct HomeView: View {
                     .tracking(1.1)
                     .foregroundStyle(palette.violetText)
             }
-            Text("TwinTrack combines all seven inputs to produce the current prediction. Model relationships are predictive, not causal.")
+            Text("Run Prediction combines all seven committed inputs. Model relationships are predictive, not causal.")
                 .font(.subheadline)
                 .foregroundStyle(palette.primaryText)
         }

@@ -19,7 +19,7 @@ struct ContentView: View {
                 .tag(TwinTrackTab.home)
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
-            WhatIfView(isActive: selectedTab == .ai)
+            TwinTrackAIView(isActive: selectedTab == .ai)
                 .tag(TwinTrackTab.ai)
                 .tabItem { Label("TwinTrack AI", systemImage: "sparkles") }
 

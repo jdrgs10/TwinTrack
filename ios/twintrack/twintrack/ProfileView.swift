@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @Environment(\.appearanceSelection) private var appearanceSelection
     @EnvironmentObject private var state: TwinTrackState
     @Environment(\.colorScheme) private var colorScheme
     @State private var isShowingManualInputs = false
@@ -148,6 +149,24 @@ struct ProfileView: View {
                             RoundedRectangle(cornerRadius: 18).stroke(border, lineWidth: 1)
                         }
                         .accessibilityIdentifier("dataPrivacyButton")
+
+                        Text("APPEARANCE")
+                            .font(.caption2.weight(.semibold)).tracking(1.1)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6).padding(.top, 18)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Appearance").font(.subheadline.weight(.medium))
+                            Picker("Appearance", selection: appearanceSelection) {
+                                ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
+                            }
+                            .pickerStyle(.segmented)
+                            .accessibilityIdentifier("appearancePicker")
+                            Text("System follows your device. Light or Dark applies to TwinTrack only.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        .padding(15)
+                        .background(card, in: RoundedRectangle(cornerRadius: 18))
+                        .overlay { RoundedRectangle(cornerRadius: 18).stroke(border) }
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 6)
@@ -343,23 +362,7 @@ private struct ManualInputsSheet: View {
             if openPicker == input {
                 Divider()
 
-                HStack(spacing: 0) {
-                    wheelColumn(
-                        title: "Hours",
-                        range: 0...ManualDuration.maximumHours,
-                        selection: hoursBinding(for: value),
-                        twoDigits: false
-                    )
-
-                    wheelColumn(
-                        title: "Minutes",
-                        range: 0...59,
-                        selection: minutesBinding(for: value),
-                        twoDigits: true
-                    )
-                }
-                .frame(height: 170)
-                .padding(.horizontal, 8)
+                DurationWheelPicker(hours: hoursBinding(for: value), minutes: minutesBinding(for: value))
             }
         }
         .background(card, in: RoundedRectangle(cornerRadius: 14))
@@ -367,30 +370,6 @@ private struct ManualInputsSheet: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(openPicker == input ? Color.accentColor.opacity(0.45) : border, lineWidth: 1)
         }
-    }
-
-    private func wheelColumn(
-        title: String,
-        range: ClosedRange<Int>,
-        selection: Binding<Int>,
-        twoDigits: Bool
-    ) -> some View {
-        VStack(spacing: 0) {
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            Picker(title, selection: selection) {
-                ForEach(range, id: \.self) { value in
-                    Text(twoDigits ? String(format: "%02d", value) : "\(value)")
-                        .tag(value)
-                }
-            }
-            .pickerStyle(.wheel)
-            .labelsHidden()
-            .clipped()
-        }
-        .frame(maxWidth: .infinity)
     }
 
     private func hoursBinding(for total: Binding<Int?>) -> Binding<Int> {

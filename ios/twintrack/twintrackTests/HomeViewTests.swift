@@ -44,6 +44,9 @@ final class HomeViewTests: XCTestCase {
         await fixture.state.requestHealthAccess()
 
         let profile = try XCTUnwrap(fixture.state.completeProfile)
+        XCTAssertNil(fixture.state.currentPrediction)
+        XCTAssertTrue(fixture.state.predictionHistory.isEmpty)
+        XCTAssertTrue(fixture.state.runPrediction())
         let prediction = try XCTUnwrap(fixture.state.currentPrediction)
         XCTAssertEqual(prediction, TwinTrackModel.predict(profile), accuracy: 1e-12)
     }

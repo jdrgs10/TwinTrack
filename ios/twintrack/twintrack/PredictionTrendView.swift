@@ -518,7 +518,7 @@ struct DataPrivacyView: View {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("No saved predictions")
                             .font(.subheadline.weight(.semibold))
-                        Text("Complete real predictions will appear here after a Health refresh or Manual Inputs save.")
+                        Text("Use Run Prediction on Home to save a complete real prediction.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -539,6 +539,8 @@ struct DataPrivacyView: View {
                             Text("7 real inputs\(snapshot.healthWindow == nil ? "" : " · Health source periods")")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
+                            Text(snapshot.provenance == "explicitRun.v1" ? "Explicit prediction run" : "Legacy prediction event")
+                                .font(.caption2).foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 4)
                         .privacySensitive()
@@ -548,7 +550,7 @@ struct DataPrivacyView: View {
             } header: {
                 Text("Prediction History")
             } footer: {
-                Text("Stored only on this device. What-If results are never included.")
+                Text("Stored locally; system backups may include prediction history. What-If results are never included.")
             }
 
             Section("Data Controls") {
@@ -557,6 +559,10 @@ struct DataPrivacyView: View {
                 }
                 .disabled(state.predictionHistory.isEmpty)
                 .accessibilityIdentifier("clearPredictionHistoryButton")
+            }
+            Section("Saved Chats") {
+                Text("Manage saved conversations in TwinTrack AI → Chat Library. Chats are stored locally and excluded from system backup.")
+                Text("Clearing Prediction History does not delete chats or their historical cards. Delete a chat separately to remove those cards.")
             }
         }
         .scrollContentBackground(.hidden)
@@ -573,7 +579,7 @@ struct DataPrivacyView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This removes prediction history only. Your manual inputs and Health state stay unchanged.")
+            Text("This removes prediction history only. Your chats, manual inputs and Health state stay unchanged.")
         }
     }
 

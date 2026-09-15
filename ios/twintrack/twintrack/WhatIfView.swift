@@ -49,7 +49,7 @@ struct WhatIfView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("What-If unavailable").font(.headline)
-                            Text("All seven valid current inputs are required before a scenario can be calculated.")
+                            Text("All seven valid inputs and a fresh explicit prediction are required. Use Run Prediction on Home first.")
                             if !state.missingInputs.isEmpty {
                                 Text("Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))")
                             } else if let validationMessage {
@@ -101,6 +101,9 @@ struct WhatIfView: View {
             // Never retain an arbitrary old baseline across refresh or manual edits.
             if isActive { start(); baselineChanged = true }
         }
+        .onChange(of: state.healthWindow) { _, _ in if isActive { start() } }
+        .onChange(of: state.lastPrediction) { _, _ in if isActive { start() } }
+        .onChange(of: state.isRefreshingHealth) { _, _ in if isActive { start() } }
         .onDisappear { discard() }
     }
 
@@ -139,7 +142,10 @@ struct WhatIfView: View {
             }
 
             if expanded || scenario == nil {
-                Button("Run simulation") { result = scenario?.evaluate() }
+                Button("Run simulation") {
+                    guard state.predictionStatus() == .fresh else { start(); return }
+                    result = scenario?.evaluate()
+                }
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity, minHeight: 46)
                     .foregroundStyle(scenario == nil ? palette.secondary : palette.accent)
@@ -266,6 +272,7 @@ struct WhatIfView: View {
 
     private func start() {
         discard()
+        guard state.predictionStatus() == .fresh else { return }
         do { scenario = try WhatIfScenario(baseline: state.completeProfile) }
         catch { validationMessage = error.localizedDescription }
     }
@@ -280,22 +287,24 @@ struct WhatIfView: View {
     }
 }
 
-private struct WhatIfEdit: Identifiable {
+struct WhatIfEdit: Identifiable {
     let id = UUID()
     let feature: TwinTrackFeature
     let value: Double
 }
 
-private struct WhatIfValueEditor: View {
+struct WhatIfValueEditor: View {
     @Environment(\.dismiss) private var dismiss
     let edit: WhatIfEdit
     let onDone: (Double) -> Void
     @State private var draft: WhatIfInputDraft
+    @State private var duration: WhatIfDurationDraft
 
     init(edit: WhatIfEdit, onDone: @escaping (Double) -> Void) {
         self.edit = edit
         self.onDone = onDone
         _draft = State(initialValue: WhatIfInputDraft(feature: edit.feature, value: edit.value))
+        _duration = State(initialValue: WhatIfDurationDraft(feature: edit.feature, value: edit.value))
     }
 
     var body: some View {
@@ -303,8 +312,18 @@ private struct WhatIfValueEditor: View {
             Form {
                 Section("Temporary scenario value") {
                     if draft.usesDuration {
-                        TextField("Hours", text: $draft.hours).keyboardType(.numberPad)
-                        TextField("Minutes", text: $draft.minutes).keyboardType(.decimalPad)
+                        Picker("Operation", selection: Binding(get: { duration.operation }, set: { duration.select($0) })) {
+                            ForEach(DurationOperation.allCases) { Text($0.rawValue).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                        Text("\(duration.operation.rawValue) · Duration").font(.subheadline.weight(.medium))
+                        DurationWheelPicker(hours: $duration.hours, minutes: $duration.minutes)
+                        if let value = duration.value {
+                            Text("Result: \(WhatIfDisplay.value(value, feature: edit.feature))")
+                                .font(.footnote).accessibilityIdentifier("durationResult")
+                        } else {
+                            Text(WhatIfScenario.validationHint(for: edit.feature)).font(.footnote).foregroundStyle(.red)
+                        }
                     } else {
                         TextField(HomeDisplay.featureName(edit.feature), text: $draft.number)
                             .keyboardType(.decimalPad)
@@ -315,7 +334,7 @@ private struct WhatIfValueEditor: View {
                 Section {
                     Text(WhatIfScenario.validationHint(for: edit.feature)).font(.footnote)
                     if draft.usesDuration {
-                        Text("Hours must be a whole number; minutes must be from 0 to less than 60.")
+                        Text("Choose an elapsed duration, not a time of day. Wheels use 0–\(ManualDuration.maximumHours) hours and 0–59 minutes, like Manual Inputs. An unchanged editor keeps the exact current value.")
                             .font(.footnote)
                     }
                     Text("This edits only the temporary scenario. Your real inputs remain unchanged.")
@@ -328,8 +347,8 @@ private struct WhatIfValueEditor: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        if let value = draft.parsedValue { onDone(value); dismiss() }
-                    }.disabled(draft.parsedValue == nil)
+                        if let value = draft.usesDuration ? duration.value : draft.parsedValue { onDone(value); dismiss() }
+                    }.disabled((draft.usesDuration ? duration.value : draft.parsedValue) == nil)
                 }
             }
         }
