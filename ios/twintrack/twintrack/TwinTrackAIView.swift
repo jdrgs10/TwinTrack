@@ -7,6 +7,7 @@ struct TwinTrackAIView: View {
     @StateObject private var chat = AssistantConversation.forApp()
     @FocusState private var composerFocused: Bool
     @State private var draft = ""
+    @State private var editingMessageID: UUID?
     @State private var showingWhatIf = false
     @State private var showingLibrary = false
     @State private var showingInfo = false
@@ -67,6 +68,16 @@ struct TwinTrackAIView: View {
                                         .background(message.role == .user ? palette.card : palette.aiSurface,
                                                     in: RoundedRectangle(cornerRadius: 18))
                                         .privacySensitive()
+                                        .contextMenu {
+                                            if message.role == .user && !chat.isGenerating {
+                                                Button {
+                                                    beginEditing(message)
+                                                } label: {
+                                                    Label("Edit", systemImage: "pencil")
+                                                }
+                                            }
+                                        }
+                                        .accessibilityIdentifier(message.role == .user ? "assistantUserMessage" : "assistantReplyMessage")
                                     if message.role == .assistant { Spacer(minLength: 16) }
                                 }
                                 if message.role == .user && message.safetyRefusal == true
@@ -85,6 +96,7 @@ struct TwinTrackAIView: View {
                                         Text(message.provenance?.origin.rawValue ?? "Route not recorded")
                                         Text(message.createdAt.formatted(date: .abbreviated, time: .shortened))
                                     }.font(.caption).foregroundStyle(.secondary)
+                                        .tint(.secondary)
                                 }
 #endif
                                 if !message.cards.isEmpty {
@@ -118,6 +130,7 @@ struct TwinTrackAIView: View {
                         if followsLatest { proxy.scrollTo("end", anchor: .bottom) }
                     }
                     .onChange(of: composerFocused) {
+                        if composerFocused { AssistantPerformance.mark(.composerFocused) }
                         if composerFocused && followsLatest { proxy.scrollTo("end", anchor: .bottom) }
                     }
                 }
@@ -147,24 +160,43 @@ struct TwinTrackAIView: View {
                     Text("Build · \(AssistantProvenance.currentBuild)").accessibilityIdentifier("assistantBuild")
                     Text(AssistantResponsePolicy.disclosure)
 #if DEBUG
+                    DisclosureGroup("Performance timings (DEBUG)") {
+                        Text(AssistantPerformance.summary).font(.caption.monospaced())
+                            .accessibilityIdentifier("assistantPerformanceTimings")
+                    }
                     Button("Minimal model check (DEBUG)") { showingDiagnostic = true }
                         .sheet(isPresented: $showingDiagnostic) { ModelDiagnosticView() }
 #endif
-                    Text("Saved chats stay in this app's local storage and are excluded from system backup. Delete them in Chat Library. Clearing Prediction History does not delete chats or their historical cards.")
+                    Text("Saved chats stay in this app's local storage and are excluded from system backup. Delete them in Chat Library. Clearing Prediction History does not delete chats or their historical cards. Export Chat shares visible conversation content, which may contain health information, only to a destination you choose.")
                     Spacer()
                 }.padding(24)
             }
         }
-        .task { chat.checkAvailability() }
-        .onChange(of: chat.activeID) { draft = ""; followsLatest = true }
+#if DEBUG
+        .onAppear { if isActive { AssistantPerformance.mark(.tabAppeared) } }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            if isActive && composerFocused { AssistantPerformance.mark(.keyboardWillShow) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
+            if isActive && composerFocused { AssistantPerformance.mark(.keyboardVisible) }
+        }
+#endif
+        .onChange(of: chat.activeID) {
+            editingMessageID = nil
+            draft = ""
+            followsLatest = true
+        }
         .onChange(of: isActive) { _, active in
+            if active { AssistantPerformance.mark(.tabActivationObserved) }
             if !active {
                 composerFocused = false
+                editingMessageID = nil
+                draft = ""
                 chat.cancel()
                 showingWhatIf = false
                 showingLibrary = false
                 showingInfo = false
-            } else { chat.checkAvailability() }
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { chat.checkAvailability() }
@@ -192,15 +224,39 @@ struct TwinTrackAIView: View {
 
     private var composer: some View {
         VStack(spacing: 0) {
+            if editingMessageID != nil {
+                HStack(spacing: 12) {
+                    Text("Editing message").font(.caption.weight(.semibold))
+                    Spacer(minLength: 0)
+                    Button("Cancel") { cancelEditing() }
+                        .accessibilityIdentifier("assistantEditCancel")
+                    Button("Save") { saveEditing() }
+                        .fontWeight(.semibold)
+                        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                  || chat.availability != .available)
+                        .accessibilityIdentifier("assistantEditSave")
+                }
+                .padding(.bottom, 8)
+            }
             HStack(alignment: .bottom, spacing: 8) {
                 TextField("Ask TwinTrack AI…", text: $draft, axis: .vertical)
                     .focused($composerFocused)
+#if DEBUG
+                    .simultaneousGesture(TapGesture().onEnded { AssistantPerformance.mark(.composerTapped) })
+#endif
                     .lineLimit(1...4).padding(12)
                     .background(palette.aiSurface, in: RoundedRectangle(cornerRadius: 18))
-                    .overlay { RoundedRectangle(cornerRadius: 18).stroke(composerFocused ? palette.aiAccent : palette.aiBorder, lineWidth: composerFocused ? 2 : 1) }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(composerFocused ? palette.aiAccent : palette.aiBorder,
+                                    lineWidth: composerFocused ? 2 : 1)
+                            .allowsHitTesting(false)
+                    }
                     .tint(palette.aiAccent)
                     .accessibilityIdentifier("assistantComposer")
-                if chat.isGenerating {
+                if editingMessageID != nil {
+                    EmptyView()
+                } else if chat.isGenerating {
                     Button { chat.cancel() } label: { Image(systemName: "stop.fill").frame(width: 44, height: 44) }
                         .accessibilityLabel("Stop response").accessibilityIdentifier("assistantStop")
                 } else {
@@ -229,6 +285,21 @@ struct TwinTrackAIView: View {
                 }
                 .accessibilityIdentifier("assistantManualWhatIf")
                 Spacer(minLength: 0)
+                Menu {
+                    if !chat.messages.isEmpty {
+                        ShareLink(item: ChatExport(title: chat.conversations.first(where: { $0.id == chat.activeID })?.title,
+                                                   messages: chat.messages),
+                                  preview: SharePreview("TwinTrack Chat")) {
+                            Label("Export Chat", systemImage: "square.and.arrow.up")
+                        }
+                    } else {
+                        Button("Export Chat", action: {}).disabled(true)
+                    }
+                    Button("About on-device chat") { composerFocused = false; showingInfo = true }
+                } label: {
+                    Image(systemName: "ellipsis.circle").frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Chat options").accessibilityIdentifier("assistantChatOptions")
                 if composerFocused {
                     Button { composerFocused = false } label: {
                         Image(systemName: "keyboard.chevron.compact.down")
@@ -276,8 +347,36 @@ struct TwinTrackAIView: View {
 
     private func newChat() {
         composerFocused = false
+        editingMessageID = nil
         chat.reset()
         if chat.activeID == nil { draft = ""; followsLatest = true }
+    }
+
+    private func beginEditing(_ message: AssistantMessage) {
+        guard message.role == .user, !chat.isGenerating else { return }
+        editingMessageID = message.id
+        draft = message.text
+        composerFocused = true
+    }
+
+    private func cancelEditing() {
+        editingMessageID = nil
+        draft = ""
+        composerFocused = false
+    }
+
+    private func saveEditing() {
+        guard let editingMessageID else { return }
+        let saved = chat.editUserMessage(
+            editingMessageID,
+            to: draft,
+            snapshot: AssistantSnapshot(state: state)
+        )
+        guard saved else { return }
+        self.editingMessageID = nil
+        draft = ""
+        composerFocused = false
+        followsLatest = true
     }
 }
 
@@ -314,6 +413,10 @@ private struct ConversationLibraryView: View {
                         }
                         .buttonStyle(.plain)
                         Menu {
+                            ShareLink(item: ChatExport(title: conversation.title, messages: conversation.messages),
+                                      preview: SharePreview("TwinTrack Chat")) {
+                                Label("Export Chat", systemImage: "square.and.arrow.up")
+                            }
                             Button("Rename") { title = conversation.title; renaming = conversation }
                             Button("Delete", role: .destructive) { deleting = conversation }
                         } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }
@@ -355,6 +458,13 @@ private struct ConversationLibraryView: View {
 extension AssistantConversation {
     static func forApp() -> AssistantConversation {
 #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--assistant-performance-audit"),
+           let index = arguments.firstIndex(of: "--synthetic-chat-library"), arguments.indices.contains(index + 1),
+           let fixtureID = UUID(uuidString: arguments[index + 1]) {
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent("SyntheticChatUITests-\(fixtureID.uuidString)", isDirectory: true)
+            return AssistantConversation(service: FoundationAssistantService(), store: FileConversationStore(directory: directory), deferFileLoad: true)
+        }
         if ProcessInfo.processInfo.arguments.contains("--synthetic-chat-ui-tests") {
             let arguments = ProcessInfo.processInfo.arguments
             if let index = arguments.firstIndex(of: "--synthetic-chat-library"),
@@ -367,7 +477,7 @@ extension AssistantConversation {
             return AssistantConversation(service: SyntheticChatUIService(), store: MemoryConversationStore())
         }
 #endif
-        return AssistantConversation()
+        return AssistantConversation(deferFileLoad: true)
     }
 }
 
@@ -380,6 +490,9 @@ private final class SyntheticChatUIService: AssistantResponding {
         if ProcessInfo.processInfo.arguments.contains("--synthetic-chat-error"), !hasFailed {
             hasFailed = true
             throw AssistantFailure.decoding
+        }
+        if ProcessInfo.processInfo.arguments.contains("--synthetic-chat-export-ui-tests") {
+            return AssistantAnswer(text: "Synthetic export response. No real health data.")
         }
         return AssistantAnswer(text: String(repeating: "Synthetic response: choose one study task, take a short break, and review what you learned.\n\n", count: 18))
     }

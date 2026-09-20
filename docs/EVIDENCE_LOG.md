@@ -1,5 +1,135 @@
 # Evidence Log
 
+## 2026-09-20 — Assistant/chat stabilization and local export
+
+**Final-code automated validation: PASS. Physical freeze approval: PENDING A.** The final 329/329 result below includes the last fallback-order correction and its new regression; it supersedes the earlier 328/328 run. See the matching latest entry in `ASSISTANT_EVALUATION.md` for root causes, exact file manifest, development failures, audit findings and timing details.
+
+- A's supplied issues recorded: short-follow-up context, verbosity/repetition, unsupported environmental claims, sleep/age drift, false uncertainty refusals, refusal explanations, provider identity, UAE crisis preservation and first-entry keyboard delay. Private physical evidence was not requested or inspected.
+- Fixed a confirmed local-guidance context gap, unknown-age duration review, sleep-topic relevance, generic typed/textual refusal explanations and adaptive brevity. Existing role-separated history, safety restrictions, deterministic arithmetic, provider cleanup, crisis handling, editing and saved-chat isolation were retained.
+- Added current/saved **Export Chat** using native local text transfer and a safe date-based `.txt` filename. Only visible text/references/card summaries are projected; diagnostic/provenance/internal metadata is excluded. Empty export is disabled. No app-managed export archive, cloud backend or automatic sharing. Native share panel was visually inspected with synthetic simulator content only; no private screenshot or export was created/committed.
+- Focused checks: assistant **9/9**, export unit **6/6**, export UI **1/1 PASS**. Final configured full run **20:11–20:21: 329/329 PASS (312 unit + 17 UI)**, 0 failed/skipped, 632.4 seconds. The existing launch-only UI test remains excluded from the plan, unchanged; it is not counted as passed.
+- Current Ridge result: **21/21 PASS**, maximum absolute error **2.8421709430404007e-14**, tolerance **9.9999999999999995e-07**. Model parameters, expected outputs and feature order unchanged.
+- Explicit Build and Xcode Analyze: **PASS at 20:25**, compiler/analyzer warnings/errors **0/0**. Final test log separately shows **23 debug/launch warnings**; inspected entries are code-9 test-app termination diagnostics. Apple's duplicate accessibility-loader diagnostic also appears in simulator stdout. These are recorded, not mislabeled as zero total runtime warnings.
+- Current timing sample: availability **49.97 ms**, initialization **49.98 ms**, foreground availability **2.39 ms**, async history **39.06 ms**, tab→appearance **342.18 ms**, tap→focus **397.41 ms**, focus→keyboard-will-show **1544.56 ms**, will-show→visible **427.93 ms**. XCTest tap/keyboard-existence interval **1.9869431250263005 s**. **No model session before typing.** Physical cause/improvement remains unproven; no speculative warm-up or artificial delay.
+- Development evidence retained in evaluation: missing `try` in new tests; wrong Share Sheet Close-button assumption corrected to native dismissal region; an offscreen long-chat assertion followed by one main-run-loop snapshot timeout; a broad duration-report edge corrected; and one existing invented-age regression corrected by preserving the app safeguard's priority. The first complete attempt was interrupted, not counted as a final pass. The export UI fixture is now a short isolated exchange; unchanged long-chat regressions remain in the full suite. Long saved-chat scrolling remains a physical retest item.
+- Final follow-up: preserve the known age-specific correction ahead of generic quality fallback after a repeated duration violation, and exclude real refusals from sleep corrections. Added a ninth stabilization test. The temporary Mac-lock block was resolved; final focused stabilization tests passed **9/9**. The final **329/329** suite and fresh explicit Build/Analyze all passed afterward.
+- Final diff reviewed; `git diff --check` PASS. No new credential/device-identifier pattern matches. Existing generated Xcode user-state file remains excluded from intended changes. No private health data, runtime stores, signing material or unrelated files were accessed for this pass. Nothing staged, committed or pushed; no V2 work.
+
+**Remaining blockers:** A must retest live on-device conversational quality and cold first input, inspect/save a synthetic export locally, and confirm long saved-chat scrolling and Light/Dark/iPad presentation. Automated injected-model tests do not certify real Foundation Models generation. No physical PASS or UI/chat freeze is claimed.
+
+## 2026-09-20 — Final quality/performance/UI audit
+
+A supplied physical PASS reports for existing arithmetic, exercise context, greetings/casual replies, UAE crisis, Watch/Ridge/What-If, editing, photos, refresh and icon. New failures were described in text only: unsupported air-quality claims, repeated sleep explanation, uncertainty falsely refused, long refusal lectures and delayed first composer interaction.
+
+The current audit and reproducible code findings are detailed in `ASSISTANT_EVALUATION.md`. No physical device/private screenshots, health values, photos, identifiers or accounts were inspected. Only repository code and synthetic simulator fixtures were used.
+
+Baseline timing fixture: **1/1 PASS**. Timing-only DEBUG events show 67.12 ms initial availability, 35.93 ms foreground availability, 263.26 ms async history load, 0.04–0.64 ms empty Profile-file checks, 468.36 ms tap→focus and 2041.25 ms focus→keyboard-visible. No model session was created before typing. These are simulator observations, not a physical responsiveness PASS or a proven physical root cause. Raw private transcripts are not required for the retest.
+
+Initial focused quality tests: **10/10 PASS**. Final review additionally corrected provenance after identity cleanup on a retry and prevented an app-owned violence boundary from being replaced again by a generic refusal. Regression coverage includes both edges. An intermediate UI run was stopped to rebuild; the complete suite is being rerun on the final source revision. A compiler actor-isolation warning was fixed before final validation. Current full unit run (17:38): **297 passed, 0 failed, 0 skipped**. Ridge **21/21 PASS**, max error **2.8421709430404007e-14**, tolerance **9.9999999999999995e-07**. Final complete scheme run (17:48–17:58, final source revision): **313 passed, 0 failed, 0 skipped** — **297/297 unit** and **16/16 UI**. One existing launch-only UI test remains excluded by the unchanged plan (314 discovered, 313 executed). Focused audit group: **10/10 PASS**, also included in the final unit suite. Ridge rerun: **21/21 PASS**, maximum absolute error **2.8421709430404007e-14**, tolerance **9.9999999999999995e-07**. Explicit app build and Xcode Analyze both **PASS** (17:59). Compiler warnings/errors: **0/0**. Analyzer warnings/errors: **0/0**. Final test log separately reports **21 debugger warnings** associated with test-app termination/relaunch (`Debug session ended with code 9: killed` was inspected). Apple’s duplicate accessibility-loader diagnostic also appeared in simulator stdout. These are recorded separately from compiler/analyzer results; no test failure accompanied them. `git diff --check`: **PASS**. Staged files: **0**. `git diff --check` passes. The generated-file scan flags only pre-existing tracked `xcuserdata` workspace state for exclusion; no new private data/credential artifact is present and the staging area is empty. Separate runtime/debugger observations: Apple duplicate accessibility-loader class diagnostic; baseline timing test debugger ended with code 9 during test-app termination, with the test passing.
+
+Final-suite timing sample: availability 59.29 ms, conversation initialization 59.30 ms, foreground availability 30.10 ms, async history 172.36 ms, empty Profile checks 0.03–0.05 ms, tab selection→appearance 207.45 ms, tap→focus callback 408.25 ms, focus→keyboard-visible 1979.33 ms. UI tap plus keyboard-existence wait: 1.974 seconds. Zero model sessions before typing. These samples do not prove a physical root cause or an improvement.
+
+Freeze remains pending A's fresh-build physical conversational and first-entry checks. No Ridge/V2 change; nothing staged, committed or pushed.
+
+
+## 2026-09-20 — Conversation context and concise response review
+
+Status: implementation and automated validation complete; live Foundation Models quality remains pending A's physical review.
+
+Confirmed app-side findings:
+
+- Final response policy replaced every refusal-shaped response in an active safety context with the same generic refusal, including useful explanations of why the request was refused.
+- Recent-history budgeting worked one message at a time and stopped at an oversized turn. It could retain an assistant answer while dropping the user statement it answered, or omit the entire nearest exchange. Newline-delimited text did not escape apparent speaker labels embedded in message content.
+- Normal generation, a phrase-specific follow-up retry, and context-limit recovery constructed different contexts. Context recovery discarded all preceding turns. The retry asserted that a short follow-up was benign and swallowed typed errors into a non-refusal fallback.
+- Instructions explicitly encouraged 3–5 sentences / 40–100 words / three tips. This promoted unnecessary advice blocks even when a brief conversational reply was sufficient. Repetition and first-person physical-plan claims were not checked.
+- Saved chats retain message roles/order; reopening does not duplicate the transcript. The runtime creates a fresh session for each request, so there is no additional hidden session history. Assistant text was labeled as Assistant, but could become the only retained antecedent. No private saved chat was inspected.
+
+Implementation: one role-separated, quoted conversation frame budgets user/assistant exchanges together and identifies the last exchange as primary. Compact recovery keeps that exchange. All ordinary turns use this mechanism without a Why/How/Idk phrase-routing table; the existing phrase grammar remains confined to deterministic arithmetic. Refusal metadata is explicit in serialization. Completed non-refused exchanges become the active context, while explicit returns retain the refused boundary. Safe explanatory refusals survive final review; a generic refusal or framework rejection within a refusal context can use a short app-owned boundary explanation without another model attempt.
+
+Default generation now requests 1–3 short sentences, usually under 60 words, with detail only when requested or safety requires it. A single bounded quality repair uses the identical conversation and unchanged safeguards for exact repetition, obvious physical-experience claims, excessive routine length, or a generic refusal to a brief contextual turn. It does not assert the request is benign. Repeated refusals remain refusals; typed safety errors are not swallowed. The quality check does not truncate safety warnings. Rejected candidates and repair instructions are not persisted.
+
+Thirteen new synthetic regressions cover the sky/Why, exercise/How, sleep/How and studying/Idk sequences, preserved refusal explanation, typed-refusal boundary explanation, paired context budgets and escaped labels, context-pressure recovery, save/decode context equivalence, typed safety failure during repair, full refused-context retention, quoted user experiences, and preservation of emergency warnings. Existing arithmetic/Why, stale refusal, greetings, casual replies, crisis, Watch, Ridge, What-If, editing and library tests remain required. These mocks prove context and review behavior, not on-device generation quality.
+
+Validation: initial focused run passed 58/58. The broader run exposed `AssistantPhysicalReviewTests.testSavedRefusalReopensSafelyAndNewChatIsIsolated`: an independent study question retained an old non-refused continuation from the refused chat. Context selection now omits that exchange when the latest turn explicitly establishes an independent benign topic; the existing assertion is unchanged. Intermediate runs were stopped for corrections. Final unit validation: **287/287 PASS**, including **61/61 AssistantFinalFixTests**, on the existing iPhone 17 Pro simulator (2026-09-20 16:50). The unchanged saved-refusal test passes. Ridge golden parity: **21/21 PASS**. **Complete UI suite: 15/15 PASS**, zero failures (2026-09-20 17:01; 551.815 seconds). **Complete configured suite: 302/302 PASS**, from separate full unit and UI target runs on the final code revision. The existing launch-only UI test remains excluded by the unchanged test plan. **App Build: PASS** (17:01). **Xcode Analyze: PASS** (17:02). Compiler/analyzer warnings: **0**. Errors: **0**. The simulator emitted an Apple accessibility duplicate-class diagnostic during UI startup; it did not produce a test failure. `git diff --check` passes. Nothing staged, committed or pushed.
+
+Physical retest: fresh chats for 2+2 → Why; sky statement → Why; exercise statement → How; sleep/energy question → How; earlier-study statement → Idk; approved refusal fixture → Why. Repeat one benign sequence after reopening its chat and after a refusal followed by a new benign exchange. Confirm concise answers, correct speaker/antecedent, no personal plans, no repeated answer and no stale refusal. Report only non-sensitive PASS/FAIL observations.
+
+Ridge/V2, seven-feature order, frozen artifacts, HealthKit, What-If implementation, UI, message editing and storage schema were not changed in this pass. No stage, commit or push.
+
+## 2026-09-19 — Final UI/chat polish before freeze
+
+Confirmed source findings:
+
+- Home retained native `.refreshable`; the undesired sentence and small spinner were app-owned active-refresh UI rather than the native pull control.
+- Profile presented a Photos picker and then a crop sheet from an already presented edit sheet while image loading completed asynchronously. That competing presentation state caused the confirmed picker glitch. Only the processed avatar was stored, so later re-cropping had no source.
+- Benign short-follow-up context reached Foundation Models, but a generic refusal could pass final review. The refusal recognizer missed the “I’m sorry, but I can’t answer…” form, and no bounded repair existed. Immediate versus stale refusal context also needed a stricter boundary for short replies such as “Idk”.
+- The composer overlay already ignored hit testing, local chat loading was deferred, and no model session was created on tab entry. The remaining avoidable main-thread work was duplicate language-model availability checking on each view/task activation.
+
+Implemented evidence: Home removes the visible “Refreshing…” sentence and presents a centered circular material-backed progress indicator only while the existing real HealthKit refresh state is active; native `.refreshable` and refresh semantics remain unchanged. Profile now uses one picker-to-editor navigation flow, stores a bounded sanitized source plus the cropped avatar, exposes the required conditional photo menus, and reopens Edit directly from the local source. ImageIO creates the orientation-normalized bounded source and UIKit re-encoding prevents source GPS and descriptive EXIF values from being copied. Short follow-ups use only the immediate exchange, retain an immediate real refusal, repair a false generic refusal once, and fall back to concise app-owned benign wording if repetition occurs. Duplicate tab-entry availability checks were removed; manual and foreground availability recovery remain.
+
+Current automated results on the existing iPhone 17 Pro simulator:
+
+- Focused assistant tests: **48/48 PASS**, **0 failures**.
+- Focused appearance/photo tests: **14/14 PASS**, **0 failures**.
+- Complete unit target: **274/274 PASS**, **0 failures**.
+- Ridge parity: **21/21 PASS**; maximum absolute error **2.8421709430404007e-14**; tolerance **9.9999999999999995e-07**.
+- Complete UI target: **15/15 PASS**, **0 failures**; the launch-only test remains intentionally excluded by the existing test plan.
+- Complete automated suite: **289/289 PASS** — **274/274 unit** and **15/15 UI**, **0 failures**.
+- Explicit app build: **PASS**.
+- Xcode Analyze: **PASS**.
+- App compiler/analyzer warnings: **0**. Errors: **0**.
+
+The UI-test process emitted an Apple CoreSimulator duplicate accessibility-class diagnostic. It is a simulator-runtime diagnostic rather than an app compiler/analyzer warning and did not fail a test.
+
+Physical visual/interaction status is **PENDING A**. Automated tests do not establish indicator visibility under a real HealthKit refresh, Photos presentation quality on physical iPhone/iPad, or actual first-touch latency. A should use a non-sensitive photo and report only PASS/FAIL or non-sensitive behavior.
+
+Protected Ridge implementation, frozen parameters, golden expected outputs, seven-feature order, HealthKit timing/query semantics, What-If behavior and app architecture were not edited. No private photo, HealthKit record, chat archive, screenshot, device identifier, account, credential, certificate, provisioning/signing file, DerivedData or simulator artifact was added. The local Xcode user-interface state remains excluded. Nothing was staged, committed or pushed.
+
+## 2026-09-19 — Context follow-ups, message editing, and first-tap focus
+
+Confirmed source findings: the short-follow-up failure was in Swift refusal-context reconstruction. A short referential message could inherit an older refusal after a later benign exchange, and prompt reconstruction then omitted the immediately preceding benign question and answer. The first-tap issue was separate from model latency: the visible composer was enabled, but its full-size decorative stroke overlay was still hit-testable and could consume the initial touch.
+
+Implemented evidence: narrow contextual follow-ups now resolve from the immediately preceding exchange. An immediately preceding genuine refusal still carries its safety boundary; an older refusal no longer contaminates a later benign exchange. No mathematical or conversational answer was hard-coded. User-message Edit is available by long press, reuses the existing composer, and provides Cancel/Save. Save replaces the selected user text, removes every later turn, persists that truncated state, and generates one fresh reply. Assistant messages remain read-only. File-backed relaunch coverage verifies that removed downstream turns do not reappear. The composer overlay now ignores hit testing; the tab does not auto-focus and no delay or model warm-up was added.
+
+Exact automated results on the existing iPhone 17 Pro simulator:
+
+- Focused assistant tests: **40/40 PASS**, **0 failures**.
+- Focused chat-library/editing tests: **20/20 PASS**, **0 failures**.
+- Focused first-tap UI regression: **1/1 PASS**.
+- Focused user-message Edit Cancel/Save UI regression: **1/1 PASS**.
+- Complete suite: **275/275 PASS** — **260/260 unit**, **15/15 UI**, **0 failures**.
+- Ridge parity: **21/21 PASS**; maximum absolute error **2.8421709430404007e-14**; tolerance **9.9999999999999995e-07**.
+- Explicit app build: **PASS**.
+- App compiler warnings: **0**. Build/test errors: **0**.
+
+Protected Ridge implementation, frozen parameters, golden expected outputs, seven-feature order, HealthKit behavior, and What-If behavior were not edited. The UI-test process may emit Apple simulator runtime diagnostics; these are separate from app compiler warnings and caused no failure.
+
+Privacy/diff status: no private HealthKit record, chat archive, screenshot, device identifier, account, credential, certificate, provisioning/signing file, DerivedData, or simulator artifact was added. Existing `.DS_Store` and Xcode `xcuserdata` files remain excluded. The Xcode user-interface state changed locally during authorized validation and must not be committed. Nothing was staged, committed, or pushed.
+
+Physical status: **PENDING A**. A should verify fresh contextual follow-ups, genuine-refusal follow-up, the approved suicide/UAE response, first-tap keyboard focus, Edit Cancel/Save for latest and earlier user turns, relaunch persistence, and that assistant messages do not offer Edit. Only PASS/FAIL and non-sensitive observations are needed.
+
+## 2026-09-19 — Final chat quality and crisis-response stabilization
+
+Confirmed source findings: no TwinTrack string, instruction or fallback contains the observed “chatbot created by Apple” wording. Typed Foundation Models errors are mapped to app-owned categories; the provider sentence therefore crossed the successful generated-text channel, where the final reviewer lacked a provider-identity guard. Explicit immediate suicide intent also lacked a deterministic pre-generation branch. Separately, the first production chat construction synchronously read and decoded the local versioned chat archive on the main actor. The app does not expose enough information to classify the successful provider text further as an Apple framework refusal versus another safety completion, and this log does not claim otherwise.
+
+Implemented evidence: a narrow current-message crisis route now returns app-owned UAE action before generation (**999** or nearest emergency department, **998** for ambulance, trusted adult/person, move away from possible means). Denials, discussion, tiredness, ordinary stress and casual messages remain outside that route. Direct provider self-identification in successful output is replaced by the concise TwinTrack refusal, while quoted user text is ignored. Local chat archive decoding now runs off the main actor and merges any new active conversation before persistence. No model warm-up or speculative generation was added.
+
+Exact automated results on the existing iPhone 17 Pro simulator:
+
+- Focused assistant suite: **36/36 PASS**, **0 failures**.
+- Complete suite: **265/265 PASS** — **252/252 unit**, **13/13 UI**, **0 failures**.
+- New deferred-file-load preservation test: PASS as part of the unit suite.
+- Ridge parity: **21/21 PASS**; maximum absolute error **2.8421709430404007e-14**; tolerance **9.9999999999999995e-07**.
+- Explicit app build: **PASS**.
+- Xcode Analyze: **PASS**.
+- Compiler warnings: **0**. Analyzer warnings: **0**. Errors: **0**.
+
+Two initial targeted/full invocations made before the active destination was set produced Xcode “No tests were found” reports. They executed no tests and are not counted as failures. After selecting the existing simulator, the focused and complete runs above passed. The UI-test process emitted one Apple CoreSimulator duplicate-accessibility-class runtime diagnostic; it is not an app source warning and did not fail a test.
+
+Frozen Ridge parameters, golden expected outputs and seven-feature order were not edited. HealthKit prediction inputs and UI layout were not changed. The Xcode user-interface state file changed locally during authorized validation and remains excluded. No private HealthKit data, chat archive, screenshot, device identifier, account, credential, certificate, provisioning/signing material, DerivedData or simulator artifact was added. Nothing was staged, committed or pushed.
+
+Physical status: **PENDING A**. Automated tests do not establish on-device language quality or first-open responsiveness. A should run the five ordinary prompts and the explicit-crisis prompt listed in `ASSISTANT_EVALUATION.md`, then compare first versus second chat opening. Only behavior/PASS/FAIL is required; no private transcript or health value should be recorded.
+
 ## Working Foundation Models baseline reported by A — 2026-09-15
 
 “User-reported physical testing: Foundation Models behavior now works.”

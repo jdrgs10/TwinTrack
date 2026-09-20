@@ -51,13 +51,13 @@ struct AssistantSnapshot: Sendable {
     }
 }
 
-struct AssistantField: Codable, Equatable, Sendable {
+nonisolated struct AssistantField: Codable, Equatable, Sendable {
     let label: String
     let value: String
 }
 
 /// All card fields are constructed by Swift, never decoded from model prose.
-struct AssistantCard: Identifiable, Codable, Equatable, Sendable {
+nonisolated struct AssistantCard: Identifiable, Codable, Equatable, Sendable {
     enum Kind: String, Codable, Sendable { case current, scenario, history, clarification, unavailable }
     let id: UUID
     let kind: Kind

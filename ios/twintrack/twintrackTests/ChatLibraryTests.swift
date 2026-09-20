@@ -83,6 +83,28 @@ final class ChatLibraryTests: XCTestCase {
         XCTAssertNil(relaunched.storageIssue)
     }
 
+    func testDeferredFileLoadKeepsNewConversationAndExistingLibrary() async throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = FileConversationStore(directory: directory)
+        let existing = saved()
+        try store.save([existing])
+
+        let chat = AssistantConversation(service: LibraryService(), store: store, deferFileLoad: true)
+        chat.send("Synthetic message sent while the library loads")
+        await finish(chat)
+        for _ in 0..<5000 {
+            if chat.conversations.count == 2 { break }
+            await Task.yield()
+        }
+
+        XCTAssertEqual(chat.conversations.count, 2)
+        XCTAssertTrue(chat.conversations.contains { $0.id == existing.id })
+        XCTAssertTrue(chat.conversations.contains { $0.id == chat.activeID })
+        XCTAssertEqual(try store.load().count, 2)
+        XCTAssertNil(chat.storageIssue)
+    }
+
     func testVersionOneRoundTripAndProtectedBackupExcludedFile() throws {
         let directory = temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -214,6 +236,76 @@ final class ChatLibraryTests: XCTestCase {
         XCTAssertEqual(service.transcripts.last?.map(\.text), ["New question"])
         XCTAssertNotEqual(chat.activeID, old)
         XCTAssertEqual(chat.conversations.first(where: { $0.id == old })?.messages.count, 1)
+    }
+
+    func testEditLatestUserMessageReplacesItAndRegenerates() async throws {
+        let service = LibraryService()
+        let store = MemoryConversationStore()
+        let chat = AssistantConversation(service: service, store: store)
+        chat.send("What is 2+2?"); await finish(chat)
+        let originalAnswerID = try XCTUnwrap(chat.messages.last?.id)
+        let userID = try XCTUnwrap(chat.messages.first?.id)
+
+        XCTAssertTrue(chat.editUserMessage(userID, to: "What is 3+3?"))
+        await finish(chat)
+
+        XCTAssertEqual(chat.messages.map(\.text), ["What is 3+3?", "Synthetic library response"])
+        XCTAssertNotEqual(chat.messages.last?.id, originalAnswerID)
+        XCTAssertEqual(service.transcripts.last?.map(\.text), ["What is 3+3?"])
+        XCTAssertEqual(store.conversations.first?.messages, chat.messages)
+    }
+
+    func testEditEarlierUserMessageRemovesAllLaterTurnsBeforeRegenerating() async throws {
+        let service = LibraryService()
+        let store = MemoryConversationStore()
+        let chat = AssistantConversation(service: service, store: store)
+        chat.send("What is 2+2?"); await finish(chat)
+        let firstUserID = try XCTUnwrap(chat.messages.first?.id)
+        chat.send("Why?"); await finish(chat)
+        XCTAssertEqual(chat.messages.count, 4)
+
+        XCTAssertTrue(chat.editUserMessage(firstUserID, to: "What is 3+3?"))
+        await finish(chat)
+
+        XCTAssertEqual(chat.messages.map(\.text), ["What is 3+3?", "Synthetic library response"])
+        XCTAssertEqual(service.transcripts.last?.map(\.text), ["What is 3+3?"])
+        XCTAssertFalse(chat.messages.contains { $0.text == "Why?" })
+        XCTAssertEqual(store.conversations.first?.messages, chat.messages)
+    }
+
+    func testRejectedEditLeavesConversationUnchanged() async throws {
+        let service = LibraryService()
+        let chat = AssistantConversation(service: service)
+        chat.send("Original question"); await finish(chat)
+        let original = chat.messages
+        let assistantID = try XCTUnwrap(chat.messages.last?.id)
+
+        XCTAssertFalse(chat.editUserMessage(assistantID, to: "Attempted assistant edit"))
+        XCTAssertFalse(chat.editUserMessage(try XCTUnwrap(chat.messages.first?.id), to: "  \n "))
+        XCTAssertEqual(chat.messages, original)
+        XCTAssertEqual(service.transcripts.count, 1)
+    }
+
+    func testEditedConversationPersistsWithoutResurrectingDownstreamTurns() async throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = FileConversationStore(directory: directory)
+        let service = LibraryService()
+        let chat = AssistantConversation(service: service, store: store)
+        chat.send("First version"); await finish(chat)
+        let firstUserID = try XCTUnwrap(chat.messages.first?.id)
+        chat.send("Downstream follow-up"); await finish(chat)
+        let id = try XCTUnwrap(chat.activeID)
+
+        XCTAssertTrue(chat.editUserMessage(firstUserID, to: "Edited version"))
+        await finish(chat)
+        let edited = chat.messages
+        XCTAssertEqual(edited.map(\.text), ["Edited version", "Synthetic library response"])
+
+        let reopened = AssistantConversation(service: LibraryService(), store: FileConversationStore(directory: directory))
+        reopened.open(id)
+        XCTAssertEqual(reopened.messages, edited)
+        XCTAssertFalse(reopened.messages.contains { $0.text == "Downstream follow-up" })
     }
 
     func testInterruptedReopenedChatRequiresExplicitCurrentInputRetry() async throws {

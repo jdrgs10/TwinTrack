@@ -19,7 +19,7 @@ struct FoundationTextClient: FoundationTextGenerating {
     func reply(to prompt: String, instructions: String) async throws -> String {
         guard availability == .available else { throw AssistantFailure.forAvailability(availability) }
         do {
-            let session = LanguageModelSession(instructions: instructions)
+            let session = AssistantPerformance.measure(.sessionInit) { LanguageModelSession(instructions: instructions) }
             let response = try await session.respond(to: prompt,
                 options: GenerationOptions(maximumResponseTokens: 450))
             try Task.checkCancellation()

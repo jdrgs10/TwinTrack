@@ -22,7 +22,7 @@ enum AssistantFailure: String, Error, Equatable {
     var message: String {
         switch self {
         case .contextLimit: "This request needs less context. Shorten it or start a new chat; your saved chat stays intact."
-        case .safety: "The on-device model could not answer that request. You can ask about a different topic."
+        case .safety: "I can’t help with that request. You can ask about a different topic."
         case .language: "The on-device model does not support this language or region yet."
         case .unavailable: "On-device chat is unavailable. Check Apple Intelligence availability."
         case .failed: "Couldn’t complete that response. Please try again."
@@ -38,11 +38,11 @@ enum AssistantFailure: String, Error, Equatable {
     }
 }
 
-struct AssistantMessage: Identifiable, Equatable, Codable {
-    enum Role: String, Codable { case user, assistant }
+nonisolated struct AssistantMessage: Identifiable, Equatable, Codable, Sendable {
+    nonisolated enum Role: String, Codable, Sendable { case user, assistant }
     let id: UUID
     let role: Role
-    let text: String
+    var text: String
     var cards: [AssistantCard] = []
     let createdAt: Date
     var safetyRefusal: Bool? = nil
@@ -90,22 +90,48 @@ final class AssistantConversation: ObservableObject {
     private var libraryReadable = true
     private var activeCreatedAt = Date()
     private var activeTitle = ""
+    private var libraryLoadInProgress = false
 
     private let service: any AssistantResponding
     private var task: Task<Void, Never>?
     private var generation = 0
     private var requestSnapshot = AssistantSnapshot()
 
-    init(service: (any AssistantResponding)? = nil, store: (any ConversationPersisting)? = nil) {
+    init(service: (any AssistantResponding)? = nil, store: (any ConversationPersisting)? = nil,
+         deferFileLoad: Bool = false) {
+        let began = ProcessInfo.processInfo.systemUptime
+        defer { AssistantPerformance.mark(.conversationInit, duration: ProcessInfo.processInfo.systemUptime - began) }
         let service = service ?? FoundationAssistantService()
         self.service = service
         // Injected services default to an isolated memory library for unit tests.
         self.store = store ?? (service is FoundationAssistantService ? FileConversationStore() as any ConversationPersisting : MemoryConversationStore())
-        availability = service.availability
-        do { conversations = try self.store.load() }
-        catch {
-            libraryReadable = false
-            storageIssue = "Saved chats could not be opened. The existing file has not been replaced."
+        availability = AssistantPerformance.measure(.availability) { service.availability }
+        if deferFileLoad, let fileStore = self.store as? FileConversationStore {
+            libraryLoadInProgress = true
+            Task { [weak self] in
+                do {
+                    let began = ProcessInfo.processInfo.systemUptime
+                    let loaded = try await fileStore.loadAsync()
+                    AssistantPerformance.mark(.historyLoad, duration: ProcessInfo.processInfo.systemUptime - began)
+                    guard let self else { return }
+                    self.libraryLoadInProgress = false
+                    self.conversations = loaded
+                    if !self.messages.isEmpty {
+                        self.persistActive(self.isGenerating ? .generating : .idle)
+                    }
+                } catch {
+                    guard let self else { return }
+                    self.libraryLoadInProgress = false
+                    self.libraryReadable = false
+                    self.storageIssue = "Saved chats could not be opened. The existing file has not been replaced."
+                }
+            }
+        } else {
+            do { conversations = try self.store.load() }
+            catch {
+                libraryReadable = false
+                storageIssue = "Saved chats could not be opened. The existing file has not been replaced."
+            }
         }
     }
 
@@ -115,7 +141,7 @@ final class AssistantConversation: ObservableObject {
         return (message.sourceIDs ?? []).compactMap { AssistantGuidance.resolve($0, for: context) }
     }
 
-    func checkAvailability() { availability = service.availability }
+    func checkAvailability() { availability = AssistantPerformance.measure(.availability) { service.availability } }
 
     func send(_ text: String, snapshot: AssistantSnapshot? = nil) {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -194,6 +220,35 @@ final class AssistantConversation: ObservableObject {
     }
 
     @discardableResult
+    func editUserMessage(_ id: UUID, to replacement: String,
+                         snapshot: AssistantSnapshot? = nil) -> Bool {
+        let replacement = replacement.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !isGenerating, !replacement.isEmpty,
+              replacement.count <= 2000, replacement.utf8.count <= 4000,
+              let index = messages.firstIndex(where: { $0.id == id && $0.role == .user }) else {
+            return false
+        }
+        checkAvailability()
+        guard availability == .available else { return false }
+
+        messages[index].text = replacement
+        messages[index].cards = []
+        messages[index].safetyRefusal = nil
+        messages[index].provenance = nil
+        messages[index].sourceIDs = nil
+        if index + 1 < messages.endIndex {
+            messages.removeSubrange((index + 1)..<messages.endIndex)
+        }
+        liveReplyIDs.formIntersection(Set(messages.map(\.id)))
+        failure = nil
+        wasCancelled = false
+        needsFreshRetry = false
+        requestSnapshot = snapshot ?? AssistantSnapshot()
+        start()
+        return true
+    }
+
+    @discardableResult
     func rename(_ id: UUID, to title: String) -> Bool {
         guard storageIssue == nil else { return false }
         let title = String(title.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80))
@@ -216,6 +271,7 @@ final class AssistantConversation: ObservableObject {
     }
 
     func retryStorage() {
+        guard !libraryLoadInProgress else { return }
         if !libraryReadable {
             do { conversations = try store.load(); libraryReadable = true; storageIssue = nil }
             catch { return }
@@ -224,7 +280,7 @@ final class AssistantConversation: ObservableObject {
     }
 
     private func persistActive(_ completion: ChatCompletion) {
-        guard let activeID, !messages.isEmpty else { return }
+        guard !libraryLoadInProgress, let activeID, !messages.isEmpty else { return }
         let record = SavedConversation(id: activeID, title: activeTitle, createdAt: activeCreatedAt,
             updatedAt: Date(), messages: messages, completion: completion)
         var updated = conversations.filter { $0.id != activeID }

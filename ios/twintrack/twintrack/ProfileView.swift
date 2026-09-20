@@ -40,6 +40,22 @@ enum ProfileStorage {
             .appendingPathComponent("TwinTrackProfile", isDirectory: true)
             .appendingPathComponent("profile-image.jpg")
     }
+
+    static func profileSourceImageURL(fileManager: FileManager = .default) -> URL {
+#if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if let index = arguments.firstIndex(of: "--synthetic-profile-ui-tests"),
+           arguments.indices.contains(index + 1),
+           let id = UUID(uuidString: arguments[index + 1]) {
+            return fileManager.temporaryDirectory
+                .appendingPathComponent("TwinTrack.ProfileUITests.\(id.uuidString)", isDirectory: true)
+                .appendingPathComponent("profile-source.jpg")
+        }
+#endif
+        return fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("TwinTrackProfile", isDirectory: true)
+            .appendingPathComponent("profile-source.jpg")
+    }
 }
 
 @MainActor
@@ -47,18 +63,14 @@ enum ProfileImageStorage {
     enum StorageError: Error { case invalidImage }
 
     static func load(from fileURL: URL) -> Data? {
+        let began = ProcessInfo.processInfo.systemUptime
+        defer { AssistantPerformance.mark(.profileImageLoad, duration: ProcessInfo.processInfo.systemUptime - began) }
         guard let data = try? Data(contentsOf: fileURL), UIImage(data: data) != nil else { return nil }
         return data
     }
 
     static func normalizedJPEG(from sourceData: Data) -> Data? {
-        guard let source = UIImage(data: sourceData), source.size.width > 0, source.size.height > 0 else { return nil }
-        let maximumDimension: CGFloat = 1_024
-        let scale = min(1, maximumDimension / max(source.size.width, source.size.height))
-        let size = CGSize(width: max(1, source.size.width * scale), height: max(1, source.size.height * scale))
-        let renderer = UIGraphicsImageRenderer(size: size)
-        let image = renderer.image { _ in source.draw(in: CGRect(origin: .zero, size: size)) }
-        return image.jpegData(compressionQuality: 0.86)
+        ProfilePhotoCropper.sanitizedSourceJPEG(from: sourceData)
     }
 
     static func save(_ data: Data?, to fileURL: URL, fileManager: FileManager = .default) throws {
@@ -90,17 +102,27 @@ struct ProfileView: View {
     @AppStorage private var studentName: String
     @AppStorage private var gradeLevel: String
     @State private var profileImageData: Data?
+    @State private var profileSourceImageData: Data?
     @State private var profileImageError: String?
     @State private var isShowingManualInputs = false
     @State private var isShowingEditProfile = false
     private let profileImageURL: URL
+    private let profileSourceImageURL: URL
 
     init(defaults: UserDefaults = ProfileStorage.defaults()) {
         let imageURL = ProfileStorage.profileImageURL()
+        let sourceImageURL = ProfileStorage.profileSourceImageURL()
+        let avatar = ProfileImageStorage.load(from: imageURL)
         _studentName = AppStorage(wrappedValue: "", ProfileStorage.studentNameKey, store: defaults)
         _gradeLevel = AppStorage(wrappedValue: "", ProfileStorage.gradeLevelKey, store: defaults)
-        _profileImageData = State(initialValue: ProfileImageStorage.load(from: imageURL))
+        _profileImageData = State(initialValue: avatar)
+        // A legacy avatar predates editable-source storage. It remains a valid,
+        // metadata-free fallback source until the user chooses another photo.
+        _profileSourceImageData = State(initialValue: avatar.flatMap {
+            ProfileImageStorage.load(from: sourceImageURL) ?? $0
+        })
         profileImageURL = imageURL
+        profileSourceImageURL = sourceImageURL
     }
 
     private var palette: ProfilePalette { ProfilePalette(colorScheme) }
@@ -250,13 +272,16 @@ struct ProfileView: View {
                 EditProfileSheet(
                     initialName: studentName,
                     initialGradeLevel: gradeLevel,
-                    initialImageData: profileImageData
-                ) { name, grade, imageData in
+                    initialImageData: profileImageData,
+                    initialSourceImageData: profileSourceImageData
+                ) { name, grade, imageData, sourceImageData in
                     studentName = name
                     gradeLevel = grade
                     do {
+                        try ProfileImageStorage.save(sourceImageData, to: profileSourceImageURL)
                         try ProfileImageStorage.save(imageData, to: profileImageURL)
                         profileImageData = imageData
+                        profileSourceImageData = sourceImageData
                     } catch {
                         profileImageError = "Your profile details were saved, but the selected photo could not be stored."
                     }
@@ -489,24 +514,34 @@ struct ProfileView: View {
 }
 
 private struct EditProfileSheet: View {
+    private struct CropSelection: Identifiable, Hashable {
+        let id = UUID()
+        let data: Data
+    }
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @State private var name: String
     @State private var gradeLevel: String
     @State private var imageData: Data?
+    @State private var sourceImageData: Data?
     @State private var selectedPhoto: PhotosPickerItem?
+    @State private var cropSelection: CropSelection?
     @State private var photoError: String?
-    let onSave: (String, String, Data?) -> Void
+    @State private var isPreparingPhoto = false
+    let onSave: (String, String, Data?, Data?) -> Void
 
     init(
         initialName: String,
         initialGradeLevel: String,
         initialImageData: Data?,
-        onSave: @escaping (String, String, Data?) -> Void
+        initialSourceImageData: Data?,
+        onSave: @escaping (String, String, Data?, Data?) -> Void
     ) {
         _name = State(initialValue: initialName)
         _gradeLevel = State(initialValue: initialGradeLevel)
         _imageData = State(initialValue: initialImageData)
+        _sourceImageData = State(initialValue: initialSourceImageData)
         self.onSave = onSave
     }
 
@@ -530,10 +565,28 @@ private struct EditProfileSheet: View {
                                     .frame(minHeight: 44)
                             }
                             .accessibilityIdentifier("profilePhotoPicker")
+                            .disabled(isPreparingPhoto)
                             if imageData != nil {
-                                Button("Remove Photo", role: .destructive) { imageData = nil }
+                                Button("Edit Photo") {
+                                    if let sourceImageData {
+                                        cropSelection = CropSelection(data: sourceImageData)
+                                    }
+                                }
+                                .frame(minHeight: 44)
+                                .disabled(sourceImageData == nil || isPreparingPhoto)
+                                .accessibilityIdentifier("editProfilePhotoButton")
+                                Button("Remove Photo", role: .destructive) {
+                                    imageData = nil
+                                    sourceImageData = nil
+                                }
                                     .frame(minHeight: 44)
+                                    .disabled(isPreparingPhoto)
                                     .accessibilityIdentifier("removeProfilePhotoButton")
+                            }
+                            if isPreparingPhoto {
+                                ProgressView()
+                                    .accessibilityLabel("Preparing photo")
+                                    .accessibilityIdentifier("profilePhotoPreparing")
                             }
                         }
                     }
@@ -562,7 +615,7 @@ private struct EditProfileSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         guard let normalizedName, let normalizedGrade else { return }
-                        onSave(normalizedName, normalizedGrade, imageData)
+                        onSave(normalizedName, normalizedGrade, imageData, sourceImageData)
                         dismiss()
                     }
                     .fontWeight(.semibold)
@@ -570,20 +623,47 @@ private struct EditProfileSheet: View {
                     .accessibilityIdentifier("saveProfileButton")
                 }
             }
-            .onChange(of: selectedPhoto) { _, item in
-                guard let item else { return }
-                Task {
-                    do {
-                        guard let sourceData = try await item.loadTransferable(type: Data.self),
-                              let normalized = ProfileImageStorage.normalizedJPEG(from: sourceData) else {
-                            photoError = "That image could not be used. Choose another photo."
-                            return
-                        }
-                        imageData = normalized
-                        photoError = nil
-                    } catch {
-                        photoError = "That image could not be loaded. Choose another photo."
+            .task(id: selectedPhoto) {
+                guard let item = selectedPhoto else { return }
+                isPreparingPhoto = true
+                defer { isPreparingPhoto = false }
+                do {
+                    guard let originalData = try await item.loadTransferable(type: Data.self) else {
+                        photoError = "That image could not be used. Choose another photo."
+                        selectedPhoto = nil
+                        return
                     }
+                    try Task.checkCancellation()
+                    let prepared = await Task.detached(priority: .userInitiated) {
+                        ProfilePhotoCropper.sanitizedSourceJPEG(from: originalData)
+                    }.value
+                    try Task.checkCancellation()
+                    guard let prepared else {
+                        photoError = "That image could not be used. Choose another photo."
+                        selectedPhoto = nil
+                        return
+                    }
+                    selectedPhoto = nil
+                    photoError = nil
+                    cropSelection = CropSelection(data: prepared)
+                } catch is CancellationError {
+                    return
+                } catch {
+                    selectedPhoto = nil
+                    photoError = "That image could not be loaded. Choose another photo."
+                }
+            }
+            .navigationDestination(item: $cropSelection) { selection in
+                if let editor = ProfilePhotoCropEditor(
+                    sourceData: selection.data,
+                    onSave: { croppedData in
+                        sourceImageData = selection.data
+                        imageData = croppedData
+                    }
+                ) {
+                    editor
+                } else {
+                    Text("That image could not be used.")
                 }
             }
             .alert("Photo Unavailable", isPresented: Binding(
@@ -652,9 +732,9 @@ enum ProfileDetailDestination: String, Identifiable, Equatable {
             return [
                 (nil, "TwinTrack AI handles only the information needed for its current app features."),
                 ("HealthKit data", "With permission, TwinTrack reads summarized sleep, steps, exercise and resting-heart-rate values for the documented time windows. Raw Health samples are not saved in TwinTrack storage."),
-                ("Stored app data", "Manual inputs, prediction history, saved chats, profile name and grade are stored locally. An optional profile image is stored in protected local app storage and excluded from system backup."),
+                ("Stored app data", "Manual inputs, prediction history, saved chats, profile name and grade are stored locally. An optional processed avatar and resized editing source are stored in protected local app storage and excluded from system backup."),
                 ("Foundation Models and tools", "For a personalized request, current summarized TwinTrack values and relevant conversation content may be provided to Apple's on-device Foundation Models framework. Numerical predictions remain separate and are calculated by the local Ridge model."),
-                ("External services", "The current app has no TwinTrack account, server backend, cloud sync or analytics. System backups may include some locally stored app preferences and prediction history; saved chats and the optional profile image are excluded from backup."),
+                ("External services", "The current app has no TwinTrack account, server backend, cloud sync or analytics. System backups may include some locally stored app preferences and prediction history; saved chats and optional profile images are excluded from backup."),
                 ("Your control", "You can review Health access in Settings, clear prediction history from Data & Privacy, delete saved chats from Chat Library, and remove your profile image from Edit Profile."),
             ]
         case .termsOfUse:

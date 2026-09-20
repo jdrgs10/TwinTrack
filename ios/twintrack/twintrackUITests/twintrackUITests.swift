@@ -3,6 +3,47 @@ import XCTest
 final class twintrackUITests: XCTestCase {
 
     @MainActor
+    func testExportCurrentAndSavedChatCancelPreservesConversation() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-chat-ui-tests", "--synthetic-chat-export-ui-tests",
+                               "--synthetic-chat-library", UUID().uuidString,
+                               "--synthetic-profile-ui-tests", UUID().uuidString]
+        app.launch()
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        app.buttons["assistantChatOptions"].tap()
+        XCTAssertFalse(app.buttons["Export Chat"].isEnabled)
+        app.tap()
+        let field = app.textFields["assistantComposer"].exists ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+        field.tap()
+        field.typeText("Synthetic export test")
+        app.buttons["assistantSend"].tap()
+        XCTAssertTrue(app.staticTexts["assistantReplyMessage"].waitForExistence(timeout: 5))
+        app.buttons["assistantDismissKeyboard"].tap()
+        app.buttons["assistantChatOptions"].tap()
+        app.buttons["Export Chat"].tap()
+        let dismissShare = app.otherElements["PopoverDismissRegion"]
+        XCTAssertTrue(dismissShare.waitForExistence(timeout: 5), "Native share panel must open.")
+        dismissShare.tap()
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantUserMessage").count, 1)
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantReplyMessage").count, 1)
+        app.buttons["assistantLibrary"].tap()
+        app.buttons["Chat options for Synthetic export test"].tap()
+        app.buttons["Export Chat"].tap()
+        XCTAssertTrue(dismissShare.waitForExistence(timeout: 5))
+        dismissShare.tap()
+        app.buttons["Done"].tap()
+        app.terminate()
+        app.launch()
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        app.buttons["assistantLibrary"].tap()
+        app.buttons.containing(.staticText, identifier: "Synthetic export test").firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["assistantReplyMessage"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["assistantUserMessage"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantUserMessage").count, 1)
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantReplyMessage").count, 1)
+    }
+
+    @MainActor
     func testAssistantBuildMarkerIsVisibleInAbout() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--synthetic-chat-ui-tests"]
@@ -72,6 +113,98 @@ final class twintrackUITests: XCTestCase {
         app.buttons["assistantManualWhatIf"].tap()
         XCTAssertTrue(app.buttons["whatIfRun"].waitForExistence(timeout: 5))
         app.buttons["Done"].tap()
+    }
+
+    @MainActor
+    func testFirstEntryTimingWithRealAvailabilityAndIsolatedHistory() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--assistant-performance-audit", "--synthetic-chat-library", UUID().uuidString,
+                               "--synthetic-profile-ui-tests", UUID().uuidString]
+        app.launch()
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        let field = app.textFields["assistantComposer"].exists ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        let began = ProcessInfo.processInfo.systemUptime
+        field.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
+        print("AUDIT UI tap-and-keyboard-wait seconds: \(ProcessInfo.processInfo.systemUptime - began)")
+        field.typeText("Synthetic typing without generation")
+        XCTAssertEqual(field.value as? String, "Synthetic typing without generation")
+        app.buttons["assistantDismissKeyboard"].tap()
+        app.buttons["About on-device chat"].tap()
+        app.buttons["Performance timings (DEBUG)"].tap()
+        let timings = app.staticTexts["assistantPerformanceTimings"]
+        XCTAssertTrue(timings.waitForExistence(timeout: 3))
+        print("AUDIT TIMINGS\n" + timings.label)
+        XCTAssertTrue(timings.label.contains("composerFocused"))
+        XCTAssertTrue(timings.label.contains("keyboardVisible"))
+        XCTAssertTrue(timings.label.contains("keyboardWillShow"))
+        XCTAssertTrue(timings.label.contains("historyLoad"))
+        XCTAssertFalse(timings.label.contains("sessionInit"), "Typing must not initialize a model session.")
+    }
+
+    @MainActor
+    func testAssistantComposerFocusesOnFirstTap() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-chat-ui-tests"]
+        app.launch()
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        let field = app.textFields["assistantComposer"].exists
+            ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        field.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3),
+                      "One tap on the visible composer must focus it and show the keyboard.")
+        field.typeText("First tap accepted")
+        XCTAssertEqual(field.value as? String, "First tap accepted")
+        app.buttons["assistantDismissKeyboard"].tap()
+        app.tabBars.buttons["Home"].tap()
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        let reopenedField = app.textFields["assistantComposer"].exists
+            ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+        reopenedField.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3),
+                      "Returning to the chat must also focus the composer on the first tap.")
+    }
+
+    @MainActor
+    func testUserMessageEditCancelAndSave() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-chat-ui-tests", "--synthetic-chat-library", UUID().uuidString]
+        app.launch()
+        app.tabBars.buttons["TwinTrack AI"].tap()
+        let field = app.textFields["assistantComposer"].exists
+            ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+        field.tap()
+        field.typeText("Original editable message")
+        app.buttons["assistantSend"].tap()
+        let original = app.staticTexts["Original editable message"]
+        XCTAssertTrue(original.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Synthetic response:")).firstMatch.waitForExistence(timeout: 5))
+        if app.buttons["assistantDismissKeyboard"].exists { app.buttons["assistantDismissKeyboard"].tap() }
+
+        original.press(forDuration: 1)
+        XCTAssertTrue(app.buttons["Edit"].waitForExistence(timeout: 3))
+        app.buttons["Edit"].tap()
+        XCTAssertTrue(app.buttons["assistantEditCancel"].waitForExistence(timeout: 3))
+        XCTAssertEqual(field.value as? String, "Original editable message")
+        app.buttons["assistantEditCancel"].tap()
+        XCTAssertTrue(original.exists)
+
+        original.press(forDuration: 1)
+        app.buttons["Edit"].tap()
+        field.tap()
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue,
+                              count: "Original editable message".count) + "Edited message")
+        app.buttons["assistantEditSave"].tap()
+
+        XCTAssertTrue(app.staticTexts["Edited message"].waitForExistence(timeout: 5))
+        XCTAssertFalse(original.exists)
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantUserMessage").count, 1)
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantReplyMessage").count, 1)
     }
 
     @MainActor
@@ -222,6 +355,8 @@ final class twintrackUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["profileDisplayGrade"].label, "Grade 12")
         app.buttons["editProfileButton"].tap()
         XCTAssertTrue(app.buttons["profilePhotoPicker"].exists)
+        XCTAssertEqual(app.buttons["profilePhotoPicker"].label, "Choose Photo")
+        XCTAssertFalse(app.buttons["editProfilePhotoButton"].exists)
         XCTAssertFalse(app.buttons["removeProfilePhotoButton"].exists)
         app.buttons["Cancel"].tap()
 
@@ -403,6 +538,7 @@ final class twintrackUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Refresh"].exists)
         home.swipeDown()
         XCTAssertTrue(app.staticTexts["pageTitle.Home"].exists)
+        XCTAssertFalse(app.staticTexts["Refreshing Apple Health…"].exists)
 
         let openAI = app.buttons["openTwinTrackAI"]
         for _ in 0..<8 {

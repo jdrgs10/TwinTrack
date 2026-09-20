@@ -1,8 +1,8 @@
 import Foundation
 
-struct AssistantProvenance: Codable, Equatable {
+nonisolated struct AssistantProvenance: Codable, Equatable, Sendable {
     static let currentBuild = "FMQ-2026-09-15-E"
-    enum Origin: String, Codable {
+    nonisolated enum Origin: String, Codable, Sendable {
         case model = "On-device model"
         case sleepReading = "Swift · readCurrentSleep"
         case current = "Swift · readCurrentTwin"

@@ -35,6 +35,7 @@ struct ContentView: View {
     }
 
     private func select(_ tab: TwinTrackTab) {
+        if tab == .ai { AssistantPerformance.mark(.tabSelected) }
         var transaction = Transaction(animation: nil)
         transaction.disablesAnimations = true
         withTransaction(transaction) {

@@ -60,12 +60,23 @@ enum AssistantGuidance {
         return formatter.number(from: text)?.intValue
     }
 
+    // Carry the nearest user topic through brief turns, never promoting an
+    // assistant's generated health claims into user intent or a stated age.
+    static func topicContext(for messages: [AssistantMessage]) -> String {
+        guard !AssistantContext.requiresSafetyContext(for: messages) else { return messages.last?.text ?? "" }
+        let recent = messages.filter { $0.role == .user }.suffix(4)
+        var turns: [String] = []
+        for message in recent.reversed() {
+            turns.insert(message.text, at: 0)
+            if message.text.split(whereSeparator: { $0.isWhitespace }).count > 5
+                || AssistantContext.independentBenignTopic(message.text) { break }
+        }
+        return turns.joined(separator: "\n")
+    }
+
     static func selected(for messages: [AssistantMessage]) -> [AssistantGuidanceSource] {
         guard !AssistantContext.requiresSafetyContext(for: messages) else { return [] }
-        var text = messages.last?.text.lowercased() ?? ""
-        if AssistantRouter.matches(#"\b(?:same|that|it|more|recommendation)\b"#, text) {
-            text += " " + (messages.dropLast().last(where: { $0.role == .user })?.text.lowercased() ?? "")
-        }
+        let text = topicContext(for: messages).lowercased()
         let age = statedAge(in: messages)
         let teenContext = AssistantRouter.matches(#"\b(?:teen|teens|teenager|teenagers|adolescent|adolescents)\b"#, text)
         let adultContext = AssistantRouter.matches(#"\badults?\b"#, text)
@@ -89,8 +100,8 @@ enum AssistantGuidance {
         let notes = selected(for: messages)
         guard !notes.isEmpty else { return "" }
         let stated = statedAge(in: messages)
-        let age = stated.map { "User-stated age: \($0)." } ?? "Age unknown: distinguish age groups or ask briefly when relevant."
-        return "\nLocal reviewed guidance (not response text). \(age) Answer for the stated age directly; no unrelated age table.\n" + notes.map {
+        let age = stated.map { "User-stated age: \($0)." } ?? "Age unknown: do not assume an adult or teenager. Do not prescribe a fixed sleep duration to this user; recommendations vary by age. Ask age only when a duration recommendation is requested."
+        return "\nLocal reviewed guidance (not response text). \(age) Answer for the stated age directly; no unrelated age table. Apply only guidance relevant to the latest question. A sleep/energy explanation should address recovery, alertness, concentration and tiredness, not expand into chronic disease risks unless asked.\n" + notes.map {
             let guidance = $0.id == "cdc-student-sleep" && stated.map({ (13...18).contains($0) }) == true
                 ? Self.teenSleepGuidance : $0.guidance
             return "[\($0.id)] \(guidance) \($0.limitations)"

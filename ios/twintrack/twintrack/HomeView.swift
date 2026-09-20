@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @EnvironmentObject private var state: TwinTrackState
@@ -34,8 +35,20 @@ struct HomeView: View {
                 await state.refreshHealth()
             }
             .tint(palette.accent)
+            .background(
+                NativeRefreshTintConfigurator(tint: UIColor(palette.accent))
+                    .allowsHitTesting(false)
+            )
             .scrollBounceBehavior(.always)
             .background(palette.background.ignoresSafeArea())
+            .overlay(alignment: .top) {
+                if state.isRefreshingHealth {
+                    refreshStatusOverlay
+                        .padding(.top, 10)
+                        .transition(.opacity)
+                        .zIndex(10)
+                }
+            }
             .navigationTitle("Home")
             .toolbar(.hidden, for: .navigationBar)
             .toolbarBackground(palette.background, for: .tabBar)
@@ -58,21 +71,21 @@ struct HomeView: View {
             .accessibilityValue(state.healthAccess.rawValue)
 
             Spacer()
-            if state.isRefreshingHealth {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(palette.accent)
-                    Text("Refreshing…")
-                        .font(.footnote)
-                }
-                .foregroundStyle(palette.primaryText)
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Refreshing Apple Health")
-                .accessibilityIdentifier("homeRefreshIndicator")
-            }
         }
         .padding(.horizontal, 20)
+    }
+
+    private var refreshStatusOverlay: some View {
+        ProgressView()
+        .controlSize(.regular)
+        .tint(palette.accent)
+        .frame(width: 42, height: 42)
+        .background(.regularMaterial, in: Circle())
+        .overlay { Circle().stroke(palette.accentBorder, lineWidth: 1) }
+        .shadow(color: .black.opacity(colorScheme == .dark ? 0.34 : 0.14), radius: 8, y: 3)
+        .accessibilityLabel("Refreshing Apple Health")
+        .accessibilityIdentifier("homeRefreshIndicator")
+        .allowsHitTesting(false)
     }
 
     private var predictionHero: some View {
@@ -478,6 +491,48 @@ private struct HomePalette {
             violetBorder = Color(red: 218 / 255, green: 212 / 255, blue: 246 / 255)
             green = Color(red: 24 / 255, green: 122 / 255, blue: 70 / 255)
             amber = Color(red: 154 / 255, green: 102 / 255, blue: 8 / 255)
+        }
+    }
+}
+
+private struct NativeRefreshTintConfigurator: UIViewRepresentable {
+    let tint: UIColor
+
+    func makeUIView(context: Context) -> RefreshTintProbe {
+        let view = RefreshTintProbe()
+        view.refreshTint = tint
+        view.isUserInteractionEnabled = false
+        view.backgroundColor = .clear
+        return view
+    }
+
+    func updateUIView(_ view: RefreshTintProbe, context: Context) {
+        view.refreshTint = tint
+        view.applyTint()
+    }
+}
+
+private final class RefreshTintProbe: UIView {
+    var refreshTint: UIColor = .systemBlue
+
+    override func didMoveToSuperview() {
+        super.didMoveToSuperview()
+        applyTint()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        applyTint()
+    }
+
+    func applyTint() {
+        var candidate = superview
+        while let view = candidate {
+            if let scrollView = view as? UIScrollView, let refreshControl = scrollView.refreshControl {
+                refreshControl.tintColor = refreshTint
+                return
+            }
+            candidate = view.superview
         }
     }
 }

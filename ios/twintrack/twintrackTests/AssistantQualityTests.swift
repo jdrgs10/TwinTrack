@@ -206,7 +206,7 @@ final class AssistantQualityTests: XCTestCase {
         XCTAssertEqual(client.prompts.count, 1)
         XCTAssertLessThan(client.prompts[0].utf8.count, 3400)
         XCTAssertLessThan(client.instructions[0].utf8.count, 4000)
-        XCTAssertTrue(client.instructions[0].contains("40–100 words"))
+        XCTAssertTrue(client.instructions[0].contains("1–3 short sentences"))
     }
 
     private func complete() -> AssistantSnapshot {

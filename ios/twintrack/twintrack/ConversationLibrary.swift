@@ -1,8 +1,8 @@
 import Foundation
 
-enum ChatCompletion: String, Codable { case idle, generating, cancelled, failed }
+nonisolated enum ChatCompletion: String, Codable, Sendable { case idle, generating, cancelled, failed }
 
-struct SavedConversation: Identifiable, Codable, Equatable {
+nonisolated struct SavedConversation: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     var title: String
     let createdAt: Date
@@ -19,7 +19,7 @@ protocol ConversationPersisting {
 enum ConversationStorageError: Error { case unsupportedVersion, invalidData }
 
 struct FileConversationStore: ConversationPersisting {
-    struct Archive: Codable {
+    nonisolated struct Archive: Codable, Sendable {
         let version: Int
         let conversations: [SavedConversation]
     }
@@ -32,6 +32,10 @@ struct FileConversationStore: ConversationPersisting {
     }
 
     func load() throws -> [SavedConversation] {
+        try Self.decode(file)
+    }
+
+    private nonisolated static func decode(_ file: URL) throws -> [SavedConversation] {
         guard FileManager.default.fileExists(atPath: file.path) else { return [] }
         let archive = try JSONDecoder().decode(Archive.self, from: Data(contentsOf: file))
         guard archive.version == 1 else { throw ConversationStorageError.unsupportedVersion }
@@ -41,6 +45,13 @@ struct FileConversationStore: ConversationPersisting {
             throw ConversationStorageError.invalidData
         }
         return archive.conversations
+    }
+
+    func loadAsync() async throws -> [SavedConversation] {
+        let file = file
+        return try await Task.detached(priority: .userInitiated) {
+            try Self.decode(file)
+        }.value
     }
 
     func save(_ conversations: [SavedConversation]) throws {
