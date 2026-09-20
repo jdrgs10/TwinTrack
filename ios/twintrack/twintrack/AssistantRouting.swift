@@ -342,12 +342,11 @@ enum AssistantContext {
         let text = text.lowercased().replacingOccurrences(of: "’", with: "'")
         // Require a first-person statement of intent or active ideation. Topic
         // discussion, ordinary distress, and an explicit denial stay conversational.
-        guard !AssistantRouter.matches(#"\b(?:i(?:'m| am) not suicidal|i (?:do not|don't) want to (?:kill|harm|hurt) myself|i (?:am not|am no longer) thinking about suicide|no (?:suicidal thoughts|thoughts of suicide|self[ -]?harm))\b"#, text) else {
-            return false
-        }
-        return AssistantRouter.matches(#"\bi(?:'m| am) (?:thinking about|considering|planning|about to) (?:suicide|killing myself|harming myself|hurting myself|ending my life)\b"#, text)
+        // Match affirmative clauses individually: a denial elsewhere in the message
+        // must not suppress a separate, current statement of intent.
+        return AssistantRouter.matches(#"\bi(?:'m| am) (?:thinking about|considering|planning|about to) (?:suicide|committing suicide|killing myself|harming myself|hurting myself|ending my life)\b"#, text)
             || AssistantRouter.matches(#"\bi (?:want|plan|intend|am going|might) to (?:kill|harm|hurt) myself\b"#, text)
-            || AssistantRouter.matches(#"\bi (?:want|plan|intend|am going|might) to end my life\b"#, text)
+            || AssistantRouter.matches(#"\bi (?:want|plan|intend|am going|might) to (?:commit suicide|end my life)\b"#, text)
             || AssistantRouter.matches(#"\bi (?:don't|do not) want to (?:live|be alive)\b"#, text)
             || AssistantRouter.matches(#"\bi(?:'m| am) suicidal\b"#, text)
     }

@@ -35,14 +35,35 @@ final class FoundationAssistantService: AssistantResponding {
     }
 
     func respond(to messages: [AssistantMessage], snapshot: AssistantSnapshot) async throws -> AssistantAnswer {
+        try Task.checkCancellation()
+        if let crisis = Self.crisisResponse(to: messages) { return crisis }
+        do {
+            return try await respondNormally(to: messages, snapshot: snapshot)
+        } catch {
+            // Cover initial generation and both bounded recovery paths. Reclassify
+            // original user input, never the model's error text or generated reply.
+            if let crisis = Self.safetyFallback(for: error, messages: messages) { return crisis }
+            throw error
+        }
+    }
+
+    static func safetyFallback(for error: Error, messages: [AssistantMessage]) -> AssistantAnswer? {
+        guard AssistantFailure.classify(error) == .safety else { return nil }
+        return crisisResponse(to: messages)
+    }
+
+    private static func crisisResponse(to messages: [AssistantMessage]) -> AssistantAnswer? {
+        guard let request = messages.last, request.role == .user,
+              AssistantContext.isImmediateMentalHealthCrisis(request.text) else { return nil }
+        return AssistantAnswer(text: AssistantResponsePolicy.mentalHealthCrisis,
+                               provenance: AssistantProvenance(.urgent))
+    }
+
+    private func respondNormally(to messages: [AssistantMessage], snapshot: AssistantSnapshot) async throws -> AssistantAnswer {
         guard availability == .available else { throw AssistantFailure.forAvailability(availability) }
         try Task.checkCancellation()
         let request = messages.last?.text ?? ""
         let run = AssistantToolRun(snapshot: snapshot, userMessage: request)
-        if AssistantContext.isImmediateMentalHealthCrisis(request) {
-            return AssistantAnswer(text: AssistantResponsePolicy.mentalHealthCrisis,
-                                   provenance: AssistantProvenance(.urgent))
-        }
         if AssistantGuidance.isUrgent(request) {
             return AssistantAnswer(text: AssistantResponsePolicy.urgent, provenance: AssistantProvenance(.urgent))
         }

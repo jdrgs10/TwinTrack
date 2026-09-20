@@ -1,5 +1,11 @@
 # Evidence Log
 
+## 2026-09-20 — Final self-harm routing correction
+
+A reported “I want to commit suicide.” reaching a generic framework safety failure. Repository inspection confirmed a missing first-person intent alternative and no app-owned typed-safety crisis fallback. The exact older failure sentence is absent from current source; no device/private logs were inspected.
+
+The unchanged approved UAE crisis response now precedes framework availability/generation for explicit intent. A shared typed-safety fallback reclassifies original user input only, preserving non-crisis refusals and ordinary conversation. Focused synthetic simulator tests: **12/12 PASS**. Complete unit/UI suite: **341/341 PASS**, no failures (22:17–22:28, **631.9 seconds**, existing launch-only UI exclusion unchanged). Ridge: **21/21 PASS**, max error **2.8421709430404007e-14**, tolerance **9.9999999999999995e-07**. Explicit simulator Build: **PASS** (22:29). Analyze: **PASS** (22:30). Compiler/analyzer warnings/errors: **0/0**, Issue Navigator empty with filters off. Final diff formatting check: **PASS**. Only two assistant source files, the new synthetic test file and the two validation documents are intended changes; generated workspace state is excluded. Separate test-run diagnostics: **23 debugger/launch warnings** grouped as one summary warning; inspected code-9 termination message. No test failures. See `ASSISTANT_EVALUATION.md` for routing evidence, scope and test coverage. Physical confirmation remains pending A; no screenshots, personal health records or identifiers collected. No staging, commit or push.
+
 ## 2026-09-20 — Assistant/chat stabilization and local export
 
 **Final-code automated validation: PASS. Physical freeze approval: PENDING A.** The final 329/329 result below includes the last fallback-order correction and its new regression; it supersedes the earlier 328/328 run. See the matching latest entry in `ASSISTANT_EVALUATION.md` for root causes, exact file manifest, development failures, audit findings and timing details.
