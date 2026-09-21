@@ -1,0 +1,128 @@
+{
+  "schema_version": 2,
+  "model_version": "2.0-aligned.1",
+  "synthetic_only": true,
+  "deployment_approved": false,
+  "features": [
+    "sleep_hours",
+    "steps",
+    "exercise_minutes",
+    "resting_heart_rate",
+    "study_minutes",
+    "screen_time_minutes",
+    "previous_score"
+  ],
+  "mean": [
+    6.893367192513169,
+    7602.392533333334,
+    35.680491590870176,
+    70.00158015140309,
+    83.97364444444445,
+    230.44768888888888,
+    71.96339108923353
+  ],
+  "scale": [
+    1.8129136060381408,
+    3726.399121553887,
+    39.56264352884094,
+    6.982683392864397,
+    61.4284354608065,
+    128.27836752414166,
+    12.381057867207895
+  ],
+  "coefficients_standardized": [
+    0.1310519732504526,
+    0.018218189739313176,
+    -0.03395381241831078,
+    -0.2983694775880961,
+    0.6573390901058191,
+    -0.5428067503081153,
+    9.650262220075692
+  ],
+  "intercept_standardized": 71.57690906344517,
+  "coefficients_raw": [
+    0.07228804109250833,
+    4.888952885893848e-06,
+    -0.0008582291118529188,
+    -0.04272991639474873,
+    0.010700892594362502,
+    -0.004231475351492609,
+    0.7794376153943269
+  ],
+  "intercept_raw": 18.04878383673281,
+  "alpha": 100.0,
+  "training_rows": 45000,
+  "training_selection": "all ten predeclared training splits pooled; no holdout rows",
+  "training_seeds": [
+    3101,
+    3102,
+    3103,
+    3104,
+    3105,
+    3106,
+    3107,
+    3108,
+    3109,
+    3110
+  ],
+  "pooled_cv_seed": 3201,
+  "output_clamp": [
+    0,
+    100
+  ],
+  "bounds": {
+    "sleep_hours": [
+      0,
+      12
+    ],
+    "steps": [
+      0,
+      30000
+    ],
+    "exercise_minutes": [
+      0,
+      180
+    ],
+    "resting_heart_rate": [
+      35,
+      120
+    ],
+    "study_minutes": [
+      0,
+      360
+    ],
+    "screen_time_minutes": [
+      0,
+      720
+    ],
+    "previous_score": [
+      0,
+      100
+    ]
+  },
+  "units": {
+    "sleep_hours": "hours in captured sleep window",
+    "steps": "count in previous day",
+    "exercise_minutes": "minutes",
+    "resting_heart_rate": "bpm",
+    "study_minutes": "minutes",
+    "screen_time_minutes": "minutes",
+    "previous_score": "0\u2013100 score points"
+  },
+  "task": {
+    "population": "Grade12 educational prototype; transfer validity unknown",
+    "target": "current-profile score on 0\u2013100 scale; not a validated forecast",
+    "prediction_horizon": null,
+    "sleep": "union asleep hours yesterday local noon to min(refresh,today noon)",
+    "steps": "previous completed local calendar day sum",
+    "exercise_minutes": "previous completed local calendar day sum",
+    "resting_heart_rate": "latest valid positive finite sample startDate in inclusive last72 elapsed hours; timestamp retained",
+    "study_minutes": "latest saved user-entered minutes; reporting period/date unknown",
+    "screen_time_minutes": "latest saved user-entered minutes; reporting period/date/content unknown",
+    "previous_score": "latest saved 0\u2013100 user score; date/subject/comparability unknown"
+  },
+  "missing_policy": "abstain on missing required input; never substitute zero",
+  "metadata_gate": "existing health-window freshness and RHR timestamp checks; no invented 28-day coverage or manual-entry date",
+  "input_transforms": "none except StandardScaler; nonlinear functions belong only to synthetic target generation",
+  "what_if_time_constraint": "Different source periods; do not sum all inputs into one fictitious 24-hour day"
+}

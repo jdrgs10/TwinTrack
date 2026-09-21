@@ -555,6 +555,43 @@ final class twintrackUITests: XCTestCase {
     }
 
     @MainActor
+    func testV2PredictionVersionManualMeaningAndHistoryPersist() throws {
+        let app = XCUIApplication()
+        let fixtureID = UUID().uuidString
+        app.launchArguments = ["--synthetic-v2-ui-tests", fixtureID, "--synthetic-profile-ui-tests", fixtureID]
+        app.launch()
+        let run = app.buttons["runPrediction"]
+        XCTAssertTrue(run.waitForExistence(timeout: 10))
+        let eligible = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: run)
+        XCTAssertEqual(XCTWaiter.wait(for: [eligible], timeout: 10), .completed)
+        for _ in 0..<4 { if run.isHittable { break }; app.swipeUp() }
+        run.tap()
+        XCTAssertTrue(app.staticTexts["TwinTrack Ridge V2 · 2.0-final.1"].firstMatch.waitForExistence(timeout: 5))
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.staticTexts["TwinTrack Ridge V2 · 2.0-final.1"].firstMatch.waitForExistence(timeout: 10))
+        app.tabBars.buttons["Profile"].tap()
+        let manualInputs = app.buttons["manualInputsButton"]
+        for _ in 0..<4 { if manualInputs.isHittable { break }; app.swipeUp() }
+        manualInputs.tap()
+        XCTAssertTrue(app.textFields["v2Subject"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["v2Subject"].value as? String, "Synthetic maths")
+        XCTAssertTrue(app.staticTexts["Yesterday’s outside-class study for this subject, including study on screens. Exclude classes, breaks and overlaps."].exists)
+        XCTAssertTrue(app.staticTexts["Yesterday’s recreational screens. Exclude study; count overlapping devices once."].exists)
+        app.buttons["Cancel"].tap()
+        let privacy = app.buttons["dataPrivacyButton"]
+        for _ in 0..<6 { if privacy.isHittable { break }; app.swipeUp() }
+        privacy.tap()
+        let stored = app.buttons["viewStoredDataButton"]
+        for _ in 0..<8 { if stored.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(stored.isHittable)
+        stored.tap()
+        let v1 = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "TwinTrack Ridge V1 · Legacy")).firstMatch
+        for _ in 0..<8 { if v1.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(v1.exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "TwinTrack Ridge V2 · 2.0-final.1")).firstMatch.exists)
+    }
+
+    @MainActor
     func testPredictionHistoryHonestEmptyState() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--synthetic-profile-ui-tests", UUID().uuidString]

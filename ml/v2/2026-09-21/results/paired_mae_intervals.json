@@ -1,0 +1,29 @@
+{
+  "ridge_six_minus_previous_only": {
+    "mae_difference_first_minus_second": -0.07399672234395664,
+    "ci_95": [
+      -0.1195146047642696,
+      -0.02917865907491418
+    ],
+    "replicates": 2000,
+    "unit": "independent synthetic row"
+  },
+  "ridge_seven_minus_previous_only": {
+    "mae_difference_first_minus_second": -0.07007065753106172,
+    "ci_95": [
+      -0.11603086874801621,
+      -0.024629505379030026
+    ],
+    "replicates": 2000,
+    "unit": "independent synthetic row"
+  },
+  "ridge_seven_minus_ridge_six": {
+    "mae_difference_first_minus_second": 0.003926064812894942,
+    "ci_95": [
+      -0.0006263219203048582,
+      0.008434589004036099
+    ],
+    "replicates": 2000,
+    "unit": "independent synthetic row"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "model_version": "2.0-candidate.1",
+  "synthetic_only": true,
+  "deployment_approved": false,
+  "features": [
+    "sleep_hours",
+    "steps",
+    "exercise_minutes",
+    "study_minutes",
+    "screen_time_minutes",
+    "previous_score"
+  ],
+  "mean": [
+    7.511415074078421,
+    7030.411530461356,
+    34.314273467026965,
+    82.37388799393221,
+    229.11312724893514,
+    72.17279998026176
+  ],
+  "scale": [
+    0.9068313428120468,
+    2006.575554646038,
+    26.28150389109708,
+    53.0165817068898,
+    107.75772533918558,
+    12.212366180498488
+  ],
+  "coefficients_standardized": [
+    0.4289361129184896,
+    0.40759810667616836,
+    -0.32629645444017386,
+    0.7020226373073837,
+    -0.3281435143139486,
+    9.55354295153795
+  ],
+  "intercept_standardized": 71.67179307598937,
+  "coefficients_raw": [
+    0.47300538994205504,
+    0.00020313120317468888,
+    -0.012415440752258759,
+    0.013241567349411966,
+    -0.0030451971149266714,
+    0.7822843509879092
+  ],
+  "intercept_raw": 10.264067392895598,
+  "alpha": 0.1,
+  "training_seed": 1101,
+  "output_clamp": [
+    0,
+    100
+  ],
+  "bounds": {
+    "sleep_hours": [
+      5,
+      10
+    ],
+    "steps": [
+      1000,
+      18000
+    ],
+    "exercise_minutes": [
+      0,
+      120
+    ],
+    "study_minutes": [
+      0,
+      300
+    ],
+    "screen_time_minutes": [
+      0,
+      480
+    ],
+    "previous_score": [
+      0,
+      100
+    ]
+  },
+  "task": "Grade12_same_subject_test_7_days_after_28_day_window_v2",
+  "missing_policy": "abstain; never replace missing inputs with zero"
+}

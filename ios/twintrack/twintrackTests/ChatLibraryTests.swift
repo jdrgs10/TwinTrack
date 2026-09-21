@@ -338,7 +338,7 @@ final class ChatLibraryTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: name) }
         let state = TwinTrackState(defaults: defaults, healthService: LibraryHealthFixture())
         await state.requestHealthAccess()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         XCTAssertTrue(state.runPrediction())
         let service = LibraryService()
         service.cards = [card(.current), card(.scenario)]
@@ -348,7 +348,7 @@ final class ChatLibraryTests: XCTestCase {
         await finish(chat)
         let id = try XCTUnwrap(chat.activeID)
         let originalMessages = chat.messages
-        state.saveManualInputs(studyMinutes: 180, screenTimeMinutes: 200, previousScore: 80)
+        state.saveV2TestInputs(studyMinutes: 180, screenTimeMinutes: 200, previousScore: 80)
         let inputs = AssistantSnapshot(state: state).values
         let prediction = state.lastPrediction
         let history = state.predictionHistory
@@ -445,6 +445,6 @@ private struct LibraryHealthFixture: HealthDataProviding {
     let isAvailable = true
     func requestAccess() async throws {}
     func read(window: HealthDataWindow) async -> HealthReadings {
-        HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30), restingHeartRate: .available(60))
+        HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30), restingHeartRate: .available(60), restingHeartRateSampleDate: window.day.start)
     }
 }

@@ -1,0 +1,2656 @@
+{
+  "model_version": "2.0-final.1",
+  "parameter_sha256": "62cb14d443221f9f2e426280ebdf52d7ef8614812a89ef5031329642ff040024",
+  "tolerance": 1e-06,
+  "feature_order": [
+    "sleep_hours",
+    "steps",
+    "exercise_minutes",
+    "resting_heart_rate",
+    "study_minutes",
+    "screen_time_minutes",
+    "previous_score"
+  ],
+  "profiles": [
+    {
+      "name": "ordinary_0",
+      "inputs": {
+        "sleep_hours": 5.026733895941334,
+        "steps": 6698.0,
+        "exercise_minutes": 49.88770842923241,
+        "resting_heart_rate": 81.52608502603346,
+        "study_minutes": 48.0,
+        "screen_time_minutes": 500.0,
+        "previous_score": 75.1513697898029
+      },
+      "expected_raw": 71.92782731279496,
+      "expected_clamped": 71.92782731279496,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_1",
+      "inputs": {
+        "sleep_hours": 3.0444262460299676,
+        "steps": 5554.0,
+        "exercise_minutes": 13.959566048020813,
+        "resting_heart_rate": 72.19108769894517,
+        "study_minutes": 187.0,
+        "screen_time_minutes": 255.0,
+        "previous_score": 57.828111638074134
+      },
+      "expected_raw": 61.13757220997421,
+      "expected_clamped": 61.13757220997421,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_2",
+      "inputs": {
+        "sleep_hours": 7.600520950056221,
+        "steps": 7692.0,
+        "exercise_minutes": 4.007630077957839,
+        "resting_heart_rate": 81.12728338535409,
+        "study_minutes": 11.0,
+        "screen_time_minutes": 252.0,
+        "previous_score": 67.88427666224784
+      },
+      "expected_raw": 67.08311373058353,
+      "expected_clamped": 67.08311373058353,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_3",
+      "inputs": {
+        "sleep_hours": 8.84030959829818,
+        "steps": 8227.0,
+        "exercise_minutes": 43.399348116262985,
+        "resting_heart_rate": 73.60414778725855,
+        "study_minutes": 0.0,
+        "screen_time_minutes": 81.0,
+        "previous_score": 68.44174393651586
+      },
+      "expected_raw": 68.63748027615004,
+      "expected_clamped": 68.63748027615004,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_4",
+      "inputs": {
+        "sleep_hours": 3.7439871563889255,
+        "steps": 3325.0,
+        "exercise_minutes": 37.25773260266798,
+        "resting_heart_rate": 68.66589890848218,
+        "study_minutes": 115.0,
+        "screen_time_minutes": 0.0,
+        "previous_score": 88.74776088824585
+      },
+      "expected_raw": 85.8281694257844,
+      "expected_clamped": 85.8281694257844,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_5",
+      "inputs": {
+        "sleep_hours": 7.876205738556038,
+        "steps": 5399.0,
+        "exercise_minutes": 26.444574663906103,
+        "resting_heart_rate": 67.22811916729356,
+        "study_minutes": 128.0,
+        "screen_time_minutes": 194.0,
+        "previous_score": 72.53089161242066
+      },
+      "expected_raw": 72.90580570122057,
+      "expected_clamped": 72.90580570122057,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_6",
+      "inputs": {
+        "sleep_hours": 6.804229001252768,
+        "steps": 9064.0,
+        "exercise_minutes": 0.0,
+        "resting_heart_rate": 67.83568500240852,
+        "study_minutes": 0.0,
+        "screen_time_minutes": 381.0,
+        "previous_score": 64.70563745283386
+      },
+      "expected_raw": 64.4645322912212,
+      "expected_clamped": 64.4645322912212,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_7",
+      "inputs": {
+        "sleep_hours": 5.138091786141949,
+        "steps": 8109.0,
+        "exercise_minutes": 0.0,
+        "resting_heart_rate": 73.70575411659054,
+        "study_minutes": 44.0,
+        "screen_time_minutes": 60.0,
+        "previous_score": 85.26478415137913
+      },
+      "expected_raw": 81.87313662902385,
+      "expected_clamped": 81.87313662902385,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_8",
+      "inputs": {
+        "sleep_hours": 7.5403754539600065,
+        "steps": 4260.0,
+        "exercise_minutes": 25.60917713652617,
+        "resting_heart_rate": 67.11672654589319,
+        "study_minutes": 81.0,
+        "screen_time_minutes": 249.0,
+        "previous_score": 56.7608063001045
+      },
+      "expected_raw": 59.90279478838158,
+      "expected_clamped": 59.90279478838158,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_9",
+      "inputs": {
+        "sleep_hours": 7.194799040976349,
+        "steps": 7121.0,
+        "exercise_minutes": 46.663570459235025,
+        "resting_heart_rate": 62.35653713814253,
+        "study_minutes": 0.0,
+        "screen_time_minutes": 322.0,
+        "previous_score": 78.86237694049179
+      },
+      "expected_raw": 76.13067592459855,
+      "expected_clamped": 76.13067592459855,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_10",
+      "inputs": {
+        "sleep_hours": 8.949653440930064,
+        "steps": 10829.0,
+        "exercise_minutes": 100.14788911721,
+        "resting_heart_rate": 70.61970546613296,
+        "study_minutes": 114.0,
+        "screen_time_minutes": 96.0,
+        "previous_score": 79.4470029096401
+      },
+      "expected_raw": 78.52835199119137,
+      "expected_clamped": 78.52835199119137,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_11",
+      "inputs": {
+        "sleep_hours": 4.737713834465179,
+        "steps": 11260.0,
+        "exercise_minutes": 50.714984424037105,
+        "resting_heart_rate": 71.52093637915907,
+        "study_minutes": 55.0,
+        "screen_time_minutes": 221.0,
+        "previous_score": 85.87847247434122
+      },
+      "expected_raw": 81.88608161069595,
+      "expected_clamped": 81.88608161069595,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_12",
+      "inputs": {
+        "sleep_hours": 7.739382171127304,
+        "steps": 8323.0,
+        "exercise_minutes": 21.6753057741382,
+        "resting_heart_rate": 71.0190169371279,
+        "study_minutes": 131.0,
+        "screen_time_minutes": 57.0,
+        "previous_score": 79.19295149357434
+      },
+      "expected_raw": 78.4550748328539,
+      "expected_clamped": 78.4550748328539,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_13",
+      "inputs": {
+        "sleep_hours": 6.280224530659371,
+        "steps": 4117.0,
+        "exercise_minutes": 0.757732275919344,
+        "resting_heart_rate": 72.39724992491722,
+        "study_minutes": 0.0,
+        "screen_time_minutes": 419.0,
+        "previous_score": 70.6058308061812
+      },
+      "expected_raw": 68.72356121781344,
+      "expected_clamped": 68.72356121781344,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_14",
+      "inputs": {
+        "sleep_hours": 6.250322982880483,
+        "steps": 8321.0,
+        "exercise_minutes": 13.062626194018282,
+        "resting_heart_rate": 64.36763710313036,
+        "study_minutes": 24.0,
+        "screen_time_minutes": 372.0,
+        "previous_score": 93.87010819288338
+      },
+      "expected_raw": 87.59777177278184,
+      "expected_clamped": 87.59777177278184,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_15",
+      "inputs": {
+        "sleep_hours": 7.866660874728645,
+        "steps": 9092.0,
+        "exercise_minutes": 48.12088301516678,
+        "resting_heart_rate": 71.95850845783758,
+        "study_minutes": 48.0,
+        "screen_time_minutes": 158.0,
+        "previous_score": 59.158984576989795
+      },
+      "expected_raw": 61.57139604210473,
+      "expected_clamped": 61.57139604210473,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_16",
+      "inputs": {
+        "sleep_hours": 6.447519346314376,
+        "steps": 7845.0,
+        "exercise_minutes": 13.286419577814902,
+        "resting_heart_rate": 63.063143863990355,
+        "study_minutes": 100.0,
+        "screen_time_minutes": 145.0,
+        "previous_score": 60.46900484020917
+      },
+      "expected_raw": 63.43414013028254,
+      "expected_clamped": 63.43414013028254,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_17",
+      "inputs": {
+        "sleep_hours": 8.105686852767683,
+        "steps": 6457.0,
+        "exercise_minutes": 0.0,
+        "resting_heart_rate": 82.76432687343991,
+        "study_minutes": 29.0,
+        "screen_time_minutes": 166.0,
+        "previous_score": 52.951842988600966
+      },
+      "expected_raw": 55.99342528566356,
+      "expected_clamped": 55.99342528566356,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_18",
+      "inputs": {
+        "sleep_hours": 7.902519038226437,
+        "steps": 9271.0,
+        "exercise_minutes": 81.13992040789275,
+        "resting_heart_rate": 53.75969476593771,
+        "study_minutes": 117.0,
+        "screen_time_minutes": 291.0,
+        "previous_score": 86.82337388371477
+      },
+      "expected_raw": 84.1592352168179,
+      "expected_clamped": 84.1592352168179,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_19",
+      "inputs": {
+        "sleep_hours": 8.496896396465008,
+        "steps": 4690.0,
+        "exercise_minutes": 18.177608099838903,
+        "resting_heart_rate": 67.8704504490045,
+        "study_minutes": 109.0,
+        "screen_time_minutes": 71.0,
+        "previous_score": 76.90138425709456
+      },
+      "expected_raw": 76.65070302840867,
+      "expected_clamped": 76.65070302840867,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_20",
+      "inputs": {
+        "sleep_hours": 6.9669387278959505,
+        "steps": 8627.0,
+        "exercise_minutes": 0.0,
+        "resting_heart_rate": 85.50202400701906,
+        "study_minutes": 55.0,
+        "screen_time_minutes": 63.0,
+        "previous_score": 52.80236179719377
+      },
+      "expected_raw": 56.31774317534439,
+      "expected_clamped": 56.31774317534439,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_21",
+      "inputs": {
+        "sleep_hours": 5.829058268748263,
+        "steps": 7294.0,
+        "exercise_minutes": 11.308200919524229,
+        "resting_heart_rate": 76.79577978443076,
+        "study_minutes": 180.0,
+        "screen_time_minutes": 165.0,
+        "previous_score": 65.75564881372924
+      },
+      "expected_raw": 67.61536831059813,
+      "expected_clamped": 67.61536831059813,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_22",
+      "inputs": {
+        "sleep_hours": 7.07471028218697,
+        "steps": 7684.0,
+        "exercise_minutes": 37.02006172096262,
+        "resting_heart_rate": 68.34769283474687,
+        "study_minutes": 74.0,
+        "screen_time_minutes": 228.0,
+        "previous_score": 66.96683382420044
+      },
+      "expected_raw": 67.72588045917271,
+      "expected_clamped": 67.72588045917271,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_23",
+      "inputs": {
+        "sleep_hours": 8.485659288364218,
+        "steps": 8122.0,
+        "exercise_minutes": 0.0,
+        "resting_heart_rate": 60.013421252256386,
+        "study_minutes": 91.0,
+        "screen_time_minutes": 206.0,
+        "previous_score": 75.59728632647224
+      },
+      "expected_raw": 75.15351774647576,
+      "expected_clamped": 75.15351774647576,
+      "allowed": true
+    },
+    {
+      "name": "ordinary_24",
+      "inputs": {
+        "sleep_hours": 7.7018775263706125,
+        "steps": 11928.0,
+        "exercise_minutes": 5.3448035411242385,
+        "resting_heart_rate": 75.41179255822604,
+        "study_minutes": 28.0,
+        "screen_time_minutes": 337.0,
+        "previous_score": 56.93637803979906
+      },
+      "expected_raw": 58.5857464724297,
+      "expected_clamped": 58.5857464724297,
+      "allowed": true
+    },
+    {
+      "name": "sleep_hours_boundary_0",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.188352087945,
+      "expected_clamped": 71.188352087945,
+      "allowed": true
+    },
+    {
+      "name": "sleep_hours_boundary_12",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.25574944416152,
+      "expected_clamped": 72.25574944416152,
+      "allowed": true
+    },
+    {
+      "name": "steps_boundary_0",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 0,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.97231633235548,
+      "expected_clamped": 71.97231633235548,
+      "allowed": true
+    },
+    {
+      "name": "steps_boundary_30000",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 30000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.47156963189053,
+      "expected_clamped": 71.47156963189053,
+      "allowed": true
+    },
+    {
+      "name": "exercise_minutes_boundary_0",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.79631731969252,
+      "expected_clamped": 71.79631731969252,
+      "allowed": true
+    },
+    {
+      "name": "exercise_minutes_boundary_180",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.10055905854408,
+      "expected_clamped": 72.10055905854408,
+      "allowed": true
+    },
+    {
+      "name": "resting_heart_rate_boundary_35",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 35,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 73.47142633040481,
+      "expected_clamped": 73.47142633040481,
+      "allowed": true
+    },
+    {
+      "name": "resting_heart_rate_boundary_120",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 120,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 69.54697415725963,
+      "expected_clamped": 69.54697415725963,
+      "allowed": true
+    },
+    {
+      "name": "study_minutes_boundary_0",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 0,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.91744203659228,
+      "expected_clamped": 70.91744203659228,
+      "allowed": true
+    },
+    {
+      "name": "study_minutes_boundary_360",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 360,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 74.66957563254448,
+      "expected_clamped": 74.66957563254448,
+      "allowed": true
+    },
+    {
+      "name": "screen_time_minutes_boundary_0",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 0,
+        "previous_score": 72
+      },
+      "expected_raw": 72.73949246228285,
+      "expected_clamped": 72.73949246228285,
+      "allowed": true
+    },
+    {
+      "name": "screen_time_minutes_boundary_720",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 720,
+        "previous_score": 72
+      },
+      "expected_raw": 69.7085769421599,
+      "expected_clamped": 69.7085769421599,
+      "allowed": true
+    },
+    {
+      "name": "previous_score_boundary_0",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 0
+      },
+      "expected_raw": 15.814980854441629,
+      "expected_clamped": 15.814980854441629,
+      "allowed": true
+    },
+    {
+      "name": "previous_score_boundary_100",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 100
+      },
+      "expected_raw": 93.64900110602315,
+      "expected_clamped": 93.64900110602315,
+      "allowed": true
+    },
+    {
+      "name": "corner_0",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 16.767474810232628,
+      "expected_clamped": 16.767474810232628,
+      "allowed": true
+    },
+    {
+      "name": "corner_1",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.60149506181415,
+      "expected_clamped": 94.60149506181415,
+      "allowed": true
+    },
+    {
+      "name": "corner_2",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 13.73655929010966,
+      "expected_clamped": 13.73655929010966,
+      "allowed": true
+    },
+    {
+      "name": "corner_3",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.57057954169119,
+      "expected_clamped": 91.57057954169119,
+      "allowed": true
+    },
+    {
+      "name": "corner_4",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 20.519608406184837,
+      "expected_clamped": 20.519608406184837,
+      "allowed": true
+    },
+    {
+      "name": "corner_5",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 98.35362865776636,
+      "expected_clamped": 98.35362865776636,
+      "allowed": true
+    },
+    {
+      "name": "corner_6",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 17.48869288606187,
+      "expected_clamped": 17.48869288606187,
+      "allowed": true
+    },
+    {
+      "name": "corner_7",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 95.32271313764339,
+      "expected_clamped": 95.32271313764339,
+      "allowed": true
+    },
+    {
+      "name": "corner_8",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 12.843022637087444,
+      "expected_clamped": 12.843022637087444,
+      "allowed": true
+    },
+    {
+      "name": "corner_9",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 90.67704288866896,
+      "expected_clamped": 90.67704288866896,
+      "allowed": true
+    },
+    {
+      "name": "corner_10",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 9.812107116964476,
+      "expected_clamped": 9.812107116964476,
+      "allowed": true
+    },
+    {
+      "name": "corner_11",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 87.646127368546,
+      "expected_clamped": 87.646127368546,
+      "allowed": true
+    },
+    {
+      "name": "corner_12",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 16.595156233039653,
+      "expected_clamped": 16.595156233039653,
+      "allowed": true
+    },
+    {
+      "name": "corner_13",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.42917648462117,
+      "expected_clamped": 94.42917648462117,
+      "allowed": true
+    },
+    {
+      "name": "corner_14",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 13.564240712916686,
+      "expected_clamped": 13.564240712916686,
+      "allowed": true
+    },
+    {
+      "name": "corner_15",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.3982609644982,
+      "expected_clamped": 91.3982609644982,
+      "allowed": true
+    },
+    {
+      "name": "corner_16",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.071716549084186,
+      "expected_clamped": 17.071716549084186,
+      "allowed": true
+    },
+    {
+      "name": "corner_17",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.90573680066572,
+      "expected_clamped": 94.90573680066572,
+      "allowed": true
+    },
+    {
+      "name": "corner_18",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.04080102896122,
+      "expected_clamped": 14.04080102896122,
+      "allowed": true
+    },
+    {
+      "name": "corner_19",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.87482128054275,
+      "expected_clamped": 91.87482128054275,
+      "allowed": true
+    },
+    {
+      "name": "corner_20",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 20.823850145036396,
+      "expected_clamped": 20.823850145036396,
+      "allowed": true
+    },
+    {
+      "name": "corner_21",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 98.65787039661792,
+      "expected_clamped": 98.65787039661792,
+      "allowed": true
+    },
+    {
+      "name": "corner_22",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 17.79293462491343,
+      "expected_clamped": 17.79293462491343,
+      "allowed": true
+    },
+    {
+      "name": "corner_23",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 95.62695487649495,
+      "expected_clamped": 95.62695487649495,
+      "allowed": true
+    },
+    {
+      "name": "corner_24",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 13.147264375939002,
+      "expected_clamped": 13.147264375939002,
+      "allowed": true
+    },
+    {
+      "name": "corner_25",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 90.98128462752052,
+      "expected_clamped": 90.98128462752052,
+      "allowed": true
+    },
+    {
+      "name": "corner_26",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 10.116348855816035,
+      "expected_clamped": 10.116348855816035,
+      "allowed": true
+    },
+    {
+      "name": "corner_27",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 87.95036910739756,
+      "expected_clamped": 87.95036910739756,
+      "allowed": true
+    },
+    {
+      "name": "corner_28",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 16.89939797189121,
+      "expected_clamped": 16.89939797189121,
+      "allowed": true
+    },
+    {
+      "name": "corner_29",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.73341822347274,
+      "expected_clamped": 94.73341822347274,
+      "allowed": true
+    },
+    {
+      "name": "corner_30",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 13.868482451768244,
+      "expected_clamped": 13.868482451768244,
+      "allowed": true
+    },
+    {
+      "name": "corner_31",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.70250270334977,
+      "expected_clamped": 91.70250270334977,
+      "allowed": true
+    },
+    {
+      "name": "corner_32",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 16.266728109767683,
+      "expected_clamped": 16.266728109767683,
+      "allowed": true
+    },
+    {
+      "name": "corner_33",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.10074836134922,
+      "expected_clamped": 94.10074836134922,
+      "allowed": true
+    },
+    {
+      "name": "corner_34",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 13.235812589644716,
+      "expected_clamped": 13.235812589644716,
+      "allowed": true
+    },
+    {
+      "name": "corner_35",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.06983284122624,
+      "expected_clamped": 91.06983284122624,
+      "allowed": true
+    },
+    {
+      "name": "corner_36",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 20.018861705719893,
+      "expected_clamped": 20.018861705719893,
+      "allowed": true
+    },
+    {
+      "name": "corner_37",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 97.85288195730142,
+      "expected_clamped": 97.85288195730142,
+      "allowed": true
+    },
+    {
+      "name": "corner_38",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 16.987946185596925,
+      "expected_clamped": 16.987946185596925,
+      "allowed": true
+    },
+    {
+      "name": "corner_39",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 94.82196643717845,
+      "expected_clamped": 94.82196643717845,
+      "allowed": true
+    },
+    {
+      "name": "corner_40",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 12.3422759366225,
+      "expected_clamped": 12.3422759366225,
+      "allowed": true
+    },
+    {
+      "name": "corner_41",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 90.17629618820402,
+      "expected_clamped": 90.17629618820402,
+      "allowed": true
+    },
+    {
+      "name": "corner_42",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 9.311360416499532,
+      "expected_clamped": 9.311360416499532,
+      "allowed": true
+    },
+    {
+      "name": "corner_43",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 87.14538066808106,
+      "expected_clamped": 87.14538066808106,
+      "allowed": true
+    },
+    {
+      "name": "corner_44",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 16.09440953257471,
+      "expected_clamped": 16.09440953257471,
+      "allowed": true
+    },
+    {
+      "name": "corner_45",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 93.92842978415624,
+      "expected_clamped": 93.92842978415624,
+      "allowed": true
+    },
+    {
+      "name": "corner_46",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 13.063494012451741,
+      "expected_clamped": 13.063494012451741,
+      "allowed": true
+    },
+    {
+      "name": "corner_47",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 90.89751426403328,
+      "expected_clamped": 90.89751426403328,
+      "allowed": true
+    },
+    {
+      "name": "corner_48",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 16.570969848619242,
+      "expected_clamped": 16.570969848619242,
+      "allowed": true
+    },
+    {
+      "name": "corner_49",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.40499010020076,
+      "expected_clamped": 94.40499010020076,
+      "allowed": true
+    },
+    {
+      "name": "corner_50",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 13.540054328496275,
+      "expected_clamped": 13.540054328496275,
+      "allowed": true
+    },
+    {
+      "name": "corner_51",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.3740745800778,
+      "expected_clamped": 91.3740745800778,
+      "allowed": true
+    },
+    {
+      "name": "corner_52",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 20.32310344457145,
+      "expected_clamped": 20.32310344457145,
+      "allowed": true
+    },
+    {
+      "name": "corner_53",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 98.15712369615298,
+      "expected_clamped": 98.15712369615298,
+      "allowed": true
+    },
+    {
+      "name": "corner_54",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 17.292187924448484,
+      "expected_clamped": 17.292187924448484,
+      "allowed": true
+    },
+    {
+      "name": "corner_55",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 95.12620817603002,
+      "expected_clamped": 95.12620817603002,
+      "allowed": true
+    },
+    {
+      "name": "corner_56",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 12.646517675474058,
+      "expected_clamped": 12.646517675474058,
+      "allowed": true
+    },
+    {
+      "name": "corner_57",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 90.4805379270556,
+      "expected_clamped": 90.4805379270556,
+      "allowed": true
+    },
+    {
+      "name": "corner_58",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 9.615602155351091,
+      "expected_clamped": 9.615602155351091,
+      "allowed": true
+    },
+    {
+      "name": "corner_59",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 87.44962240693262,
+      "expected_clamped": 87.44962240693262,
+      "allowed": true
+    },
+    {
+      "name": "corner_60",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 16.398651271426267,
+      "expected_clamped": 16.398651271426267,
+      "allowed": true
+    },
+    {
+      "name": "corner_61",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.2326715230078,
+      "expected_clamped": 94.2326715230078,
+      "allowed": true
+    },
+    {
+      "name": "corner_62",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 13.3677357513033,
+      "expected_clamped": 13.3677357513033,
+      "allowed": true
+    },
+    {
+      "name": "corner_63",
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.20175600288482,
+      "expected_clamped": 91.20175600288482,
+      "allowed": true
+    },
+    {
+      "name": "corner_64",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.834872166449138,
+      "expected_clamped": 17.834872166449138,
+      "allowed": true
+    },
+    {
+      "name": "corner_65",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 95.66889241803067,
+      "expected_clamped": 95.66889241803067,
+      "allowed": true
+    },
+    {
+      "name": "corner_66",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.80395664632617,
+      "expected_clamped": 14.80395664632617,
+      "allowed": true
+    },
+    {
+      "name": "corner_67",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 92.63797689790769,
+      "expected_clamped": 92.63797689790769,
+      "allowed": true
+    },
+    {
+      "name": "corner_68",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 21.587005762401347,
+      "expected_clamped": 21.587005762401347,
+      "allowed": true
+    },
+    {
+      "name": "corner_69",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 99.42102601398287,
+      "expected_clamped": 99.42102601398287,
+      "allowed": true
+    },
+    {
+      "name": "corner_70",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 18.55609024227838,
+      "expected_clamped": 18.55609024227838,
+      "allowed": true
+    },
+    {
+      "name": "corner_71",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 96.39011049385991,
+      "expected_clamped": 96.39011049385991,
+      "allowed": true
+    },
+    {
+      "name": "corner_72",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 13.910419993303954,
+      "expected_clamped": 13.910419993303954,
+      "allowed": true
+    },
+    {
+      "name": "corner_73",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 91.74444024488548,
+      "expected_clamped": 91.74444024488548,
+      "allowed": true
+    },
+    {
+      "name": "corner_74",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 10.879504473180987,
+      "expected_clamped": 10.879504473180987,
+      "allowed": true
+    },
+    {
+      "name": "corner_75",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 88.71352472476251,
+      "expected_clamped": 88.71352472476251,
+      "allowed": true
+    },
+    {
+      "name": "corner_76",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.662553589256163,
+      "expected_clamped": 17.662553589256163,
+      "allowed": true
+    },
+    {
+      "name": "corner_77",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 95.49657384083768,
+      "expected_clamped": 95.49657384083768,
+      "allowed": true
+    },
+    {
+      "name": "corner_78",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.631638069133196,
+      "expected_clamped": 14.631638069133196,
+      "allowed": true
+    },
+    {
+      "name": "corner_79",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 92.46565832071472,
+      "expected_clamped": 92.46565832071472,
+      "allowed": true
+    },
+    {
+      "name": "corner_80",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 18.139113905300704,
+      "expected_clamped": 18.139113905300704,
+      "allowed": true
+    },
+    {
+      "name": "corner_81",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 95.97313415688222,
+      "expected_clamped": 95.97313415688222,
+      "allowed": true
+    },
+    {
+      "name": "corner_82",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 15.10819838517773,
+      "expected_clamped": 15.10819838517773,
+      "allowed": true
+    },
+    {
+      "name": "corner_83",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 92.94221863675926,
+      "expected_clamped": 92.94221863675926,
+      "allowed": true
+    },
+    {
+      "name": "corner_84",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 21.891247501252906,
+      "expected_clamped": 21.891247501252906,
+      "allowed": true
+    },
+    {
+      "name": "corner_85",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 99.72526775283444,
+      "expected_clamped": 99.72526775283444,
+      "allowed": true
+    },
+    {
+      "name": "corner_86",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 18.86033198112994,
+      "expected_clamped": 18.86033198112994,
+      "allowed": true
+    },
+    {
+      "name": "corner_87",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 96.69435223271147,
+      "expected_clamped": 96.69435223271147,
+      "allowed": true
+    },
+    {
+      "name": "corner_88",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 14.21466173215552,
+      "expected_clamped": 14.21466173215552,
+      "allowed": true
+    },
+    {
+      "name": "corner_89",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 92.04868198373704,
+      "expected_clamped": 92.04868198373704,
+      "allowed": true
+    },
+    {
+      "name": "corner_90",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 11.183746212032545,
+      "expected_clamped": 11.183746212032545,
+      "allowed": true
+    },
+    {
+      "name": "corner_91",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 89.01776646361407,
+      "expected_clamped": 89.01776646361407,
+      "allowed": true
+    },
+    {
+      "name": "corner_92",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.96679532810772,
+      "expected_clamped": 17.96679532810772,
+      "allowed": true
+    },
+    {
+      "name": "corner_93",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 95.80081557968924,
+      "expected_clamped": 95.80081557968924,
+      "allowed": true
+    },
+    {
+      "name": "corner_94",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.935879807984755,
+      "expected_clamped": 14.935879807984755,
+      "allowed": true
+    },
+    {
+      "name": "corner_95",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 0,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 92.76990005956628,
+      "expected_clamped": 92.76990005956628,
+      "allowed": true
+    },
+    {
+      "name": "corner_96",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.334125465984194,
+      "expected_clamped": 17.334125465984194,
+      "allowed": true
+    },
+    {
+      "name": "corner_97",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 95.16814571756572,
+      "expected_clamped": 95.16814571756572,
+      "allowed": true
+    },
+    {
+      "name": "corner_98",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.303209945861227,
+      "expected_clamped": 14.303209945861227,
+      "allowed": true
+    },
+    {
+      "name": "corner_99",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 92.13723019744276,
+      "expected_clamped": 92.13723019744276,
+      "allowed": true
+    },
+    {
+      "name": "corner_100",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 21.086259061936403,
+      "expected_clamped": 21.086259061936403,
+      "allowed": true
+    },
+    {
+      "name": "corner_101",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 98.92027931351794,
+      "expected_clamped": 98.92027931351794,
+      "allowed": true
+    },
+    {
+      "name": "corner_102",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 18.055343541813436,
+      "expected_clamped": 18.055343541813436,
+      "allowed": true
+    },
+    {
+      "name": "corner_103",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 95.88936379339496,
+      "expected_clamped": 95.88936379339496,
+      "allowed": true
+    },
+    {
+      "name": "corner_104",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 13.40967329283901,
+      "expected_clamped": 13.40967329283901,
+      "allowed": true
+    },
+    {
+      "name": "corner_105",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 91.24369354442054,
+      "expected_clamped": 91.24369354442054,
+      "allowed": true
+    },
+    {
+      "name": "corner_106",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 10.378757772716042,
+      "expected_clamped": 10.378757772716042,
+      "allowed": true
+    },
+    {
+      "name": "corner_107",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 88.21277802429756,
+      "expected_clamped": 88.21277802429756,
+      "allowed": true
+    },
+    {
+      "name": "corner_108",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.16180688879122,
+      "expected_clamped": 17.16180688879122,
+      "allowed": true
+    },
+    {
+      "name": "corner_109",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 94.99582714037274,
+      "expected_clamped": 94.99582714037274,
+      "allowed": true
+    },
+    {
+      "name": "corner_110",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.130891368668252,
+      "expected_clamped": 14.130891368668252,
+      "allowed": true
+    },
+    {
+      "name": "corner_111",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 91.96491162024978,
+      "expected_clamped": 91.96491162024978,
+      "allowed": true
+    },
+    {
+      "name": "corner_112",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.63836720483576,
+      "expected_clamped": 17.63836720483576,
+      "allowed": true
+    },
+    {
+      "name": "corner_113",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 95.47238745641728,
+      "expected_clamped": 95.47238745641728,
+      "allowed": true
+    },
+    {
+      "name": "corner_114",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.607451684712785,
+      "expected_clamped": 14.607451684712785,
+      "allowed": true
+    },
+    {
+      "name": "corner_115",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 92.44147193629432,
+      "expected_clamped": 92.44147193629432,
+      "allowed": true
+    },
+    {
+      "name": "corner_116",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 21.39050080078796,
+      "expected_clamped": 21.39050080078796,
+      "allowed": true
+    },
+    {
+      "name": "corner_117",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 99.2245210523695,
+      "expected_clamped": 99.2245210523695,
+      "allowed": true
+    },
+    {
+      "name": "corner_118",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 18.359585280664994,
+      "expected_clamped": 18.359585280664994,
+      "allowed": true
+    },
+    {
+      "name": "corner_119",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 35,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 96.19360553224652,
+      "expected_clamped": 96.19360553224652,
+      "allowed": true
+    },
+    {
+      "name": "corner_120",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 13.713915031690576,
+      "expected_clamped": 13.713915031690576,
+      "allowed": true
+    },
+    {
+      "name": "corner_121",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 91.5479352832721,
+      "expected_clamped": 91.5479352832721,
+      "allowed": true
+    },
+    {
+      "name": "corner_122",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 10.682999511567601,
+      "expected_clamped": 10.682999511567601,
+      "allowed": true
+    },
+    {
+      "name": "corner_123",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 0,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 88.51701976314914,
+      "expected_clamped": 88.51701976314914,
+      "allowed": true
+    },
+    {
+      "name": "corner_124",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 0
+      },
+      "expected_raw": 17.466048627642778,
+      "expected_clamped": 17.466048627642778,
+      "allowed": true
+    },
+    {
+      "name": "corner_125",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 0,
+        "previous_score": 100
+      },
+      "expected_raw": 95.30006887922431,
+      "expected_clamped": 95.30006887922431,
+      "allowed": true
+    },
+    {
+      "name": "corner_126",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 0
+      },
+      "expected_raw": 14.43513310751981,
+      "expected_clamped": 14.43513310751981,
+      "allowed": true
+    },
+    {
+      "name": "corner_127",
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 30000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 120,
+        "study_minutes": 360,
+        "screen_time_minutes": 720,
+        "previous_score": 100
+      },
+      "expected_raw": 92.26915335910134,
+      "expected_clamped": 92.26915335910134,
+      "allowed": true
+    },
+    {
+      "name": "what_if_sleep_hours",
+      "inputs": {
+        "sleep_hours": 8.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.94442521526504,
+      "expected_clamped": 71.94442521526504,
+      "allowed": true
+    },
+    {
+      "name": "what_if_steps",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 9000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.822092322216,
+      "expected_clamped": 71.822092322216,
+      "allowed": true
+    },
+    {
+      "name": "what_if_exercise_minutes",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 65,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.90618239205558,
+      "expected_clamped": 71.90618239205558,
+      "allowed": true
+    },
+    {
+      "name": "what_if_resting_heart_rate",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 75,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.62462530774826,
+      "expected_clamped": 71.62462530774826,
+      "allowed": true
+    },
+    {
+      "name": "what_if_study_minutes",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 120,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.16815323524301,
+      "expected_clamped": 72.16815323524301,
+      "allowed": true
+    },
+    {
+      "name": "what_if_screen_time_minutes",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 270,
+        "previous_score": 72
+      },
+      "expected_raw": 71.60289914223675,
+      "expected_clamped": 71.60289914223675,
+      "allowed": true
+    },
+    {
+      "name": "what_if_previous_score",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 82
+      },
+      "expected_raw": 79.63887746073848,
+      "expected_clamped": 79.63887746073848,
+      "allowed": true
+    },
+    {
+      "name": "arithmetic_clamp_low",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": -1000
+      },
+      "expected_raw": -762.5252216613735,
+      "expected_clamped": 0.0,
+      "allowed": false
+    },
+    {
+      "name": "arithmetic_clamp_high",
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 1000
+      },
+      "expected_raw": 794.155183370257,
+      "expected_clamped": 100.0,
+      "allowed": false
+    }
+  ]
+}

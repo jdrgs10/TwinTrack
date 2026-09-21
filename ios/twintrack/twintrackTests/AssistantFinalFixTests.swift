@@ -766,9 +766,10 @@ final class AssistantFinalFixTests: XCTestCase {
     private func complete(sleep: HealthMetricResult = .available(7)) -> AssistantSnapshot {
         let profile = TwinTrackProfile(sleepHours: 7, steps: 5000, exerciseMinutes: 30, restingHeartRate: 60, studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         let now = Date(); let window = HealthDataWindow(now: now, calendar: .current)
-        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: now, healthWindow: window, provenance: "explicitRun.v1")
+        let context = V2PredictionContext.fixture(now: now)
+        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: now, healthWindow: window, provenance: TwinTrackModel.provenance, predictionContext: context)
         return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75], health: HealthReadings(sleep: sleep), window: window,
-                                 predictionStatus: .fresh, lastPrediction: prediction)
+                                 predictionStatus: .fresh, lastPrediction: prediction, predictionContext: context)
     }
 }
 

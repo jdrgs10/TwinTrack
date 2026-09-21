@@ -1,0 +1,122 @@
+{
+  "schema_version": 2,
+  "model_version": "2.0-seven-input.1",
+  "synthetic_only": true,
+  "deployment_approved": false,
+  "features": [
+    "sleep_hours",
+    "steps",
+    "exercise_minutes",
+    "resting_heart_rate",
+    "study_minutes",
+    "screen_time_minutes",
+    "previous_score"
+  ],
+  "mean": [
+    7.503806210279998,
+    7698.374005941382,
+    34.52263091389111,
+    70.01946419491874,
+    81.90590953624725,
+    228.52134518672287,
+    72.01685042736115
+  ],
+  "scale": [
+    0.9084013422352012,
+    2436.4685229407587,
+    26.831911860173452,
+    6.906032231433108,
+    52.40397567581751,
+    106.452218233086,
+    12.342924827178342
+  ],
+  "coefficients_standardized": [
+    0.4059214588458718,
+    0.05001731148976185,
+    0.008027588283780076,
+    -0.18426781736579292,
+    0.7316176573641925,
+    -0.4187220257803769,
+    9.584838521770608
+  ],
+  "intercept_standardized": 71.64184873688652,
+  "coefficients_raw": [
+    0.4468525529113227,
+    2.0528609755808444e-05,
+    0.000299180629603044,
+    -0.0266821542661052,
+    0.013961109780871202,
+    -0.003933426965923342,
+    0.7765451589452605
+  ],
+  "intercept_raw": 13.819696567231965,
+  "alpha": 0.1,
+  "training_rows": 45000,
+  "training_selection": "all ten predeclared training splits pooled; no holdout rows",
+  "training_seeds": [
+    2101,
+    2102,
+    2103,
+    2104,
+    2105,
+    2106,
+    2107,
+    2108,
+    2109,
+    2110
+  ],
+  "pooled_cv_seed": 2201,
+  "output_clamp": [
+    0,
+    100
+  ],
+  "bounds": {
+    "sleep_hours": [
+      5,
+      10
+    ],
+    "steps": [
+      1000,
+      18000
+    ],
+    "exercise_minutes": [
+      0,
+      120
+    ],
+    "resting_heart_rate": [
+      45,
+      100
+    ],
+    "study_minutes": [
+      0,
+      300
+    ],
+    "screen_time_minutes": [
+      0,
+      480
+    ],
+    "previous_score": [
+      0,
+      100
+    ]
+  },
+  "units": {
+    "sleep_hours": "hours/day",
+    "steps": "steps/day",
+    "exercise_minutes": "minutes/day",
+    "resting_heart_rate": "bpm",
+    "study_minutes": "minutes/day",
+    "screen_time_minutes": "minutes/day",
+    "previous_score": "percentage points"
+  },
+  "task": {
+    "population": "UAE Grade12; same subject/comparable assessment",
+    "horizon_local_days": 7,
+    "habit_window_completed_local_days": 28,
+    "minimum_observed_days": 21,
+    "maximum_prior_score_age_days": 90
+  },
+  "missing_policy": "abstain on missing required input; never substitute zero",
+  "metadata_gate": "subject/date/day-coverage checks required before app integration; numeric helper cannot validate these",
+  "input_transforms": "none except StandardScaler; nonlinear functions belong only to synthetic target generation"
+}

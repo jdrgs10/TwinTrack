@@ -225,8 +225,9 @@ final class AssistantPhysicalReviewTests: XCTestCase {
     private func assistant(_ text: String) -> AssistantMessage { AssistantMessage(role: .assistant, text: text) }
     private func complete() -> AssistantSnapshot {
         let profile = TwinTrackProfile(sleepHours: 7, steps: 5000, exerciseMinutes: 30, restingHeartRate: 60, studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
-        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: Date(), healthWindow: nil, provenance: "explicitRun.v1")
-        return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75], predictionStatus: .fresh, lastPrediction: prediction)
+        let context = V2PredictionContext.fixture()
+        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: Date(), healthWindow: nil, provenance: TwinTrackModel.provenance, predictionContext: context)
+        return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75], predictionStatus: .fresh, lastPrediction: prediction, predictionContext: context)
     }
 }
 

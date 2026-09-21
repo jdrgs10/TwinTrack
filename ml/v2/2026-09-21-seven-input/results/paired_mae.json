@@ -1,0 +1,47 @@
+{
+  "new_previous_only": {
+    "difference": -0.06847177932195,
+    "ci95": [
+      -0.10417798598492187,
+      -0.033386452667881275
+    ],
+    "replicates": 2000,
+    "scope": "paired independent synthetic rows only"
+  },
+  "new_ridge_six": {
+    "difference": -0.0022571772947520136,
+    "ci95": [
+      -0.007723533875214351,
+      0.003412000858829781
+    ],
+    "replicates": 2000,
+    "scope": "paired independent synthetic rows only"
+  },
+  "old_previous_only": {
+    "difference": -0.06696838632661666,
+    "ci95": [
+      -0.10189658068104725,
+      -0.031685958807832815
+    ],
+    "replicates": 2000,
+    "scope": "paired independent synthetic rows only"
+  },
+  "old_ridge_six": {
+    "difference": -0.011730322178428114,
+    "ci95": [
+      -0.025885015279775533,
+      0.0027854902486952235
+    ],
+    "replicates": 2000,
+    "scope": "paired independent synthetic rows only"
+  },
+  "v1_frozen": {
+    "difference": -1.4938405618387016,
+    "ci95": [
+      -1.637873936548854,
+      -1.344452417636288
+    ],
+    "replicates": 2000,
+    "scope": "paired independent synthetic rows only"
+  }
+}

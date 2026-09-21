@@ -1,0 +1,24 @@
+{
+  "previous_strongest_every_seed": true,
+  "strong_direction_check": true,
+  "weak_features": {
+    "steps": {
+      "sign_consistent": false,
+      "all_seed_effects_small": true
+    },
+    "exercise_minutes": {
+      "sign_consistent": false,
+      "all_seed_effects_small": true
+    },
+    "resting_heart_rate": {
+      "sign_consistent": true,
+      "all_seed_effects_small": true
+    }
+  },
+  "corner_guard_pass": true,
+  "input_contract_matches_current_app": true,
+  "deployment_approved": false,
+  "recommendation": "DO NOT APPROVE",
+  "reason": "Numerical candidate is aligned to stored snapshots, but no meaningful assessment target/horizon or manual reporting period is established; teen RHR comparison remains an unvalidated statistical prototype. Review final report.",
+  "alignment_scope": "Literal source-snapshot definitions only; manual reporting period/subject/date remain unknown. No validated forecast claim."
+}

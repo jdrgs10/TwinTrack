@@ -1,0 +1,15 @@
+{
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "pandas": "2.2.3",
+  "sklearn": "1.8.0",
+  "joblib": "1.6.0",
+  "source_sha256": {
+    "PROTOCOL.md": "df5d727e4094ecfc810aa1e95893ca5311c5e73745a58483575c914ec74b8396",
+    "config.json": "171f0301fdfe979b1d6b99a6b5f5df9547648221ebd2e5db525dd1931569b884",
+    "generator.py": "5ee0a963b27517809abb201e58401d1397db7143b44fc8406fa3243a16096bb4",
+    "train.py": "d48352f2476fe1cf9cfba8536bf14485d487b27066dc7561f765d8b5af1a884b",
+    "evaluate.py": "eafb0e11e5359fb8e227ff9372a5fc15cc406dec328a89a3acaaf7347bc99364"
+  }
+}

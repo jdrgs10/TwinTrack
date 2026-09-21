@@ -1,0 +1,185 @@
+{
+  "scope": "Python export checks; not Swift parity",
+  "profiles": [
+    {
+      "profile": {
+        "sleep_hours": 5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.57531574199267,
+      "expected_clamped": 70.57531574199267
+    },
+    {
+      "profile": {
+        "sleep_hours": 10,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.77393359829709,
+      "expected_clamped": 72.77393359829709
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 1000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.45163386537587,
+      "expected_clamped": 70.45163386537587
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 18000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 73.91677447888806,
+      "expected_clamped": 73.91677447888806
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.13630633550864,
+      "expected_clamped": 72.13630633550864
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 120,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.5533977685472,
+      "expected_clamped": 70.5533977685472
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 45,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.07339300408935,
+      "expected_clamped": 72.07339300408935
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 100,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 71.19610266941152,
+      "expected_clamped": 71.19610266941152
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 0,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.4793688017207,
+      "expected_clamped": 70.4793688017207
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 300,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected": "reject_infeasible_time"
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 0,
+        "previous_score": 72
+      },
+      "expected_raw": 72.31077471604786,
+      "expected_clamped": 72.31077471604786
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 480,
+        "previous_score": 72
+      },
+      "expected": "reject_infeasible_time"
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 0
+      },
+      "expected_raw": 15.35214224248572,
+      "expected_clamped": 15.35214224248572
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 100
+      },
+      "expected_raw": 93.57781228090121,
+      "expected_clamped": 93.57781228090121
+    }
+  ]
+}

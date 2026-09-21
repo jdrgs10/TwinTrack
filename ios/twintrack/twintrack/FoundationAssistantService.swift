@@ -212,6 +212,11 @@ final class FoundationAssistantService: AssistantResponding {
     For current personal inputs or prediction call readCurrentTwin. For a scenario call
     runWhatIf with all changes together; use the user's exact quoted feature, operation,
     value and original unit. For past predictions/trends call readPredictionHistory.
+    Numerical tools use TwinTrack Ridge V2 2.0-final.1. The experimental target is the
+    next same-subject individual assessment 1–7 days ahead. Study is yesterday's
+    outside-class study for that subject; screen is yesterday's recreational time,
+    excluding study. Prior score is the latest comparable same-subject result 1–90
+    days old. Respect unavailable eligibility; never invent dates or source values.
     Do not run a scenario for unclear wording such as "make it two". Ask what feature,
     operation and unit the user means. Do not infer missing health values.
     Every tool shares one captured baseline for this request. Never reuse previous
@@ -236,15 +241,15 @@ final class FoundationAssistantService: AssistantResponding {
 }
 
 enum AssistantResponsePolicy {
-    static let disclosure = "TwinTrack's production Ridge model was trained on synthetic student profiles. NetHealth research is separate and does not validate this exact Ridge model. Ridge combines the inputs using learned coefficients; its regularization discourages overly large coefficients and helps reduce overfitting. Swift standardizes the seven inputs, applies the frozen Ridge model, and limits the score to 0–100. 21/21 golden parity verifies the Swift calculation matches Python; it does not establish real-world predictive accuracy. This is a research/prototype prediction, not a validated causal academic instrument or a guaranteed outcome."
+    static let disclosure = "TwinTrack Ridge V2 2.0-final.1 was trained on evidence-informed synthetic student profiles using StandardScaler and Ridge, alpha 0.1. NetHealth research is separate and does not validate this exact Ridge model. Swift standardizes the seven inputs and limits the score to 0–100. Version-specific golden parity checks Swift/Python arithmetic, not academic validity. Real-student predictive accuracy remains unverified. This experimental next-assessment estimate is not a causal claim or a guaranteed outcome."
     static let urgent = "This could need urgent medical attention and may be a medical emergency. Call 998 for an ambulance in the UAE now. Ask someone nearby to stay with you and help. Do not drive yourself. TwinTrack cannot diagnose the cause."
     static let mentalHealthCrisis = "I'm sorry you're facing this. Your safety matters right now: call 999 in the UAE or go to the nearest emergency department. If you need an ambulance, call 998 in the UAE. Stay with a trusted adult, parent, teacher, school counselor, family member, or another trusted person, and move away from anything you could use to hurt yourself."
     static let refusalExplanation = "I can’t help with that request because it could enable harm or abuse. I can discuss the topic in a safe way."
     static let refusal = "I can’t help with that request. You can ask about a different topic."
     static let symptom = "I can't diagnose the cause. Where is the discomfort, how long has it lasted, and is it severe or getting worse? If symptoms are severe or you have trouble breathing, fainting, or significant bleeding, seek urgent professional help. If symptoms continue, worsen, or worry you, tell a trusted adult and consider speaking with a healthcare professional."
     static let headache = "I can't diagnose the cause. Rest, drink water, and reduce screen or bright-light exposure if that helps. Lack of sleep, dehydration, skipped meals, or stress can sometimes contribute, so monitor whether it improves. Seek urgent help for a sudden worst-ever headache, weakness or numbness on one side, trouble speaking, vision changes, repeated vomiting, fainting, or a recent head injury; otherwise contact a doctor if it persists, worsens, or keeps returning."
-    static let training = "The production Ridge model was trained on synthetic student profiles, not a cohort of real TwinTrack users. Training fitted regularized coefficients; Swift standardizes the seven inputs and applies the frozen model. NetHealth research is separate evidence. The 21/21 parity check confirms Swift matches Python, not real-world grade accuracy. This remains a research prototype."
-    static let reliability = "Treat this prediction as a research-prototype estimate, not a guaranteed grade or evidence that changing one habit causes a better result. The production model was trained on synthetic profiles and has not established real-world accuracy for individual students. 21/21 parity checks computational agreement with Python, not academic validity."
+    static let training = "TwinTrack Ridge V2 2.0-final.1 was trained on synthetic student profiles, not real TwinTrack users. Training fitted regularized coefficients; Swift standardizes all seven inputs and applies the fixed model. NetHealth is separate evidence. Version-specific parity checks arithmetic, not real-world grade accuracy. This remains a research prototype."
+    static let reliability = "Treat this experimental V2 prediction, trained on synthetic profiles, as a prototype estimate, not a guaranteed grade or evidence that changing a habit causes a better result. Real-student predictive accuracy remains unverified. Version-specific parity checks agreement with Python, not academic validity."
     static let casualAcknowledgement = "Alright."
 
     static func modelExplanation(_ request: String) -> String {

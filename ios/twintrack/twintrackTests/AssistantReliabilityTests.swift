@@ -53,7 +53,7 @@ final class AssistantReliabilityTests: XCTestCase {
         let client = TextClientStub()
         let service = FoundationAssistantService(client: client)
         let examples: [(String, TwinTrackFeature, Double)] = [
-            ("What if I sleep for 6 more hours?", .sleepHours, 13),
+            ("What if I sleep for 5 more hours?", .sleepHours, 12),
             ("Study another hour", .studyMinutes, 180),
             ("Reduce screen time by 30 minutes", .screenTimeMinutes, 210),
             ("Add 2,000 steps", .steps, 7000),
@@ -86,7 +86,7 @@ final class AssistantReliabilityTests: XCTestCase {
 
     func testUnderstoodOutOfRangeReportsRangeInsteadOfAmbiguity() async throws {
         let service = FoundationAssistantService(client: TextClientStub())
-        for prompt in ["Set previous score to 101", "Decrease screen time by 300 minutes", "Set steps to -1"] {
+        for prompt in ["Set previous score to 101", "Decrease screen time by 300 minutes", "Set steps to -1", "What if I sleep for 6 more hours?"] {
             let answer = try await service.respond(to: [user(prompt)], snapshot: complete())
             XCTAssertEqual(answer.cards.first?.title, "Check the scenario", prompt)
             XCTAssertTrue(answer.cards.first?.message.contains("valid") == true, prompt)
@@ -264,8 +264,9 @@ final class AssistantReliabilityTests: XCTestCase {
     private func user(_ text: String) -> AssistantMessage { AssistantMessage(role: .user, text: text) }
     private func complete() -> AssistantSnapshot {
         let profile = TwinTrackProfile(sleepHours: 7, steps: 5000, exerciseMinutes: 30, restingHeartRate: 60, studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
-        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: Date(), healthWindow: nil, provenance: "explicitRun.v1")
-        return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75], predictionStatus: .fresh, lastPrediction: prediction)
+        let context = V2PredictionContext.fixture()
+        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: Date(), healthWindow: nil, provenance: TwinTrackModel.provenance, predictionContext: context)
+        return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75], predictionStatus: .fresh, lastPrediction: prediction, predictionContext: context)
     }
 }
 

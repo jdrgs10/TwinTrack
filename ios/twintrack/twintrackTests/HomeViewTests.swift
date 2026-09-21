@@ -36,7 +36,7 @@ final class HomeViewTests: XCTestCase {
         defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
 
         fixture.service.result = completeHealth
-        XCTAssertTrue(fixture.state.saveManualInputs(
+        XCTAssertTrue(fixture.state.saveV2TestInputs(
             studyMinutes: 165,
             screenTimeMinutes: 264,
             previousScore: 81.4
@@ -57,7 +57,7 @@ final class HomeViewTests: XCTestCase {
             defer { fixture.defaults.removePersistentDomain(forName: fixture.name) }
 
             fixture.service.result = healthReadings(missing: missing)
-            XCTAssertTrue(fixture.state.saveManualInputs(
+            XCTAssertTrue(fixture.state.saveV2TestInputs(
                 studyMinutes: missing == .studyMinutes ? nil : 165,
                 screenTimeMinutes: missing == .screenTimeMinutes ? nil : 264,
                 previousScore: missing == .previousScore ? nil : 81.4
@@ -113,6 +113,8 @@ private final class HomeTestHealthService: HealthDataProviding {
     func requestAccess() async throws {}
 
     func read(window: HealthDataWindow) async -> HealthReadings {
-        result
+        var value = result
+        value.restingHeartRateSampleDate = window.day.start
+        return value
     }
 }

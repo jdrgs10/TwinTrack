@@ -16,6 +16,10 @@ struct twintrackApp: App {
     private static func makeState() -> TwinTrackState {
 #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
+        if let index = arguments.firstIndex(of: "--synthetic-v2-ui-tests"),
+           arguments.indices.contains(index + 1), let id = UUID(uuidString: arguments[index + 1]) {
+            return V2UITestFixture.state(id: id)
+        }
         if arguments.contains("--synthetic-duration-ui-tests") {
             let name = "TwinTrack.DurationUITestFixture"
             let defaults = UserDefaults(suiteName: name)!

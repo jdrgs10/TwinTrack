@@ -31,7 +31,7 @@ struct TwinTrackProfile {
     let screenTimeMinutes: Double
     let previousScore: Double
 
-    fileprivate var orderedValues: [Double] {
+    var orderedValues: [Double] {
         [
             sleepHours,
             steps,
@@ -44,7 +44,7 @@ struct TwinTrackProfile {
     }
 }
 
-enum TwinTrackModel {
+enum TwinTrackModelV1 {
     // These Double values are copied exactly from the frozen
     // ml/frozen_export/twintrack_model_params.json artifact.
     private static let mean: [Double] = [

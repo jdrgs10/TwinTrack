@@ -1,0 +1,188 @@
+{
+  "tolerance": 1e-10,
+  "scope": "Python checks; not independently audited Swift golden profiles",
+  "profiles": [
+    {
+      "inputs": {
+        "sleep_hours": 0,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 71.25585315845751,
+      "clamped": 71.25585315845751
+    },
+    {
+      "inputs": {
+        "sleep_hours": 12,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 72.12330965156762,
+      "clamped": 72.12330965156762
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 0,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 71.76379079645007,
+      "clamped": 71.76379079645007
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 30000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 71.91045938302689,
+      "clamped": 71.91045938302689
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 71.82805148556618,
+      "clamped": 71.82805148556618
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 180,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 71.67357024543266,
+      "clamped": 71.67357024543266
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 35,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 73.29356054046754,
+      "clamped": 73.29356054046754
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 120,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 69.6615176469139,
+      "clamped": 69.6615176469139
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 0,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 70.8349331331587,
+      "clamped": 70.8349331331587
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 360,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "raw": 74.68725446712921,
+      "clamped": 74.68725446712921
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 0,
+        "previous_score": 72
+      },
+      "raw": 72.68662329046478,
+      "clamped": 72.68662329046478
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 720,
+        "previous_score": 72
+      },
+      "raw": 69.6399610373901,
+      "clamped": 69.6399610373901
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 0
+      },
+      "raw": 15.678505158259796,
+      "clamped": 15.678505158259796
+    },
+    {
+      "inputs": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 100
+      },
+      "raw": 93.62226669769248,
+      "clamped": 93.62226669769248
+    }
+  ]
+}

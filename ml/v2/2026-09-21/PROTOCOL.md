@@ -1,0 +1,36 @@
+# TwinTrack offline V2 protocol — 2026-09-21, version 2.0-candidate.1
+
+Written before executing any V2 candidate evaluation. No iOS integration is authorized. V1 and the frozen NetHealth report are read-only. HSLS outcomes and all participant-level research datasets are excluded. The dataset-strategy PDF is planning evidence; MCS and COMPASS papers are published external evidence, not completed TwinTrack analyses.
+
+## Task contract
+
+Proposed population: UAE Grade 12 students, approximately ages 16–18, within one specified subject/course and comparable assessment format. This is a product/research definition, not a claim that the available evidence represents that population.
+
+At a prediction cutoff, predict a single same-subject assessment exactly seven local calendar days later, expressed as percentage points 0–100. `previous_score` is the most recent comparable same-subject assessment completed before cutoff, no older than 90 days. Lifestyle variables are arithmetic means over the 28 completed local calendar days immediately before cutoff. Sleep uses completed noon-to-noon sleep windows assigned by their ending day; daily steps, exercise and RHR use completed daily values. RHR, if used, is the mean of valid daily resting-HR summaries, not latest 72-hour HR and not average daily HR. Study is deliberate same-subject study outside class; screen is recreational screen use excluding study and simultaneous double counting. All exposure windows close before outcome measurement.
+
+Require at least 21 observed days of each required lifestyle input, otherwise abstain; available-day means can still be biased. This gate, horizon, subject definition and 90-day prior-score age are development assumptions. The experiment simulates window summaries, not individual days, so its missingness model assesses whole-window coverage rather than validating this daily completeness rule. No random single day is interpreted as a scientific grade predictor.
+
+## Frozen experiment design
+
+- Main synthetic parameters are in `config.json`; all numbers are development assumptions unless explicitly identified otherwise in the decision ledger. No numeric academic effect is copied from a GPA, odds ratio, correlation or foreign examination scale.
+- One independent synthetic student/assessment per row; no repeated student leaks. No private data. Dependence across rows/schools and temporal drift are not established by this simulation.
+- Five generation/split seeds: 1101–1105. Each generates 6,000 rows, split 75/25. Inner shuffled five-fold CV (split seed) selects Ridge alpha from [0.1, 1, 10, 100, 1000] by MAE, with scaling inside every fold. Mean-only and previous-score-only Ridge use exactly the same rows. Both required multivariable Ridges use raw inputs, no unapproved transforms. No broad model search.
+- Candidates: unchanged frozen V1 formula; mean-only; previous-score-only standardized Ridge; V2 six-input standardized Ridge; V2 seven-input standardized Ridge. Also reproduce the original V1 OLS prior-only baseline on its original 800/200 split.
+- Seed 1101 is the preselected artifact seed; never choose the best observed seed. Export the model fitted on its training portion only, not refitted using holdout outcomes.
+- Independent final synthetic cohort: 2,000 rows, seed 97001. All candidates score identical rows. Its common random inputs/outcome-noise draws are also used for prespecified assumption stress tests. Stress tests evaluate the frozen candidate trained on central assumptions; no scenario retuning. Synthetic holdout means unseen draws, not independent evidence about human biology.
+- Stress scenarios: null lifestyle effects; doubled lifestyle effects; opposite sleep direction; noise SD 6 and 12 vs 8; direct RHR coefficients −0.2 and +0.2 vs zero; saturating outcome effects; lower prior-attainment/shorter-sleep/higher-screen population. Scenario coefficients and saturation cutoffs are assumptions, never empirically fitted curves.
+- Report raw/clamped MAE, RMSE, R², mean prediction bias, calibration intercept/slope, decile calibration, coefficient distributions and sign frequencies, paired differences vs previous-score-only and six vs seven, with 2,000 paired row-bootstrap replicates of final-cohort MAE differences. Intervals quantify simulated sampling uncertainty only.
+- Missingness: separate synthetic mask, dependent on fitness and screen use; no zero filling or imputation. Evaluate all models on common complete-seven rows for accuracy, and six vs seven on common complete-six rows where possible. Report coverage/abstention separately on each model's eligible population, never claim a feature gain from different evaluation samples.
+- What-If: enumerate all 128 seven-feature bound corners, identify time-infeasible profiles, probe each input's bound endpoints around the training mean, test out-of-bounds rejection and missing/nonfinite input rejection. Report linear slopes and absence of causal meaning. No optimization toward maximum grades.
+- V1 comparison: old holdout reproduction is historical development evidence. Frozen V1 on V2 rows is a common-scenario transport stress test with a changed target/window, not proof V2 is more accurate in people. Report the mismatch prominently.
+
+## Selection / replacement criteria, fixed before results
+
+1. Prefer the simplest candidate unless added features improve MAE by at least 0.10 assessment points vs previous-only on the final synthetic cohort, paired MAE interval lies below zero, and MAE and RMSE improve in at least four of five independent development seeds. The 0.10 threshold is an explicit engineering relevance threshold, not a clinically validated difference.
+2. Retain RHR only if seven vs six also meets those criteria, coefficient direction is stable across at least four of five seeds, AND there is compatible prior-attainment-adjusted external RHR evidence. Zero direct RHR signal in the central generator cannot prove real RHR is irrelevant; nonzero RHR stress scenarios expose that dependence.
+3. No model receives a scientific deployment endorsement from synthetic error alone. Replacement additionally requires credible population/window mapping, transparent assumptions, calibrated representative real outcomes, missingness/abstention validation, robust behavior, independent export/parity checks, and A approval. If no multivariable model clears the incremental gate, recommend the previous-only baseline as the provisional predictive candidate; retain six/seven artifacts only for research. This does not validate removing useful wellbeing displays.
+4. No causal What-If claim, unsupported positive activity/RHR effect, or arbitrary nonlinear optimum. Raw Ridge is the default; nonlinear shapes are stress-tested only because no transferable curve has been established.
+
+## Preservation and reproducibility
+
+Record SHA-256 of V1 data, generator/scripts, artifacts, parity fixtures, and every iOS source/resource file before and after. Keep copies of external research only in the ignored local research area. Save only aggregate research descriptions and source hashes in the V2 report. Record dependency versions and V1 pickle-version warnings; cross-check the artifact against frozen JSON, regenerated data in memory and 21 golden profiles. Never execute V1 scripts that write their production paths.

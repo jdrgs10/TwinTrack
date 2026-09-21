@@ -1,0 +1,23 @@
+{
+  "previous_strongest_every_seed": true,
+  "strong_direction_check": true,
+  "weak_features": {
+    "steps": {
+      "sign_consistent": false,
+      "all_seed_effects_small": true
+    },
+    "exercise_minutes": {
+      "sign_consistent": false,
+      "all_seed_effects_small": true
+    },
+    "resting_heart_rate": {
+      "sign_consistent": true,
+      "all_seed_effects_small": true
+    }
+  },
+  "corner_guard_pass": true,
+  "input_contract_matches_current_app": false,
+  "deployment_approved": false,
+  "recommendation": "DO NOT APPROVE",
+  "reason": "28-day model input contract is not current single-day/latest-72-hour app contract; no integration in this pass"
+}

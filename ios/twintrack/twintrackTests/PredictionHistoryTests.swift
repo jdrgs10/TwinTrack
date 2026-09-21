@@ -447,6 +447,7 @@ final class PredictionHistoryTests: XCTestCase {
         await fixture.state.requestHealthAccess()
         fixture.state.runFixturePrediction()
         let beforeCancel = fixture.state.predictionHistory
+        let beforeClearHealth = fixture.state.healthReadings
 
         // The confirmation dialog's Cancel action deliberately performs no mutation.
         XCTAssertEqual(fixture.state.predictionHistory, beforeCancel)
@@ -456,7 +457,7 @@ final class PredictionHistoryTests: XCTestCase {
         XCTAssertEqual(fixture.state.studyMinutes, 120)
         XCTAssertEqual(fixture.state.screenTimeMinutes, 240)
         XCTAssertEqual(fixture.state.previousScore, 75)
-        XCTAssertEqual(fixture.state.healthReadings, fixture.service.readings)
+        XCTAssertEqual(fixture.state.healthReadings, beforeClearHealth)
         let recreated = TwinTrackState(defaults: fixture.defaults, healthService: fixture.service)
         XCTAssertTrue(recreated.predictionHistory.isEmpty)
         XCTAssertEqual(recreated.studyMinutes, 120)
@@ -618,7 +619,9 @@ private final class HistoryTestHealthService: HealthDataProviding {
     func requestAccess() async throws {}
 
     func read(window: HealthDataWindow) async -> HealthReadings {
-        readings
+        var result = readings
+        if result.restingHeartRateSampleDate == nil { result.restingHeartRateSampleDate = window.day.start }
+        return result
     }
 }
 
@@ -635,6 +638,9 @@ extension TwinTrackState {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = window.timeZone
         let now = max(window.restingHeartRate.end, lastPrediction?.createdAt.addingTimeInterval(0.001) ?? window.restingHeartRate.end)
+        // These history fixtures explicitly reconfirm synthetic manual data for their simulated day.
+        saveManualInputs(studyMinutes: studyMinutes, screenTimeMinutes: screenTimeMinutes, previousScore: previousScore,
+                         now: now, context: .fixture(now: now, calendar: calendar))
         runPrediction(now: now, calendar: calendar)
     }
 }

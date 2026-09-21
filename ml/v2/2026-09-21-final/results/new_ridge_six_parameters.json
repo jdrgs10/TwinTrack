@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "model_version": "2.0-final.1",
+  "synthetic_only": true,
+  "deployment_approved": false,
+  "features": [
+    "sleep_hours",
+    "steps",
+    "exercise_minutes",
+    "study_minutes",
+    "screen_time_minutes",
+    "previous_score"
+  ],
+  "mean": [
+    6.910532056110472,
+    7579.6176444444445,
+    35.616004765183405,
+    81.225,
+    222.69113333333334,
+    72.08134473524811
+  ],
+  "scale": [
+    1.8081970678397858,
+    3714.3206672528972,
+    39.43167004155552,
+    58.99105937437563,
+    118.71129985175519,
+    12.395571969521258
+  ],
+  "coefficients_standardized": [
+    0.18982590911163777,
+    -0.061320465956499016,
+    0.10037353225999233,
+    0.6218838020271318,
+    -0.525608605768476,
+    9.651572735412675
+  ],
+  "intercept_standardized": 71.70996613127207,
+  "coefficients_raw": [
+    0.1049807637053735,
+    -1.650920086063853e-05,
+    0.0025455054821216685,
+    0.010542000917129892,
+    -0.004427620676589742,
+    0.7786306883735868
+  ],
+  "intercept_raw": 15.023936665014986,
+  "alpha": 0.1,
+  "training_rows": 45000,
+  "training_selection": "all ten predeclared training splits pooled; no holdout rows",
+  "training_seeds": [
+    4101,
+    4102,
+    4103,
+    4104,
+    4105,
+    4106,
+    4107,
+    4108,
+    4109,
+    4110
+  ],
+  "pooled_cv_seed": 4201,
+  "output_clamp": [
+    0,
+    100
+  ],
+  "bounds": {
+    "sleep_hours": [
+      0,
+      12
+    ],
+    "steps": [
+      0,
+      30000
+    ],
+    "exercise_minutes": [
+      0,
+      180
+    ],
+    "study_minutes": [
+      0,
+      360
+    ],
+    "screen_time_minutes": [
+      0,
+      720
+    ],
+    "previous_score": [
+      0,
+      100
+    ]
+  },
+  "units": {
+    "sleep_hours": "hours",
+    "steps": "count",
+    "exercise_minutes": "minutes",
+    "study_minutes": "minutes",
+    "screen_time_minutes": "minutes",
+    "previous_score": "percentage points"
+  },
+  "task": {
+    "target": "experimental percentage estimate for next individually graded same-subject quiz/test/exam",
+    "horizon_local_days": [
+      1,
+      7
+    ],
+    "maximum_prior_age_local_days": 90,
+    "sleep": "accessible asleep union yesterday noon to min(now,today noon)",
+    "steps": "previous completed local calendar day total",
+    "exercise_minutes": "previous completed local calendar day Apple Exercise total",
+    "resting_heart_rate": "latest finite positive sample within previous72 elapsed hours, timestamp retained",
+    "study_minutes": "previous completed local calendar day outside-class study for selected subject, including academic screen use",
+    "screen_time_minutes": "previous completed local calendar day recreational non-study active screen time, simultaneous devices counted once",
+    "previous_score": "most recent prior individual assessment in SAME subject, 1\u201390 local days old, earned/max*100",
+    "horizon_effect": "not learned; constant mean relationship across permitted horizons assumed",
+    "real_world_accuracy": "UNVERIFIED"
+  },
+  "missing_policy": "abstain on missing required input; never substitute zero",
+  "metadata_gate": "dated yesterday reports, selected/previous/study subject identity, next assessment 1\u20137 days, latest prior 1\u201390 days, valid percent scale; retain current HealthKit freshness",
+  "input_transforms": "none except StandardScaler; nonlinear functions belong only to synthetic target generation",
+  "what_if": "override same captured source-period totals; no live-state writes or causal grade claim"
+}

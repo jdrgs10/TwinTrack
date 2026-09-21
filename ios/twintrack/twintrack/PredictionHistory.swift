@@ -84,6 +84,13 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
     let healthWindow: PredictionHealthWindow?
     // Absent means a legacy event; never relabel it as an explicit user run.
     let provenance: String?
+    let modelVersion: String?
+    let predictionContext: V2PredictionContext?
+
+    var modelLabel: String {
+        guard let modelVersion else { return "TwinTrack Ridge V1 · Legacy" }
+        return modelVersion == TwinTrackModel.version ? "TwinTrack Ridge V2 · \(modelVersion)" : "TwinTrack Ridge · \(modelVersion)"
+    }
 
     init(
         id: UUID = UUID(),
@@ -91,7 +98,9 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
         prediction: Double,
         inputs: PredictionInputs,
         healthWindow: PredictionHealthWindow?,
-        provenance: String? = nil
+        provenance: String? = nil,
+        modelVersion: String? = nil,
+        predictionContext: V2PredictionContext? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -99,6 +108,8 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
         self.inputs = inputs
         self.healthWindow = healthWindow
         self.provenance = provenance
+        self.modelVersion = modelVersion
+        self.predictionContext = predictionContext
     }
 
     static func realBaseline(
@@ -106,7 +117,8 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
         createdAt: Date,
         healthWindow: HealthDataWindow?,
         restingHeartRateSampleDate: Date? = nil,
-        provenance: String? = nil
+        provenance: String? = nil,
+        predictionContext: V2PredictionContext? = nil
     ) -> PredictionSnapshot? {
         let inputs = PredictionInputs(profile: profile)
         let prediction = TwinTrackModel.predict(profile)
@@ -131,7 +143,9 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
             prediction: prediction,
             inputs: inputs,
             healthWindow: storedHealthWindow,
-            provenance: provenance
+            provenance: provenance,
+            modelVersion: TwinTrackModel.version,
+            predictionContext: predictionContext
         )
     }
 
@@ -146,7 +160,8 @@ struct PredictionSnapshot: Identifiable, Codable, Equatable, Sendable {
     func hasSameSourceIdentity(as other: PredictionSnapshot) -> Bool {
         // Timestamp and derived prediction are deliberately excluded. The real
         // inputs and Health source metadata define whether a snapshot is new.
-        guard inputs == other.inputs else { return false }
+        guard inputs == other.inputs, modelVersion == other.modelVersion,
+              predictionContext == other.predictionContext else { return false }
         switch (healthWindow, other.healthWindow) {
         case (nil, nil): return true
         case let (window?, otherWindow?): return window.hasSameSourceIdentity(as: otherWindow)

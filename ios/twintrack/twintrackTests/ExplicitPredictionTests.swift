@@ -8,15 +8,15 @@ final class ExplicitPredictionTests: XCTestCase {
         let (state, health, defaults, name) = fixture()
         defer { defaults.removePersistentDomain(forName: name) }
         await state.requestHealthAccess()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         XCTAssertNil(state.currentPrediction)
         XCTAssertTrue(state.predictionHistory.isEmpty)
         XCTAssertTrue(state.runPrediction())
         let saved = try XCTUnwrap(state.lastPrediction)
-        XCTAssertEqual(saved.provenance, "explicitRun.v1")
+        XCTAssertEqual(saved.provenance, TwinTrackModel.provenance)
         XCTAssertEqual(saved.prediction, TwinTrackModel.predict(try XCTUnwrap(state.completeProfile)), accuracy: 1e-12)
         state.runPrediction()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         await state.refreshHealth()
         _ = state.currentPrediction
         XCTAssertEqual(state.predictionHistory, [saved])
@@ -27,10 +27,13 @@ final class ExplicitPredictionTests: XCTestCase {
         let (state, health, defaults, name) = fixture()
         defer { defaults.removePersistentDomain(forName: name) }
         await state.requestHealthAccess()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         state.runPrediction()
         let original = try XCTUnwrap(state.lastPrediction)
         state.setStudyTime(hours: 3, minutes: 0)
+        XCTAssertEqual(state.predictionStatus(), .missing)
+        XCTAssertFalse(state.runPrediction())
+        state.saveV2TestInputs(studyMinutes: 180, screenTimeMinutes: 240, previousScore: 75)
         XCTAssertEqual(state.predictionStatus(), .stale)
         XCTAssertNil(state.currentPrediction)
         XCTAssertEqual(state.lastPrediction, original)
@@ -51,7 +54,7 @@ final class ExplicitPredictionTests: XCTestCase {
         let (state, health, defaults, name) = fixture()
         defer { defaults.removePersistentDomain(forName: name) }
         await state.requestHealthAccess()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         state.runPrediction()
         let saved = state.lastPrediction
         health.hold = true
@@ -70,11 +73,11 @@ final class ExplicitPredictionTests: XCTestCase {
         let (state, _, defaults, name) = fixture()
         defer { defaults.removePersistentDomain(forName: name) }
         await state.requestHealthAccess()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         state.runPrediction()
         XCTAssertTrue(state.clearPredictionHistory())
         await state.refreshHealth()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         state.runPrediction()
         XCTAssertTrue(state.predictionHistory.isEmpty)
     }
@@ -83,7 +86,7 @@ final class ExplicitPredictionTests: XCTestCase {
         let (state, health, defaults, name) = fixture()
         defer { defaults.removePersistentDomain(forName: name) }
         await state.requestHealthAccess()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         state.runPrediction()
         let restored = TwinTrackState(defaults: defaults, healthService: health)
         XCTAssertNotNil(restored.lastPrediction)
@@ -101,7 +104,7 @@ final class ExplicitPredictionTests: XCTestCase {
         defaults.set(corrupt, forKey: "twintrack.prediction.history.v1")
         let restored = TwinTrackState(defaults: defaults, healthService: health)
         await restored.requestHealthAccess()
-        restored.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        restored.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         XCTAssertFalse(restored.runPrediction())
         XCTAssertFalse(restored.clearPredictionHistory())
         XCTAssertNotNil(restored.predictionIssue)
@@ -112,7 +115,7 @@ final class ExplicitPredictionTests: XCTestCase {
         let (state, _, defaults, name) = fixture()
         defer { defaults.removePersistentDomain(forName: name) }
         await state.requestHealthAccess()
-        state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
+        state.saveV2TestInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         let run = AssistantToolRun(snapshot: AssistantSnapshot(state: state), userMessage: "What if I sleep 8 hours?")
         _ = try run.readCurrent()
         XCTAssertNil(run.cards.last?.prediction)
@@ -139,6 +142,7 @@ private final class ExplicitHealthFixture: HealthDataProviding {
     var readings = HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30), restingHeartRate: .available(60))
     func requestAccess() async throws { authorizations += 1 }
     func read(window: HealthDataWindow) async -> HealthReadings {
+        readings.restingHeartRateSampleDate = window.day.start
         if hold { return await withCheckedContinuation { pending = $0 } }
         return readings
     }

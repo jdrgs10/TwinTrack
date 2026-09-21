@@ -1,0 +1,51 @@
+# Files created in this pass
+
+47 files; no prior-version or production-file edits. Nothing staged.
+
+- `docs/V2_FINAL_BLOCKER_RESOLUTION.md`
+- `ml/v2/2026-09-21-final/ASSUMPTION_LEDGER.md`
+- `ml/v2/2026-09-21-final/FILE_INVENTORY.md`
+- `ml/v2/2026-09-21-final/PROTOCOL.md`
+- `ml/v2/2026-09-21-final/README.md`
+- `ml/v2/2026-09-21-final/VALIDATION.md`
+- `ml/v2/2026-09-21-final/config.json`
+- `ml/v2/2026-09-21-final/diagnose.py`
+- `ml/v2/2026-09-21-final/diagnostics/coefficients.csv`
+- `ml/v2/2026-09-21-final/diagnostics/design.csv`
+- `ml/v2/2026-09-21-final/diagnostics/signal.csv`
+- `ml/v2/2026-09-21-final/diagnostics/source_sha256.json`
+- `ml/v2/2026-09-21-final/diagnostics/summary.csv`
+- `ml/v2/2026-09-21-final/document_results.py`
+- `ml/v2/2026-09-21-final/evaluate.py`
+- `ml/v2/2026-09-21-final/generator.py`
+- `ml/v2/2026-09-21-final/requirements.txt`
+- `ml/v2/2026-09-21-final/results/acceptance.json`
+- `ml/v2/2026-09-21-final/results/artifact_sha256.json`
+- `ml/v2/2026-09-21-final/results/calibration.csv`
+- `ml/v2/2026-09-21-final/results/coefficient_stability.csv`
+- `ml/v2/2026-09-21-final/results/comparison_metrics.csv`
+- `ml/v2/2026-09-21-final/results/development_metrics.csv`
+- `ml/v2/2026-09-21-final/results/environment.json`
+- `ml/v2/2026-09-21-final/results/extreme_profiles.csv`
+- `ml/v2/2026-09-21-final/results/final_coefficients.csv`
+- `ml/v2/2026-09-21-final/results/missingness_coverage.csv`
+- `ml/v2/2026-09-21-final/results/multi_seed_coefficients.csv`
+- `ml/v2/2026-09-21-final/results/new_previous_only_parameters.json`
+- `ml/v2/2026-09-21-final/results/new_ridge_seven_parameters.json`
+- `ml/v2/2026-09-21-final/results/new_ridge_six_parameters.json`
+- `ml/v2/2026-09-21-final/results/paired_mae.json`
+- `ml/v2/2026-09-21-final/results/preservation.json`
+- `ml/v2/2026-09-21-final/results/protected_sha256.json`
+- `ml/v2/2026-09-21-final/results/python_export_fixtures.json`
+- `ml/v2/2026-09-21-final/results/resolved_config.json`
+- `ml/v2/2026-09-21-final/results/scenario_clipping.json`
+- `ml/v2/2026-09-21-final/results/seven_input_model.joblib`
+- `ml/v2/2026-09-21-final/results/synthetic_final.csv`
+- `ml/v2/2026-09-21-final/results/synthetic_missingness.csv`
+- `ml/v2/2026-09-21-final/results/synthetic_summary.json`
+- `ml/v2/2026-09-21-final/results/synthetic_v2.csv`
+- `ml/v2/2026-09-21-final/results/training_cv.csv`
+- `ml/v2/2026-09-21-final/results/v1_parity.json`
+- `ml/v2/2026-09-21-final/results/what_if_sensitivities.csv`
+- `ml/v2/2026-09-21-final/test_final.py`
+- `ml/v2/2026-09-21-final/train.py`

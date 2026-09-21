@@ -56,6 +56,7 @@ final class TwinTrackState: ObservableObject {
     @Published private(set) var studyMinutes: Int?
     @Published private(set) var screenTimeMinutes: Int?
     @Published private(set) var previousScore: Double?
+    @Published private(set) var predictionContext: V2PredictionContext?
     @Published private(set) var predictionHistory: [PredictionSnapshot]
     @Published private(set) var lastPrediction: PredictionSnapshot?
     @Published private(set) var predictionIssue: String?
@@ -68,6 +69,7 @@ final class TwinTrackState: ObservableObject {
     private var isHealthSceneActive = true
 
     private enum Key {
+        static let v2Manual = "twintrack.manual.v2.entry"
         static let studyMinutes = "twintrack.manual.study_minutes"
         static let screenTimeMinutes = "twintrack.manual.screen_time_minutes"
         static let previousScore = "twintrack.manual.previous_score"
@@ -103,6 +105,14 @@ final class TwinTrackState: ObservableObject {
 
         if defaults.object(forKey: Key.previousScore) != nil {
             previousScore = defaults.double(forKey: Key.previousScore)
+        }
+        if defaults.object(forKey: Key.v2Manual) != nil {
+            // A malformed new record must not fall back to stale legacy values.
+            let entry = defaults.data(forKey: Key.v2Manual).flatMap { try? JSONDecoder().decode(V2ManualEntry.self, from: $0) }
+            studyMinutes = entry?.studyMinutes
+            screenTimeMinutes = entry?.screenTimeMinutes
+            previousScore = entry?.previousScore
+            predictionContext = entry?.context
         }
     }
 
@@ -184,9 +194,7 @@ final class TwinTrackState: ObservableObject {
             return false
         }
 
-        studyMinutes = total
-        defaults.set(total, forKey: Key.studyMinutes)
-        return true
+        return saveManualInputs(studyMinutes: total, screenTimeMinutes: screenTimeMinutes, previousScore: previousScore)
     }
 
     @discardableResult
@@ -195,9 +203,7 @@ final class TwinTrackState: ObservableObject {
             return false
         }
 
-        screenTimeMinutes = total
-        defaults.set(total, forKey: Key.screenTimeMinutes)
-        return true
+        return saveManualInputs(studyMinutes: studyMinutes, screenTimeMinutes: total, previousScore: previousScore)
     }
 
     @discardableResult
@@ -206,9 +212,7 @@ final class TwinTrackState: ObservableObject {
             return false
         }
 
-        previousScore = score
-        defaults.set(score, forKey: Key.previousScore)
-        return true
+        return saveManualInputs(studyMinutes: studyMinutes, screenTimeMinutes: screenTimeMinutes, previousScore: score)
     }
 
     @discardableResult
@@ -216,7 +220,8 @@ final class TwinTrackState: ObservableObject {
         studyMinutes: Int?,
         screenTimeMinutes: Int?,
         previousScore: Double?,
-        now: Date = Date()
+        now: Date = Date(),
+        context: V2PredictionContext? = nil
     ) -> Bool {
         guard isValidDuration(studyMinutes),
               isValidDuration(screenTimeMinutes),
@@ -224,13 +229,16 @@ final class TwinTrackState: ObservableObject {
             return false
         }
 
+        let entry = V2ManualEntry(studyMinutes: studyMinutes, screenTimeMinutes: screenTimeMinutes, previousScore: previousScore, context: context)
+        guard let data = try? JSONEncoder().encode(entry) else { return false }
+        // One blob commits values and their provenance atomically. Missing context
+        // is allowed for storage, but never grants V2 prediction eligibility.
+        defaults.set(data, forKey: Key.v2Manual)
         self.studyMinutes = studyMinutes
         self.screenTimeMinutes = screenTimeMinutes
         self.previousScore = previousScore
-
-        persist(studyMinutes, key: Key.studyMinutes)
-        persist(screenTimeMinutes, key: Key.screenTimeMinutes)
-        persist(previousScore, key: Key.previousScore)
+        predictionContext = context
+        for key in [Key.studyMinutes, Key.screenTimeMinutes, Key.previousScore] { defaults.removeObject(forKey: key) }
         return true
     }
 
@@ -273,19 +281,32 @@ final class TwinTrackState: ObservableObject {
         predictionStatus() == .fresh ? lastPrediction?.prediction : nil
     }
 
+    func v2EligibilityIssue(now: Date = Date(), calendar: Calendar = .current) -> String? {
+        guard let context = predictionContext else { return "Confirm yesterday’s manual inputs and assessment details in Profile → Manual Inputs." }
+        if let issue = context.issue(now: now, calendar: calendar) { return issue }
+        if let profile = completeProfile,
+           let feature = TwinTrackFeature.allCases.first(where: { !WhatIfScenario.isValid(WhatIfScenario.value($0, in: profile), for: $0) }) {
+            return "\(HomeDisplay.featureName(feature)) is outside V2 support. \(WhatIfScenario.validationHint(for: feature))"
+        }
+        return nil
+    }
+
     func predictionStatus(now: Date = Date(), calendar: Calendar = .current) -> PredictionStatus {
         if isRefreshingHealth { return .refreshing }
         guard let profile = completeProfile else { return .missing }
-        guard TwinTrackFeature.allCases.allSatisfy({ WhatIfScenario.isValid(WhatIfScenario.value($0, in: profile), for: $0) }),
-              let window = healthWindow else { return .needsRefresh }
+        guard let window = healthWindow else { return .needsRefresh }
         let expected = HealthDataWindow(now: now, calendar: calendar)
         guard window.day == expected.day, window.sleep.start == expected.sleep.start,
               window.timeZone == expected.timeZone else { return .needsRefresh }
         if let sampleDate = healthReadings.restingHeartRateSampleDate,
            !(expected.restingHeartRate.start...expected.restingHeartRate.end).contains(sampleDate) { return .needsRefresh }
+        guard healthReadings.restingHeartRateSampleDate != nil else { return .needsRefresh }
+        guard v2EligibilityIssue(now: now, calendar: calendar) == nil else { return .missing }
         guard let lastPrediction else { return .ready }
         let source = PredictionHealthWindow(window, restingHeartRateSampleDate: healthReadings.restingHeartRateSampleDate)
-        return lastPrediction.provenance == "explicitRun.v1"
+        return lastPrediction.provenance == TwinTrackModel.provenance
+            && lastPrediction.modelVersion == TwinTrackModel.version
+            && lastPrediction.predictionContext == predictionContext
             && lastPrediction.inputs == PredictionInputs(profile: profile)
             && lastPrediction.healthWindow?.hasSameSourceIdentity(as: source) == true ? .fresh : .stale
     }
@@ -300,7 +321,7 @@ final class TwinTrackState: ObservableObject {
         guard let profile = completeProfile,
               let snapshot = PredictionSnapshot.realBaseline(profile: profile, createdAt: now,
                 healthWindow: healthWindow, restingHeartRateSampleDate: healthReadings.restingHeartRateSampleDate,
-                provenance: "explicitRun.v1") else { return false }
+                provenance: TwinTrackModel.provenance, predictionContext: predictionContext) else { return false }
         do {
             let updated = (predictionHistory + [snapshot]).sorted { $0.createdAt < $1.createdAt }
             try historyStore.save(updated)
@@ -318,19 +339,4 @@ final class TwinTrackState: ObservableObject {
         value.map { ManualDuration.parts(from: $0) != nil } ?? true
     }
 
-    private func persist(_ value: Int?, key: String) {
-        if let value {
-            defaults.set(value, forKey: key)
-        } else {
-            defaults.removeObject(forKey: key)
-        }
-    }
-
-    private func persist(_ value: Double?, key: String) {
-        if let value {
-            defaults.set(value, forKey: key)
-        } else {
-            defaults.removeObject(forKey: key)
-        }
-    }
 }

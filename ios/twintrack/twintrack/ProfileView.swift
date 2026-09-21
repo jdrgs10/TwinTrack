@@ -301,7 +301,8 @@ struct ProfileView: View {
                 ManualInputsSheet(
                     initialStudyMinutes: state.studyMinutes,
                     initialScreenTimeMinutes: state.screenTimeMinutes,
-                    initialPreviousScore: state.previousScore
+                    initialPreviousScore: state.previousScore,
+                    initialContext: state.predictionContext
                 )
                 .environmentObject(state)
                 .presentationDetents([.large])
@@ -706,7 +707,9 @@ enum ProfileDetailDestination: String, Identifiable, Equatable {
         switch self {
         case .predictionMethodology:
             return [
-                (nil, "Predictions use a frozen Ridge Regression model. The weights were fitted once and are not retrained on your device."),
+                (nil, "TwinTrack Ridge V2 · 2.0-final.1 estimates the next same-subject individual assessment score, 1–7 days ahead. Real-student predictive accuracy remains unverified."),
+                ("Source periods", "Study means yesterday’s outside-class study for that subject. Screen time means yesterday’s recreational use, excluding study. The prior percentage score must be the latest comparable same-subject result, 1–90 days old."),
+                ("Apple Health", "Recent sleep uses yesterday noon to the earlier of now or today noon. Steps and exercise use the previous completed day. Resting heart rate is the latest accessible sample within 72 hours."),
                 ("Seven inputs", "Sleep, steps, exercise, resting heart rate, study time, screen time and previous score are all required for a numerical prediction."),
                 ("Deterministic", "Identical inputs always return an identical score. There is no randomness between runs."),
                 ("Predictive, not causal", "The model describes relationships it observed in training data. It does not prove that changing a habit will change your grade."),
@@ -715,7 +718,8 @@ enum ProfileDetailDestination: String, Identifiable, Equatable {
             ]
         case .modelInformation:
             return [
-                ("Model", "Ridge Regression"),
+                ("Model", "TwinTrack Ridge V2 · 2.0-final.1"),
+                ("Training", "StandardScaler + Ridge, alpha 0.1. Evidence-informed synthetic data. Real-student predictive accuracy remains unverified."),
                 ("Status", "Frozen"),
                 ("Execution", "On-device"),
                 ("Inputs", "7"),
@@ -803,13 +807,30 @@ private struct ManualInputsSheet: View {
     @State private var draftScreenTimeMinutes: Int?
     @State private var previousScoreText: String
     @State private var openPicker: TimeInput?
+    @State private var subject: String
+    @State private var assessmentName: String
+    @State private var assessmentDate: Date
+    @State private var previousDate: Date
+    @State private var confirmed: Bool
+    @State private var saveIssue: String?
+    @State private var manualDay: Date
+    @State private var sourceTimeZone: String
 
     private enum TimeInput { case study, screen }
 
-    init(initialStudyMinutes: Int?, initialScreenTimeMinutes: Int?, initialPreviousScore: Double?) {
+    init(initialStudyMinutes: Int?, initialScreenTimeMinutes: Int?, initialPreviousScore: Double?, initialContext: V2PredictionContext? = nil) {
         _draftStudyMinutes = State(initialValue: initialStudyMinutes)
         _draftScreenTimeMinutes = State(initialValue: initialScreenTimeMinutes)
         _previousScoreText = State(initialValue: Self.scoreText(initialPreviousScore))
+        _subject = State(initialValue: initialContext?.subject ?? "")
+        _assessmentName = State(initialValue: initialContext?.assessmentName ?? "")
+        // Today is ineligible for both dates; untouched date controls cannot grant eligibility.
+        _assessmentDate = State(initialValue: initialContext?.assessmentDate ?? Date())
+        _previousDate = State(initialValue: initialContext?.previousDate ?? Date())
+        _confirmed = State(initialValue: false)
+        let calendar = Calendar.current
+        _manualDay = State(initialValue: calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: Date()))!)
+        _sourceTimeZone = State(initialValue: calendar.timeZone.identifier)
     }
 
     private var border: Color {
@@ -823,7 +844,9 @@ private struct ManualInputsSheet: View {
             ScrollView {
                 VStack(spacing: 9) {
                     timeField(title: "Study Time", value: $draftStudyMinutes, input: .study)
+                    Text("Yesterday’s outside-class study for this subject, including study on screens. Exclude classes, breaks and overlaps.").font(.caption).foregroundStyle(.secondary)
                     timeField(title: "Screen Time", value: $draftScreenTimeMinutes, input: .screen)
+                    Text("Yesterday’s recreational screens. Exclude study; count overlapping devices once.").font(.caption).foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
@@ -842,7 +865,22 @@ private struct ManualInputsSheet: View {
                     .padding(.horizontal, 14).padding(.vertical, 11)
                     .background(card, in: RoundedRectangle(cornerRadius: 14))
                     .overlay { RoundedRectangle(cornerRadius: 14).stroke(isScoreValid ? border : .red) }
-                    Text("These three inputs are entered in TwinTrack. They are not Apple Health data.")
+                    Text("Latest comparable same-subject result, as a percentage (for example, 40/50 = 80).").font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        TextField("Subject", text: $subject).accessibilityIdentifier("v2Subject")
+                        TextField("Next quiz / test / exam", text: $assessmentName).accessibilityIdentifier("v2Assessment")
+                        DatePicker("Next assessment · 1–7 days ahead", selection: $assessmentDate, displayedComponents: .date)
+                            .accessibilityIdentifier("v2AssessmentDate")
+                        DatePicker("Previous result · 1–90 days old", selection: $previousDate, displayedComponents: .date)
+                            .accessibilityIdentifier("v2PreviousDate")
+                        Toggle("I confirm the next individual assessment, latest comparable individual result, and study time are for this subject.", isOn: $confirmed)
+                            .font(.caption).accessibilityIdentifier("v2ConfirmContext")
+                        Text("Saving confirms the manual durations are for \(manualDay.formatted(date: .abbreviated, time: .omitted)).")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .padding(14).background(card, in: RoundedRectangle(cornerRadius: 14))
+                    if let saveIssue { Text(saveIssue).font(.caption).foregroundStyle(.red) }
+                    Text("Saved without confirmation, these values remain unavailable for V2. They are manual entries, not Apple Health data.")
                         .font(.caption).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 4)
                 }
@@ -850,6 +888,10 @@ private struct ManualInputsSheet: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Manual Inputs")
+            .onChange(of: subject) { _, _ in confirmed = false }
+            .onChange(of: assessmentName) { _, _ in confirmed = false }
+            .onChange(of: assessmentDate) { _, _ in confirmed = false }
+            .onChange(of: previousDate) { _, _ in confirmed = false }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -916,7 +958,16 @@ private struct ManualInputsSheet: View {
     private func save() {
         let trimmedScore = previousScoreText.trimmingCharacters(in: .whitespacesAndNewlines)
         let score = trimmedScore.isEmpty ? nil : PreviousScoreInput.parse(trimmedScore)
-        if state.saveManualInputs(studyMinutes: draftStudyMinutes, screenTimeMinutes: draftScreenTimeMinutes, previousScore: score) {
+        let calendar = Calendar.current
+        let now = Date()
+        let context = V2PredictionContext(subject: subject.trimmingCharacters(in: .whitespacesAndNewlines),
+            assessmentName: assessmentName.trimmingCharacters(in: .whitespacesAndNewlines), assessmentDate: assessmentDate,
+            previousDate: previousDate, manualDay: manualDay,
+            timeZoneIdentifier: sourceTimeZone, sameSubjectConfirmed: confirmed,
+            nextIndividualAssessmentConfirmed: confirmed, latestComparablePriorConfirmed: confirmed)
+        if confirmed, let issue = context.issue(now: now, calendar: calendar) { saveIssue = issue; return }
+        if state.saveManualInputs(studyMinutes: draftStudyMinutes, screenTimeMinutes: draftScreenTimeMinutes, previousScore: score,
+                                  now: now, context: confirmed ? context : nil) {
             dismiss()
         }
     }

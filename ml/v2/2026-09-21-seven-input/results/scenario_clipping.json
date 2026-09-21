@@ -1,0 +1,98 @@
+[
+  {
+    "seed": 98001,
+    "scenario": "central",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00625
+  },
+  {
+    "seed": 98001,
+    "scenario": "null_habits",
+    "rows": 4000,
+    "target_clipped_fraction": 0.006
+  },
+  {
+    "seed": 98001,
+    "scenario": "double_habits",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00625
+  },
+  {
+    "seed": 98001,
+    "scenario": "rhr_null",
+    "rows": 4000,
+    "target_clipped_fraction": 0.006
+  },
+  {
+    "seed": 98001,
+    "scenario": "rhr_negative",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00625
+  },
+  {
+    "seed": 98001,
+    "scenario": "rhr_positive",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00625
+  },
+  {
+    "seed": 98001,
+    "scenario": "opposite_sleep",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00625
+  },
+  {
+    "seed": 98001,
+    "scenario": "low_noise",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00075
+  },
+  {
+    "seed": 98001,
+    "scenario": "high_noise",
+    "rows": 4000,
+    "target_clipped_fraction": 0.03175
+  },
+  {
+    "seed": 98001,
+    "scenario": "linear",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00675
+  },
+  {
+    "seed": 98001,
+    "scenario": "shifted_caps",
+    "rows": 4000,
+    "target_clipped_fraction": 0.006
+  },
+  {
+    "seed": 98001,
+    "scenario": "population_shift",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00075
+  },
+  {
+    "seed": 98001,
+    "scenario": "previous_low",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00175
+  },
+  {
+    "seed": 98001,
+    "scenario": "previous_high",
+    "rows": 4000,
+    "target_clipped_fraction": 0.01175
+  },
+  {
+    "seed": 98001,
+    "scenario": "strong_activity_coupling",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00625
+  },
+  {
+    "seed": 98001,
+    "scenario": "measurement_double",
+    "rows": 4000,
+    "target_clipped_fraction": 0.00625
+  }
+]

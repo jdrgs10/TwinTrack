@@ -1,5 +1,15 @@
 # TwinTrack UI Freeze
 
+## 2026-09-21 V2 model-dependent update — automated PASS, physical review pending
+
+The approved experimental **TwinTrack Ridge V2 2.0-final.1** integration adds only model-dependent UI: Home/history version labels, legacy V1 identification, a mixed-version trend warning without a comparison delta, concise manual source-period help and local subject/assessment dates/confirmation, V2 What-If labels/ranges, and updated Model Information/Methodology. Existing wheels, three tabs, logo rule, chat layout, navigation and HealthKit windows are unchanged.
+
+Target is the next same-subject individual assessment 1–7 local days ahead; the latest comparable prior result is 1–90 local days old and entered as a percentage. Study is yesterday's outside-class selected-subject total; screen time is yesterday's recreational use excluding study. Legacy or stale manual values require reconfirmation. No default date creates eligibility. Old history retains its originating V1 score; new runs store V2 and target metadata.
+
+**Real-student predictive accuracy remains unverified.** Fresh Xcode validation passed: focused V2 12/12, complete configured suite 354/354 (336 unit + 18 UI), V2 parity 176/176, V1 parity 21/21, explicit Build and Analyze with 0 compiler/analyzer warnings/errors. The test action separately records 25 debugger termination warnings, grouped as one summary warning. Initial CLI environment blocks and three corrected fixture expectations are recorded in the integration evidence. This establishes automated readiness, not physical UI freeze. A must complete the [V2 physical checklist](../ml/v2/2026-09-21-ios-parity/README.md) before sign-off. The approved separate RHR personal-baseline wellbeing design is deferred; no alert or weight change is included.
+
+The older freeze/verification entries below remain historical evidence rather than results for this integration.
+
 **Date:** 2026-09-15  
 **Current branch:** `ios-development`  
 **Current commit:** `11da98dca5cc585065465fceb3e14e21960a69bc`  

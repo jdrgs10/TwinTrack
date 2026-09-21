@@ -47,7 +47,9 @@ final class DurationPickerTests: XCTestCase {
     func testWheelBoundsAndNegativeScenarioRejected() {
         var draft = WhatIfDurationDraft(feature: .screenTimeMinutes, value: 30)
         draft.hours = ManualDuration.maximumHours; draft.minutes = 59
-        XCTAssertEqual(draft.value, Double(ManualDuration.maximumHours * 60 + 59))
+        XCTAssertNil(draft.value, "The existing wheel range does not override V2 support.")
+        draft.hours = 12; draft.minutes = 0
+        XCTAssertEqual(draft.value, 720)
         draft.minutes = 60; XCTAssertNil(draft.value)
         draft.minutes = 0; draft.hours = -1; XCTAssertNil(draft.value)
         draft.hours = ManualDuration.maximumHours + 1; XCTAssertNil(draft.value)
@@ -56,12 +58,13 @@ final class DurationPickerTests: XCTestCase {
     }
 
     func testUntouchedPrecisionAndLargeValuesArePreserved() {
-        for (feature, value) in [(TwinTrackFeature.sleepHours, 7.123456789), (.studyMinutes, 123.123456), (.screenTimeMinutes, 2000.123)] {
+        for (feature, value) in [(TwinTrackFeature.sleepHours, 7.123456789), (.studyMinutes, 123.123456), (.screenTimeMinutes, 600.123)] {
             let draft = WhatIfDurationDraft(feature: feature, value: value)
             XCTAssertEqual(draft.value, value)
             XCTAssertFalse(draft.edited)
         }
         XCTAssertNil(WhatIfDurationDraft(feature: .sleepHours, value: .infinity).value)
+        XCTAssertNil(WhatIfDurationDraft(feature: .screenTimeMinutes, value: 2000.123).value)
     }
 
     func testCancelDraftHasNoConnectionToBaselineOrHistory() throws {
@@ -69,8 +72,8 @@ final class DurationPickerTests: XCTestCase {
         let scenario = try WhatIfScenario(baseline: profile)
         let original = scenario.evaluate().scenarioPrediction
         var draft = WhatIfDurationDraft(feature: .sleepHours, value: scenario.scenarioValue(for: .sleepHours))
-        draft.select(.increase); draft.hours = 6
-        XCTAssertEqual(draft.value, 13)
+        draft.select(.increase); draft.hours = 2
+        XCTAssertEqual(draft.value, 9)
         // Cancel dismisses the value draft without calling the editor's onDone.
         XCTAssertTrue(scenario.changes.isEmpty)
         XCTAssertEqual(scenario.evaluate().scenarioPrediction, original)

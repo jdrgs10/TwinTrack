@@ -1,0 +1,23 @@
+{
+  "numerical_gates": {
+    "ridge_six_vs_previous_only": {
+      "seeds_both_metrics_better": 5,
+      "minimum_gain": 0.1,
+      "numerical_gate_pass": false
+    },
+    "ridge_seven_vs_previous_only": {
+      "seeds_both_metrics_better": 5,
+      "minimum_gain": 0.1,
+      "numerical_gate_pass": false
+    },
+    "ridge_seven_vs_ridge_six": {
+      "seeds_both_metrics_better": 2,
+      "minimum_gain": 0.1,
+      "numerical_gate_pass": false
+    }
+  },
+  "provisional_candidate": "previous_only",
+  "rhr_evidence_gate": "NOT MET: compatible prior-attainment-adjusted UAE/Grade12 RHR evidence not established",
+  "deployment_approved": false,
+  "interpretation": "synthetic candidate only; real validation and new input-window contract required"
+}

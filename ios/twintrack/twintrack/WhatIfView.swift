@@ -35,9 +35,9 @@ struct WhatIfView: View {
                     } else if let scenario {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("MODEL SCENARIO").font(.caption.weight(.semibold)).foregroundStyle(palette.accent)
-                            Text("Current prediction: \(HomeDisplay.prediction(scenario.baselinePrediction))")
+                            Text("V2 baseline: \(HomeDisplay.prediction(scenario.baselinePrediction))")
                                 .font(.title2.weight(.semibold)).monospacedDigit()
-                            Text("Adjust the values below to compare a temporary scenario with your current data.")
+                            Text("Adjust captured inputs to compare a temporary V2 estimate. Study and recreational screens refer to yesterday.")
                                 .font(.footnote).foregroundStyle(palette.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -103,6 +103,7 @@ struct WhatIfView: View {
         }
         .onChange(of: state.healthWindow) { _, _ in if isActive { start() } }
         .onChange(of: state.lastPrediction) { _, _ in if isActive { start() } }
+        .onChange(of: state.predictionContext) { _, _ in if isActive { start() } }
         .onChange(of: state.isRefreshingHealth) { _, _ in if isActive { start() } }
         .onDisappear { discard() }
     }
@@ -220,13 +221,15 @@ struct WhatIfView: View {
 
     private func resultCard(_ result: WhatIfResult) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("RIDGE REGRESSION · DETERMINISTIC", systemImage: "chart.line.uptrend.xyaxis")
+            Label("RIDGE V2 · 2.0-final.1 · DETERMINISTIC", systemImage: "chart.line.uptrend.xyaxis")
                 .font(.caption2.weight(.semibold)).foregroundStyle(palette.accent)
             Text("WHAT-IF").font(.caption2).foregroundStyle(palette.secondary)
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .lastTextBaseline, spacing: 14) { scores(result) }
                 VStack(alignment: .leading, spacing: 12) { scores(result) }
             }
+            Text("The model estimate changes by \(WhatIfDisplay.delta(result.delta)) points.")
+                .font(.footnote).foregroundStyle(palette.secondary)
             Divider().overlay(palette.accentBorder)
             Text("VARIABLES CHANGED").font(.caption2.weight(.semibold)).foregroundStyle(palette.secondary)
             if result.changedFeatures.isEmpty {
@@ -246,12 +249,12 @@ struct WhatIfView: View {
 
     @ViewBuilder private func scores(_ result: WhatIfResult) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Current").font(.caption).foregroundStyle(palette.secondary)
+            Text("V2 baseline").font(.caption).foregroundStyle(palette.secondary)
             Text(HomeDisplay.prediction(result.baselinePrediction)).font(.title2.weight(.semibold)).monospacedDigit()
         }
         Image(systemName: "arrow.right").font(.footnote).accessibilityHidden(true)
         VStack(alignment: .leading, spacing: 4) {
-            Text("Simulated").font(.caption).foregroundStyle(palette.accent)
+            Text("V2 estimate").font(.caption).foregroundStyle(palette.accent)
             Text(HomeDisplay.prediction(result.scenarioPrediction)).font(.largeTitle.weight(.semibold)).monospacedDigit()
         }
         Text("\(WhatIfDisplay.delta(result.delta)) pts")
@@ -259,7 +262,7 @@ struct WhatIfView: View {
             .foregroundStyle(result.delta == 0 ? palette.secondary : (result.delta > 0 ? palette.positive : palette.negative))
             .padding(.vertical, 5).padding(.horizontal, 9)
             .background(palette.card, in: Capsule())
-            .accessibilityLabel("Model predicted change: \(WhatIfDisplay.delta(result.delta)) points")
+            .accessibilityLabel("The model estimate changes by \(WhatIfDisplay.delta(result.delta)) points")
     }
 
     private func update(_ value: Double, feature: TwinTrackFeature) {

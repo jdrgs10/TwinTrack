@@ -1,0 +1,68 @@
+{
+  "schema_version": 2,
+  "model_version": "2.0-aligned.1",
+  "synthetic_only": true,
+  "deployment_approved": false,
+  "features": [
+    "previous_score"
+  ],
+  "mean": [
+    71.96339108923353
+  ],
+  "scale": [
+    12.381057867207895
+  ],
+  "coefficients_standardized": [
+    9.783009737091744
+  ],
+  "intercept_standardized": 71.57690906344517,
+  "coefficients_raw": [
+    0.790159438879834
+  ],
+  "intercept_raw": 14.714356340486368,
+  "alpha": 0.1,
+  "training_rows": 45000,
+  "training_selection": "all ten predeclared training splits pooled; no holdout rows",
+  "training_seeds": [
+    3101,
+    3102,
+    3103,
+    3104,
+    3105,
+    3106,
+    3107,
+    3108,
+    3109,
+    3110
+  ],
+  "pooled_cv_seed": 3201,
+  "output_clamp": [
+    0,
+    100
+  ],
+  "bounds": {
+    "previous_score": [
+      0,
+      100
+    ]
+  },
+  "units": {
+    "previous_score": "0\u2013100 score points"
+  },
+  "task": {
+    "population": "Grade12 educational prototype; transfer validity unknown",
+    "target": "current-profile score on 0\u2013100 scale; not a validated forecast",
+    "prediction_horizon": null,
+    "sleep": "union asleep hours yesterday local noon to min(refresh,today noon)",
+    "steps": "previous completed local calendar day sum",
+    "exercise_minutes": "previous completed local calendar day sum",
+    "resting_heart_rate": "latest valid positive finite sample startDate in inclusive last72 elapsed hours; timestamp retained",
+    "study_minutes": "latest saved user-entered minutes; reporting period/date unknown",
+    "screen_time_minutes": "latest saved user-entered minutes; reporting period/date/content unknown",
+    "previous_score": "latest saved 0\u2013100 user score; date/subject/comparability unknown"
+  },
+  "missing_policy": "abstain on missing required input; never substitute zero",
+  "metadata_gate": "existing health-window freshness and RHR timestamp checks; no invented 28-day coverage or manual-entry date",
+  "input_transforms": "none except StandardScaler; nonlinear functions belong only to synthetic target generation",
+  "what_if_time_constraint": "Different source periods; do not sum all inputs into one fictitious 24-hour day"
+}

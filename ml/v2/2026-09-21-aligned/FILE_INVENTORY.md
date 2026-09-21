@@ -1,0 +1,47 @@
+# Files created in this pass
+
+43 files. Prior versions/report files are not new changes from this pass. No production edits.
+
+- `docs/V2_PRODUCTION_ALIGNMENT_DECISION.md`
+- `ml/v2/2026-09-21-aligned/ASSUMPTION_LEDGER.md`
+- `ml/v2/2026-09-21-aligned/FILE_INVENTORY.md`
+- `ml/v2/2026-09-21-aligned/PROTOCOL.md`
+- `ml/v2/2026-09-21-aligned/README.md`
+- `ml/v2/2026-09-21-aligned/VALIDATION.md`
+- `ml/v2/2026-09-21-aligned/config.json`
+- `ml/v2/2026-09-21-aligned/document_results.py`
+- `ml/v2/2026-09-21-aligned/evaluate.py`
+- `ml/v2/2026-09-21-aligned/generator.py`
+- `ml/v2/2026-09-21-aligned/requirements.txt`
+- `ml/v2/2026-09-21-aligned/results/acceptance.json`
+- `ml/v2/2026-09-21-aligned/results/artifact_sha256.json`
+- `ml/v2/2026-09-21-aligned/results/calibration.csv`
+- `ml/v2/2026-09-21-aligned/results/coefficient_stability.csv`
+- `ml/v2/2026-09-21-aligned/results/common_support_metrics.csv`
+- `ml/v2/2026-09-21-aligned/results/comparison_metrics.csv`
+- `ml/v2/2026-09-21-aligned/results/development_metrics.csv`
+- `ml/v2/2026-09-21-aligned/results/environment.json`
+- `ml/v2/2026-09-21-aligned/results/extreme_profiles.csv`
+- `ml/v2/2026-09-21-aligned/results/final_coefficients.csv`
+- `ml/v2/2026-09-21-aligned/results/missingness_coverage.csv`
+- `ml/v2/2026-09-21-aligned/results/multi_seed_coefficients.csv`
+- `ml/v2/2026-09-21-aligned/results/new_previous_only_parameters.json`
+- `ml/v2/2026-09-21-aligned/results/new_ridge_seven_parameters.json`
+- `ml/v2/2026-09-21-aligned/results/new_ridge_six_parameters.json`
+- `ml/v2/2026-09-21-aligned/results/paired_mae.json`
+- `ml/v2/2026-09-21-aligned/results/preservation.json`
+- `ml/v2/2026-09-21-aligned/results/protected_sha256.json`
+- `ml/v2/2026-09-21-aligned/results/python_export_fixtures.json`
+- `ml/v2/2026-09-21-aligned/results/resolved_config.json`
+- `ml/v2/2026-09-21-aligned/results/scenario_clipping.json`
+- `ml/v2/2026-09-21-aligned/results/seven_input_model.joblib`
+- `ml/v2/2026-09-21-aligned/results/synthetic_final.csv`
+- `ml/v2/2026-09-21-aligned/results/synthetic_missingness.csv`
+- `ml/v2/2026-09-21-aligned/results/synthetic_summary.json`
+- `ml/v2/2026-09-21-aligned/results/synthetic_v2.csv`
+- `ml/v2/2026-09-21-aligned/results/training_cv.csv`
+- `ml/v2/2026-09-21-aligned/results/v1_parity.json`
+- `ml/v2/2026-09-21-aligned/results/what_if_sensitivities.csv`
+- `ml/v2/2026-09-21-aligned/rhr_trend.py`
+- `ml/v2/2026-09-21-aligned/test_alignment.py`
+- `ml/v2/2026-09-21-aligned/train.py`

@@ -1,0 +1,159 @@
+{
+  "scope": "Python export checks; not Swift parity",
+  "profiles": [
+    {
+      "profile": {
+        "sleep_hours": 5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.49319527694158,
+      "expected_clamped": 70.49319527694158
+    },
+    {
+      "profile": {
+        "sleep_hours": 10,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.85822222665185,
+      "expected_clamped": 72.85822222665185
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 1000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.45692153274858,
+      "expected_clamped": 70.45692153274858
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 18000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 73.91015198671829,
+      "expected_clamped": 73.91015198671829
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 0,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 72.11024917812577,
+      "expected_clamped": 72.11024917812577
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 120,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.62039628785472,
+      "expected_clamped": 70.62039628785472
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 0,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected_raw": 70.48396769034963,
+      "expected_clamped": 70.48396769034963
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 300,
+        "screen_time_minutes": 210,
+        "previous_score": 72
+      },
+      "expected": "reject_infeasible_time"
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 0,
+        "previous_score": 72
+      },
+      "expected_raw": 72.31520014593131,
+      "expected_clamped": 72.31520014593131
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 480,
+        "previous_score": 72
+      },
+      "expected": "reject_infeasible_time"
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 0
+      },
+      "expected_raw": 15.351235480667249,
+      "expected_clamped": 15.351235480667249
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 100
+      },
+      "expected_raw": 93.57967057945817,
+      "expected_clamped": 93.57967057945817
+    }
+  ]
+}

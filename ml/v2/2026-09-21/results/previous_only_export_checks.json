@@ -1,0 +1,31 @@
+{
+  "scope": "Python export checks; not Swift parity",
+  "profiles": [
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 0
+      },
+      "expected_raw": 14.30182086879573,
+      "expected_clamped": 14.30182086879573
+    },
+    {
+      "profile": {
+        "sleep_hours": 7.5,
+        "steps": 7000,
+        "exercise_minutes": 35,
+        "resting_heart_rate": 70,
+        "study_minutes": 90,
+        "screen_time_minutes": 210,
+        "previous_score": 100
+      },
+      "expected_raw": 93.79156246519149,
+      "expected_clamped": 93.79156246519149
+    }
+  ]
+}

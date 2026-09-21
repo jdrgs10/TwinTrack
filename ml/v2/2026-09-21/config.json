@@ -1,0 +1,30 @@
+{
+  "version": "2.0-candidate.1",
+  "development_seeds": [1101, 1102, 1103, 1104, 1105],
+  "development_rows": 6000,
+  "holdout_fraction": 0.25,
+  "final_seed": 97001,
+  "final_rows": 2000,
+  "cv_folds": 5,
+  "alpha_grid": [0.1, 1, 10, 100, 1000],
+  "bootstrap_replicates": 2000,
+  "bootstrap_seed": 78123,
+  "required_gain": 0.1,
+  "bounds": {"sleep_hours": [5, 10], "steps": [1000, 18000], "exercise_minutes": [0, 120], "resting_heart_rate": [45, 100], "study_minutes": [0, 300], "screen_time_minutes": [0, 480], "previous_score": [0, 100]},
+  "reference": {"sleep_hours": 7.5, "steps": 7000, "exercise_minutes": 35, "resting_heart_rate": 70, "study_minutes": 90, "screen_time_minutes": 210, "previous_score": 72},
+  "generator": {
+    "latent_factors": "independent standard-normal engagement, fitness, screen preference",
+    "sleep": {"mean": 7.5, "screen_loading": -0.5, "engagement_loading": 0.2, "noise_sd": 0.7},
+    "study": {"median": 75, "engagement_loading": 0.35, "screen_loading": -0.15, "log_noise_sd": 0.4, "zero_probability": 0.05},
+    "screen": {"median": 210, "preference_loading": 0.35, "engagement_loading": -0.15, "log_noise_sd": 0.35},
+    "exercise": {"gamma_shape": 2, "gamma_scale": 18, "fitness_loading": 0.25, "zero_probability": 0.05},
+    "time": {"minutes_per_day": 1440, "school_minutes_daily_average": 300, "other_reserved_minutes": 180},
+    "steps": {"base": 2500, "per_exercise_minute": 70, "incidental_median": 2000, "incidental_log_sd": 0.35},
+    "rhr": {"mean": 70, "fitness_loading": -4, "sleep_deficit_loading": 2, "noise_sd": 5},
+    "previous": {"beta_a": 9, "beta_b": 3.5, "engagement_loading": 0.25},
+    "measurement_sd": {"sleep_hours": 0.25, "steps": 400, "exercise_minutes": 5, "resting_heart_rate": 2, "study_minutes": 15, "screen_time_minutes": 25, "previous_score": 2},
+    "target": {"mean": 72, "previous_slope": 0.8, "outcome_noise_sd": 8, "habit_coefficients": {"sleep_hours": 0.5, "steps": 0, "exercise_minutes": 0, "resting_heart_rate": 0, "study_minutes": 0.015, "screen_time_minutes": -0.004}},
+    "missingness": {"shared_wearable_failure_probability": 0.08, "sleep_hours": 0.08, "steps": 0.02, "exercise_minutes": 0.06, "resting_heart_rate": 0.30, "study_minutes": 0.05, "screen_time_minutes": 0.05, "previous_score": 0.02, "high_screen_threshold": 300, "high_screen_added_probability": 0.05, "low_fitness_added_rhr_probability": 0.10}
+  },
+  "stress": {"low_noise_sd": 6, "high_noise_sd": 12, "rhr_slopes": [-0.2, 0.2], "double_effect_multiplier": 2, "saturation_caps": {"sleep_hours": 8, "study_minutes": 180, "exercise_minutes": 60, "screen_time_minutes": 240}, "shifted_previous_beta": [6, 4], "shifted_sleep_hours": -1, "shifted_screen_minutes": 60}
+}

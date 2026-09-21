@@ -1,5 +1,21 @@
 # Evidence Log
 
+## 2026-09-21 — Experimental V2 native integration: automated PASS, physical review pending
+
+Integrated StandardScaler + Ridge alpha 0.1, version **2.0-final.1**, from `ml/v2/2026-09-21-final/results/new_ridge_seven_parameters.json` (SHA-256 `62cb14d443221f9f2e426280ebdf52d7ef8614812a89ef5031329642ff040024`). All 27 approved artifact hashes verified; no refit or parameter/feature-order alteration. V1 engine arithmetic, frozen exports and 21-profile evidence preserved separately.
+
+Added dated/confirmed V2 manual metadata, honest eligibility gates, atomic value/context storage, model/target snapshot identity and backward-compatible V1 history labels. Home, Profile methodology and numerical assistant/What-If tools share the V2 contract. HealthKit aggregation/windows and assistant safety/conversation behavior remain unchanged. Undated manual data requires reconfirmation; no missing value is invented. RHR wellbeing remains deferred.
+
+**Fresh Xcode results:** focused V2 **12/12 PASS**; complete configured suite **354/354 PASS (336 unit + 18 UI)**, 0 failed/skipped, **649.719 seconds**, **21:33:00–21:43:50 Asia/Dubai**. New iOS V2 golden parity **176/176 PASS** and preserved iOS V1 parity **21/21 PASS**, tolerance **1e-6**. New V2 UI/history/relaunch regression passed. The pre-existing launch-only screenshot test remains excluded and is not counted as passed. Explicit Build and Analyze both **PASS at 21:45**, compiler/analyzer warnings/errors **0/0**, Issue Navigator empty with filters off.
+
+Standalone compilation of the same production Swift engines independently yielded V2 **176/176** and V1 **21/21**, each maximum absolute error **2.842170943040401e-14**. V2 fixtures include 174 supported profiles plus two ineligible clamp-mechanics probes. Portable production date-contract checks **12/12 PASS**; 55-file syntax parse and final diff formatting **PASS**.
+
+**Development evidence:** initial CLI attempts were blocked by CoreSimulator/macro-service sandbox access, then resolved through A-authorized Xcode use. First full Xcode run was **351 passed / 3 failed**, with all 18 UI cases passed: two obsolete 13-hour sleep expectations exceeded V2 support; one history-clear assertion omitted the newly dated synthetic RHR reading. Tests now preserve the 12-hour allowed/13-hour rejected distinction and compare the full pre-clear committed Health snapshot. No production behavior was changed to make these tests pass. The final 354/354 run supersedes that first run. No Profile-subtitle flake occurred.
+
+**Runtime diagnostics:** **25** test-app debugger termination warnings, all `Debug session ended with code 9: killed`, grouped as one Uncategorized summary warning. They are separate from compiler/analyzer warnings and are not hidden by a claim of zero total runtime warnings.
+
+See [integration evidence and physical checklist](../ml/v2/2026-09-21-ios-parity/README.md) and [exact file manifest](../ml/v2/2026-09-21-ios-parity/FILES_CHANGED.md). Preservation/privacy checks pass; generated workspace state remains outside intended changes, local handoff remains Git-excluded, and no private evidence, credentials, signing material or device identifiers are added to the integration files. No physical device or private Health records inspected. Nothing staged/committed/pushed. Automated integration **VERIFIED**; A's physical review and UI freeze remain **PENDING**. **Real-student predictive accuracy remains unverified.**
+
 ## 2026-09-20 — Final self-harm routing correction
 
 A reported “I want to commit suicide.” reaching a generic framework safety failure. Repository inspection confirmed a missing first-person intent alternative and no app-owned typed-safety crisis fallback. The exact older failure sentence is absent from current source; no device/private logs were inspected.

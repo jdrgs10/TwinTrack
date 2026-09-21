@@ -1,0 +1,62 @@
+{
+  "schema_version": 2,
+  "model_version": "2.0-seven-input.1",
+  "synthetic_only": true,
+  "deployment_approved": false,
+  "features": [
+    "previous_score"
+  ],
+  "mean": [
+    72.01685042736115
+  ],
+  "scale": [
+    12.342924827178342
+  ],
+  "coefficients_standardized": [
+    9.739446130798273
+  ],
+  "intercept_standardized": 71.64184873688652,
+  "coefficients_raw": [
+    0.7890711696916947
+  ],
+  "intercept_raw": 14.815428332656836,
+  "alpha": 0.1,
+  "training_rows": 45000,
+  "training_selection": "all ten predeclared training splits pooled; no holdout rows",
+  "training_seeds": [
+    2101,
+    2102,
+    2103,
+    2104,
+    2105,
+    2106,
+    2107,
+    2108,
+    2109,
+    2110
+  ],
+  "pooled_cv_seed": 2201,
+  "output_clamp": [
+    0,
+    100
+  ],
+  "bounds": {
+    "previous_score": [
+      0,
+      100
+    ]
+  },
+  "units": {
+    "previous_score": "percentage points"
+  },
+  "task": {
+    "population": "UAE Grade12; same subject/comparable assessment",
+    "horizon_local_days": 7,
+    "habit_window_completed_local_days": 28,
+    "minimum_observed_days": 21,
+    "maximum_prior_score_age_days": 90
+  },
+  "missing_policy": "abstain on missing required input; never substitute zero",
+  "metadata_gate": "subject/date/day-coverage checks required before app integration; numeric helper cannot validate these",
+  "input_transforms": "none except StandardScaler; nonlinear functions belong only to synthetic target generation"
+}

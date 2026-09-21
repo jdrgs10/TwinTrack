@@ -1,0 +1,251 @@
+{
+  "artifact_version_warnings": [
+    "Trying to unpickle estimator Pipeline from version 1.9.0 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:\nhttps://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations",
+    "Trying to unpickle estimator Ridge from version 1.9.0 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:\nhttps://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations",
+    "Trying to unpickle estimator StandardScaler from version 1.9.0 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:\nhttps://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations"
+  ],
+  "rows": 1000,
+  "split_train": 800,
+  "split_test": 200,
+  "pipeline": "Pipeline(steps=[('scaler', StandardScaler()), ('ridge', Ridge(alpha=10.0))])",
+  "alpha": 10.0,
+  "features": [
+    "sleep_hours",
+    "steps",
+    "exercise_minutes",
+    "resting_heart_rate",
+    "study_minutes",
+    "screen_time_minutes",
+    "previous_score"
+  ],
+  "artifact_json_prediction_max_error": 0.0,
+  "frozen_copy_prediction_max_error": 0.0,
+  "generator_csv_numeric_match": true,
+  "scaler_training_mean_max_error": 0.0,
+  "scaler_training_sd_max_error": 0.0,
+  "raw": {
+    "n": 200,
+    "mae": 4.76146176524888,
+    "rmse": 5.868372602783463,
+    "r2": 0.5704285621846623,
+    "bias_pred_minus_actual": 0.19866843457439987,
+    "calibration_slope": 0.9963005817685956,
+    "calibration_intercept": 0.0534401421692985
+  },
+  "clamped": {
+    "n": 200,
+    "mae": 4.76146176524888,
+    "rmse": 5.868372602783463,
+    "r2": 0.5704285621846623,
+    "bias_pred_minus_actual": 0.19866843457439987,
+    "calibration_slope": 0.9963005817685956,
+    "calibration_intercept": 0.0534401421692985
+  },
+  "clip_fraction": 0.0,
+  "saved_metrics": {
+    "mae": 4.76146176524888,
+    "rmse": 5.868372602783463,
+    "r2": 0.5704285621846623
+  },
+  "summary": {
+    "sleep_hours": {
+      "count": 1000.0,
+      "mean": 6.966270000000001,
+      "std": 1.1731552669533476,
+      "min": 4.0,
+      "25%": 6.16,
+      "50%": 7.01,
+      "75%": 7.71,
+      "max": 10.0
+    },
+    "steps": {
+      "count": 1000.0,
+      "mean": 6804.912,
+      "std": 2515.1765407794514,
+      "min": 1000.0,
+      "25%": 5174.25,
+      "50%": 6890.5,
+      "75%": 8507.0,
+      "max": 14286.0
+    },
+    "exercise_minutes": {
+      "count": 1000.0,
+      "mean": 31.319,
+      "std": 19.084325780348923,
+      "min": 0.0,
+      "25%": 16.8,
+      "50%": 30.7,
+      "75%": 44.5,
+      "max": 91.2
+    },
+    "resting_heart_rate": {
+      "count": 1000.0,
+      "mean": 67.99119999999999,
+      "std": 8.775128799365024,
+      "min": 45.0,
+      "25%": 61.8,
+      "50%": 67.9,
+      "75%": 73.8,
+      "max": 95.8
+    },
+    "study_minutes": {
+      "count": 1000.0,
+      "mean": 89.84530000000001,
+      "std": 47.87827197003706,
+      "min": 0.0,
+      "25%": 55.675000000000004,
+      "50%": 89.1,
+      "75%": 119.4,
+      "max": 262.7
+    },
+    "screen_time_minutes": {
+      "count": 1000.0,
+      "mean": 244.94740000000002,
+      "std": 90.23760956175325,
+      "min": 30.0,
+      "25%": 183.45,
+      "50%": 244.95,
+      "75%": 304.8,
+      "max": 531.7
+    },
+    "previous_score": {
+      "count": 1000.0,
+      "mean": 75.11139999999999,
+      "std": 12.16311190984163,
+      "min": 38.2,
+      "25%": 67.2,
+      "50%": 74.3,
+      "75%": 83.9,
+      "max": 100.0
+    },
+    "assessment_score": {
+      "count": 1000.0,
+      "mean": 67.91,
+      "std": 9.092739846598379,
+      "min": 36.2,
+      "25%": 61.9,
+      "50%": 68.0,
+      "75%": 74.2,
+      "max": 95.6
+    }
+  },
+  "correlations": {
+    "sleep_hours": {
+      "sleep_hours": 1.0,
+      "steps": -0.006141659877658599,
+      "exercise_minutes": 0.0365507921650574,
+      "resting_heart_rate": 0.006024057277715503,
+      "study_minutes": -0.004749443245677067,
+      "screen_time_minutes": -0.06054230376407916,
+      "previous_score": 0.020662263330433032,
+      "assessment_score": 0.13599647458223763
+    },
+    "steps": {
+      "sleep_hours": -0.006141659877658599,
+      "steps": 1.0,
+      "exercise_minutes": -0.02180615944553367,
+      "resting_heart_rate": -0.022070016023208367,
+      "study_minutes": -0.0014641309637137185,
+      "screen_time_minutes": -0.001720529045468525,
+      "previous_score": -0.055149029982358135,
+      "assessment_score": 0.03551543872492304
+    },
+    "exercise_minutes": {
+      "sleep_hours": 0.0365507921650574,
+      "steps": -0.02180615944553367,
+      "exercise_minutes": 1.0,
+      "resting_heart_rate": 0.03749043095462731,
+      "study_minutes": 0.028940793481374565,
+      "screen_time_minutes": -0.025815922898742454,
+      "previous_score": 0.04304147948267538,
+      "assessment_score": 0.09055899503218988
+    },
+    "resting_heart_rate": {
+      "sleep_hours": 0.006024057277715503,
+      "steps": -0.022070016023208367,
+      "exercise_minutes": 0.03749043095462731,
+      "resting_heart_rate": 1.0,
+      "study_minutes": 0.013162886542940068,
+      "screen_time_minutes": 0.05348994422440018,
+      "previous_score": -0.010130627185232178,
+      "assessment_score": -0.007903909547328048
+    },
+    "study_minutes": {
+      "sleep_hours": -0.004749443245677067,
+      "steps": -0.0014641309637137185,
+      "exercise_minutes": 0.028940793481374565,
+      "resting_heart_rate": 0.013162886542940068,
+      "study_minutes": 1.0,
+      "screen_time_minutes": 0.021872819029256366,
+      "previous_score": 0.007557334600104974,
+      "assessment_score": 0.1684138336674081
+    },
+    "screen_time_minutes": {
+      "sleep_hours": -0.06054230376407916,
+      "steps": -0.001720529045468525,
+      "exercise_minutes": -0.025815922898742454,
+      "resting_heart_rate": 0.05348994422440018,
+      "study_minutes": 0.021872819029256366,
+      "screen_time_minutes": 1.0,
+      "previous_score": -0.023150383306473024,
+      "assessment_score": -0.1302168583306397
+    },
+    "previous_score": {
+      "sleep_hours": 0.020662263330433032,
+      "steps": -0.055149029982358135,
+      "exercise_minutes": 0.04304147948267538,
+      "resting_heart_rate": -0.010130627185232178,
+      "study_minutes": 0.007557334600104974,
+      "screen_time_minutes": -0.023150383306473024,
+      "previous_score": 1.0,
+      "assessment_score": 0.7259490770775738
+    },
+    "assessment_score": {
+      "sleep_hours": 0.13599647458223763,
+      "steps": 0.03551543872492304,
+      "exercise_minutes": 0.09055899503218988,
+      "resting_heart_rate": -0.007903909547328048,
+      "study_minutes": 0.1684138336674081,
+      "screen_time_minutes": -0.1302168583306397,
+      "previous_score": 0.7259490770775738,
+      "assessment_score": 1.0
+    }
+  },
+  "raw_coefficients": {
+    "sleep_hours": 0.8847406163364671,
+    "steps": 0.0003450630161238116,
+    "exercise_minutes": 0.02695178418013611,
+    "resting_heart_rate": 0.027543998681835172,
+    "study_minutes": 0.03255574119478139,
+    "screen_time_minutes": -0.010292328587485482,
+    "previous_score": 0.5316917453836745
+  },
+  "mean_baseline": {
+    "n": 200,
+    "mae": 7.1444925,
+    "rmse": 8.953783426050968,
+    "r2": -3.0409848250867455e-05,
+    "bias_pred_minus_actual": -0.0493750000000113,
+    "calibration_slope": null,
+    "calibration_intercept": null
+  },
+  "previous_ols_baseline": {
+    "n": 200,
+    "mae": 4.8014991166603025,
+    "rmse": 6.008378699621792,
+    "r2": 0.5496868479533286,
+    "bias_pred_minus_actual": 0.39495110048242266,
+    "calibration_slope": 0.9927813138393541,
+    "calibration_intercept": 0.09840604283356251
+  },
+  "retuned_in_memory_alpha": 10,
+  "retuned_cv_mae": 4.636596102140946,
+  "refit_coefficient_max_error": 8.881784197001252e-16,
+  "golden": {
+    "total": 21,
+    "pass": 21,
+    "max_error": 7.105427357601002e-15,
+    "tolerance": 1e-06,
+    "scope": "Python frozen artifact/JSON; no new Swift run"
+  }
+}

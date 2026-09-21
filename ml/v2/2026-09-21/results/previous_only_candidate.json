@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "model_version": "2.0-candidate.1",
+  "synthetic_only": true,
+  "deployment_approved": false,
+  "features": [
+    "previous_score"
+  ],
+  "mean": [
+    72.17279998026176
+  ],
+  "scale": [
+    12.212366180498488
+  ],
+  "coefficients_standardized": [
+    9.707578319683874
+  ],
+  "intercept_standardized": 71.67179307598937,
+  "coefficients_raw": [
+    0.7948974159639575
+  ],
+  "intercept_raw": 14.301820868795737,
+  "alpha": 0.1,
+  "training_seed": 1101,
+  "output_clamp": [
+    0,
+    100
+  ],
+  "bounds": {
+    "previous_score": [
+      0,
+      100
+    ]
+  },
+  "task": "Grade12_same_subject_test_7_days_after_28_day_window_v2",
+  "missing_policy": "abstain; never replace missing inputs with zero"
+}

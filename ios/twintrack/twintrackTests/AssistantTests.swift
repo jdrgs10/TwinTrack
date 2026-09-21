@@ -356,9 +356,10 @@ final class AssistantTests: XCTestCase {
         let profile = TwinTrackProfile(sleepHours: 7, steps: 5000, exerciseMinutes: 30, restingHeartRate: 60,
             studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
         let window = HealthDataWindow(now: now, calendar: calendar)
-        let run = PredictionSnapshot.realBaseline(profile: profile, createdAt: now, healthWindow: window, provenance: "explicitRun.v1")
+        let context = V2PredictionContext.fixture(now: now, calendar: calendar)
+        let run = PredictionSnapshot.realBaseline(profile: profile, createdAt: now, healthWindow: window, provenance: TwinTrackModel.provenance, predictionContext: context)
         return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75],
-            window: window, capturedAt: now, calendar: calendar, predictionStatus: .fresh, lastPrediction: run)
+            window: window, capturedAt: now, calendar: calendar, predictionStatus: .fresh, lastPrediction: run, predictionContext: context)
     }
 
     private func scenarioRun(_ prompt: String) -> AssistantToolRun {
@@ -392,7 +393,7 @@ private final class AssistantHealthStub: HealthDataProviding {
     func requestAccess() async throws { requests += 1 }
     func read(window: HealthDataWindow) async -> HealthReadings {
         reads += 1
-        return HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30), restingHeartRate: .available(60))
+        return HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30), restingHeartRate: .available(60), restingHeartRateSampleDate: window.day.start)
     }
 }
 

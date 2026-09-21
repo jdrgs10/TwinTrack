@@ -1,0 +1,62 @@
+[
+  {
+    "target_clip_fraction": 0.0085,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "central"
+  },
+  {
+    "target_clip_fraction": 0.0085,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "null_habits"
+  },
+  {
+    "target_clip_fraction": 0.0115,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "double_habits"
+  },
+  {
+    "target_clip_fraction": 0.008,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "opposite_sleep"
+  },
+  {
+    "target_clip_fraction": 0.003,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "low_noise"
+  },
+  {
+    "target_clip_fraction": 0.0315,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "high_noise"
+  },
+  {
+    "target_clip_fraction": 0.0095,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "rhr_negative"
+  },
+  {
+    "target_clip_fraction": 0.0085,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "rhr_positive"
+  },
+  {
+    "target_clip_fraction": 0.008,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "saturation"
+  },
+  {
+    "target_clip_fraction": 0.002,
+    "rows": 2000,
+    "seed": 97001,
+    "scenario": "population_shift"
+  }
+]

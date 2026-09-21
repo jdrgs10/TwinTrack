@@ -74,22 +74,24 @@ struct WhatIfScenario {
     }
 
     static func isValid(_ value: Double, for feature: TwinTrackFeature) -> Bool {
-        // This is a floating-point safety guard, not a scientific/training range.
-        // It leaves ample headroom for unit conversion and the frozen calculation.
-        guard value.isFinite, value >= 0,
-              value <= Double.greatestFiniteMagnitude.squareRoot() else { return false }
-        switch feature {
-        case .previousScore: return value <= 100
-        case .restingHeartRate: return value > 0
-        default: return true
-        }
+        // Approved V2 engineering support; not a healthy range or recommendation.
+        value.isFinite && TwinTrackModel.bounds[feature.rawValue].contains(value)
     }
 
     static func validationHint(for feature: TwinTrackFeature) -> String {
+        let range = TwinTrackModel.bounds[feature.rawValue]
+        let unit = feature == .sleepHours ? "hours" : feature == .steps ? "steps" : feature == .restingHeartRate ? "bpm" : feature == .previousScore ? "points" : "minutes"
+        return "Use \(Int(range.lowerBound))–\(Int(range.upperBound)) \(unit). \(period(for: feature))"
+    }
+
+    static func period(for feature: TwinTrackFeature) -> String {
         switch feature {
-        case .previousScore: "Use a finite number from 0 through 100."
-        case .restingHeartRate: "Use a positive finite number in bpm; values too large to calculate safely are rejected."
-        default: "Use a non-negative finite number; values too large to calculate safely are rejected."
+        case .sleepHours: "Captured recent sleep window."
+        case .steps, .exerciseMinutes: "Previous completed day."
+        case .studyMinutes: "Yesterday’s outside-class study for the selected subject."
+        case .screenTimeMinutes: "Yesterday’s recreational screens, excluding study."
+        case .restingHeartRate: "Hypothetical latest resting sample, not a health target."
+        case .previousScore: "Hypothetical same-subject prior score."
         }
     }
 

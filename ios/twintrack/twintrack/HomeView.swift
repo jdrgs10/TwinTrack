@@ -100,6 +100,8 @@ struct HomeView: View {
                 Text(state.predictionStatus() == .fresh ? "Current explicit run" : "Previous · Inputs changed or awaiting refresh")
                     .font(.footnote).foregroundStyle(palette.secondaryText)
                 Text(saved.createdAt, format: .dateTime.month().day().hour().minute()).font(.caption)
+                Text(saved.modelLabel).font(.caption).foregroundStyle(palette.secondaryText)
+                if let context = saved.predictionContext { Text(context.summary).font(.caption) }
                 let prediction = saved.prediction
                 HStack(alignment: .lastTextBaseline, spacing: 10) {
                     Text(HomeDisplay.prediction(prediction))
@@ -119,7 +121,7 @@ struct HomeView: View {
                     .accessibilityValue("\(HomeDisplay.prediction(prediction)) out of 100")
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(state.missingInputs.isEmpty ? "Ready to predict" : "Prediction unavailable")
+                    Text(state.missingInputs.isEmpty && state.v2EligibilityIssue() == nil ? "Ready to predict" : "Prediction unavailable")
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(palette.heroText)
                     Text(state.missingInputs.isEmpty ? "Run Prediction when your current inputs are ready." : "Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))")
@@ -134,6 +136,7 @@ struct HomeView: View {
             if state.predictionStatus() == .needsRefresh {
                 Text("Refresh Apple Health to establish current source periods.").font(.footnote)
             }
+            if let issue = state.v2EligibilityIssue() { Text(issue).font(.footnote).foregroundStyle(palette.secondaryText) }
             if state.predictionStatus() != .fresh {
                 Button(state.lastPrediction == nil ? "Run Prediction" : "Run Prediction Again") { state.runPrediction() }
                     .buttonStyle(.borderedProminent)
@@ -142,7 +145,7 @@ struct HomeView: View {
             }
             if let issue = state.predictionIssue { Text(issue).font(.footnote) }
 
-            Text("Ridge Regression • 7 inputs • On-device")
+            Text("TwinTrack Ridge V2 • 7 inputs • Experimental")
                 .font(.caption)
                 .foregroundStyle(palette.secondaryText)
         }

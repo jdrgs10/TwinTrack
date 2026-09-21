@@ -29,8 +29,8 @@ final class TwinTrackModelTests: XCTestCase {
         // 21/21 parity proves Swift implements the same numerical pipeline as Python.
         for profile in golden.profiles {
             let input = try profile.makeInput()
-            let rawError = abs(TwinTrackModel.predictRaw(input) - profile.expectedRaw)
-            let clampedError = abs(TwinTrackModel.predict(input) - profile.expectedClamped)
+            let rawError = abs(TwinTrackModelV1.predictRaw(input) - profile.expectedRaw)
+            let clampedError = abs(TwinTrackModelV1.predict(input) - profile.expectedClamped)
             let profileError = max(rawError, clampedError)
 
             maximumAbsoluteError = max(maximumAbsoluteError, profileError)

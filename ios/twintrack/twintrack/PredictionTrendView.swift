@@ -109,7 +109,7 @@ struct PredictionTrendView: View {
     @ViewBuilder
     private var selectedScoreLabel: some View {
         if let selectedPoint {
-            Text("Predicted score \(HomeDisplay.prediction(selectedPoint.snapshot.prediction))")
+            Text("\(selectedPoint.snapshot.modelLabel) · \(HomeDisplay.prediction(selectedPoint.snapshot.prediction))")
                 .font(.caption.weight(.medium))
                 .monospacedDigit()
                 .foregroundStyle(palette.accentText)
@@ -282,6 +282,9 @@ enum PredictionTrendPresentation {
             )
         }
 
+        guard points.allSatisfy({ $0.snapshot.modelVersion == first.modelVersion }) else {
+            return PredictionTrendSummary(description: "Different model versions · scores are not directly comparable", delta: nil)
+        }
         let delta = last.prediction - first.prediction
         let description: String
         if delta > 0.05 {
@@ -374,6 +377,8 @@ struct PredictionHistoryDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("historyDetailDate")
+                    Text(snapshot.modelLabel).font(.caption).accessibilityIdentifier("historyModelVersion")
+                    if let context = snapshot.predictionContext { Text(context.summary).font(.caption) }
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("PREDICTED ASSESSMENT SCORE")
@@ -520,7 +525,7 @@ struct DataPrivacyView: View {
                 )
                 privacyDescription(
                     title: "Manual Inputs",
-                    text: "Study time, screen time and previous score are entered by you and stored as app preferences."
+                    text: "Study time, recreational screen time and prior percentage are entered by you and stored locally with the subject, assessment dates and manual source day. These details establish V2 eligibility; the model still uses seven numerical inputs."
                 )
                 privacyDescription(
                     title: "Profile",
@@ -641,7 +646,7 @@ private struct StoredPredictionDataView: View {
                             Text("7 real inputs\(snapshot.healthWindow == nil ? "" : " · Health source periods")")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
-                            Text(snapshot.provenance == "explicitRun.v1" ? "Explicit prediction run" : "Legacy prediction event")
+                            Text(snapshot.modelLabel)
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }

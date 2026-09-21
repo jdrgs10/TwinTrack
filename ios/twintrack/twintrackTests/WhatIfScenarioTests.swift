@@ -41,21 +41,21 @@ final class WhatIfScenarioTests: XCTestCase {
         XCTAssertEqual(result.changedFeatures, [.studyMinutes])
     }
 
-    func testMultipleChangesAreEvaluatedTogetherNotSummedAtClamp() throws {
+    func testMultipleSupportedChangesAreEvaluatedTogether() throws {
         var combined = try WhatIfScenario(baseline: baseline)
         var studyOnly = combined
         var screenOnly = combined
-        try combined.set(10_000, for: .studyMinutes)
-        try combined.set(100_000, for: .screenTimeMinutes)
-        try studyOnly.set(10_000, for: .studyMinutes)
-        try screenOnly.set(100_000, for: .screenTimeMinutes)
+        try combined.set(360, for: .studyMinutes)
+        try combined.set(720, for: .screenTimeMinutes)
+        try studyOnly.set(360, for: .studyMinutes)
+        try screenOnly.set(720, for: .screenTimeMinutes)
         let expected = TwinTrackProfile(sleepHours: 7, steps: 6500, exerciseMinutes: 30,
-                                       restingHeartRate: 68, studyMinutes: 10_000,
-                                       screenTimeMinutes: 100_000, previousScore: 75)
+                                       restingHeartRate: 68, studyMinutes: 360,
+                                       screenTimeMinutes: 720, previousScore: 75)
         let result = combined.evaluate()
         XCTAssertEqual(result.scenarioPrediction, TwinTrackModel.predict(expected))
         XCTAssertEqual(result.delta, result.scenarioPrediction - result.baselinePrediction)
-        XCTAssertNotEqual(result.delta, studyOnly.evaluate().delta + screenOnly.evaluate().delta)
+        XCTAssertEqual(result.delta, studyOnly.evaluate().delta + screenOnly.evaluate().delta, accuracy: 1e-10)
         XCTAssertEqual(result.changedFeatures, [.studyMinutes, .screenTimeMinutes])
     }
 
@@ -112,7 +112,8 @@ final class WhatIfScenarioTests: XCTestCase {
             XCTAssertEqual(scenario.scenarioValue(for: feature), 0)
         }
         XCTAssertThrowsError(try scenario.set(0, for: .restingHeartRate))
-        try scenario.set(0.1, for: .restingHeartRate)
+        XCTAssertThrowsError(try scenario.set(0.1, for: .restingHeartRate))
+        try scenario.set(35, for: .restingHeartRate)
     }
 
     func testNonfiniteAndUncomputablyLargeValuesAreRejected() throws {
@@ -125,22 +126,14 @@ final class WhatIfScenarioTests: XCTestCase {
         XCTAssertTrue(scenario.changes.isEmpty)
     }
 
-    func testClampedDeltaAtBothBoundaries() throws {
+    func testUnsupportedValuesCannotForceClampedScenarios() throws {
         var scenario = try WhatIfScenario(baseline: baseline)
-        try scenario.set(10_000, for: .studyMinutes)
-        let high = scenario.evaluate()
-        XCTAssertGreaterThan(TwinTrackModel.predictRaw(high.scenario), 100)
-        XCTAssertEqual(high.scenarioPrediction, 100)
-        XCTAssertEqual(high.delta, 100 - TwinTrackModel.predict(baseline))
-        scenario.reset()
-        try scenario.set(100_000, for: .screenTimeMinutes)
-        let low = scenario.evaluate()
-        XCTAssertLessThan(TwinTrackModel.predictRaw(low.scenario), 0)
-        XCTAssertEqual(low.scenarioPrediction, 0)
-        XCTAssertEqual(low.delta, -TwinTrackModel.predict(baseline))
-        var alreadyClamped = try WhatIfScenario(baseline: high.scenario)
-        try alreadyClamped.set(20_000, for: .studyMinutes)
-        XCTAssertEqual(alreadyClamped.evaluate().delta, 0)
+        // V2's approved support does not reach the output clamps. Raw clipping
+        // is tested separately by the versioned golden arithmetic probes.
+        XCTAssertThrowsError(try scenario.set(10_000, for: .studyMinutes))
+        XCTAssertThrowsError(try scenario.set(100_000, for: .screenTimeMinutes))
+        XCTAssertEqual(scenario.evaluate().delta, 0)
+        XCTAssertTrue(scenario.changes.isEmpty)
     }
 
     func testCancelAndExitLeaveRealStateAndPersistenceUnchanged() async throws {
@@ -205,8 +198,8 @@ final class WhatIfScenarioTests: XCTestCase {
     }
 
     func testUntouchedEditorDoesNotRoundPreciseBaseline() {
-        let precise = 7.123456789123
         for feature in TwinTrackFeature.allCases {
+            let precise = feature == .restingHeartRate ? 67.123456789123 : 7.123456789123
             XCTAssertEqual(WhatIfInputDraft(feature: feature, value: precise).parsedValue, precise)
         }
         XCTAssertEqual(WhatIfDisplay.value(119.9999, feature: .studyMinutes), "2h 0m")
@@ -233,7 +226,8 @@ final class WhatIfScenarioTests: XCTestCase {
 
     func testLargeValidScenarioRemainsFiniteAndDeltaFormattingAvoidsNegativeZero() throws {
         var scenario = try WhatIfScenario(baseline: baseline)
-        try scenario.set(Double.greatestFiniteMagnitude.squareRoot(), for: .steps)
+        try scenario.set(30_000, for: .steps)
+        XCTAssertThrowsError(try scenario.set(30_001, for: .steps))
         let result = scenario.evaluate()
         XCTAssertTrue(result.scenarioPrediction.isFinite)
         XCTAssertTrue(result.delta.isFinite)

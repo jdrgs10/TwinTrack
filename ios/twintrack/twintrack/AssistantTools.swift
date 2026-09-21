@@ -12,6 +12,8 @@ struct AssistantSnapshot: Sendable {
     let calendar: Calendar
     let predictionStatus: PredictionStatus
     let lastPrediction: PredictionSnapshot?
+    let predictionContext: V2PredictionContext?
+    let eligibilityIssue: String?
 
     @MainActor init(state: TwinTrackState, now: Date = Date(), calendar: Calendar = .current) {
         values = [state.sleepHours, state.steps, state.exerciseMinutes, state.restingHeartRate,
@@ -23,12 +25,15 @@ struct AssistantSnapshot: Sendable {
         self.calendar = calendar
         predictionStatus = state.predictionStatus(now: now, calendar: calendar)
         lastPrediction = state.lastPrediction
+        predictionContext = state.predictionContext
+        eligibilityIssue = state.v2EligibilityIssue(now: now, calendar: calendar)
     }
 
     init(values: [Double?] = Array(repeating: nil, count: 7), health: HealthReadings = HealthReadings(),
          window: HealthDataWindow? = nil, history: [PredictionSnapshot] = [],
          capturedAt: Date = Date(), calendar: Calendar = .current,
-         predictionStatus: PredictionStatus = .ready, lastPrediction: PredictionSnapshot? = nil) {
+         predictionStatus: PredictionStatus = .ready, lastPrediction: PredictionSnapshot? = nil,
+         predictionContext: V2PredictionContext? = nil, eligibilityIssue: String? = nil) {
         self.values = values.count == 7 ? values : Array(repeating: nil, count: 7)
         self.health = health
         self.window = window
@@ -37,6 +42,17 @@ struct AssistantSnapshot: Sendable {
         self.calendar = calendar
         self.predictionStatus = predictionStatus
         self.lastPrediction = lastPrediction
+        self.predictionContext = predictionContext
+        self.eligibilityIssue = eligibilityIssue
+    }
+
+    var isCurrentV2: Bool {
+        guard predictionStatus == .fresh, lastPrediction?.provenance == TwinTrackModel.provenance,
+              lastPrediction?.modelVersion == TwinTrackModel.version,
+              let predictionContext, predictionContext.issue(now: capturedAt, calendar: calendar) == nil,
+              lastPrediction?.predictionContext == predictionContext, let profile,
+              lastPrediction?.inputs == PredictionInputs(profile: profile) else { return false }
+        return TwinTrackFeature.allCases.allSatisfy { WhatIfScenario.isValid(WhatIfScenario.value($0, in: profile), for: $0) }
     }
 
     var missing: [String] {
@@ -141,16 +157,17 @@ final class AssistantToolRun {
         try begin("readCurrentTwin")
         var fields = inputFields(snapshot.values)
         fields += sourceFields()
-        let fresh = snapshot.predictionStatus == .fresh && snapshot.lastPrediction?.provenance == "explicitRun.v1"
-        let status = fresh ? "Current explicit run · Not a guaranteed outcome"
+        let fresh = snapshot.isCurrentV2
+        let status = fresh ? "Experimental V2 estimate · Real-student predictive accuracy remains unverified."
             : (snapshot.lastPrediction == nil ? "No current run. Use Run Prediction on Home." : "Previous result is not current. Review inputs and use Run Prediction Again on Home.")
         if let prior = snapshot.lastPrediction {
+            fields.append(AssistantField(label: "Previous run model", value: prior.modelLabel))
             fields.append(AssistantField(label: "Previous run", value: dateText(prior.createdAt, time: true)))
             if !fresh { fields.append(AssistantField(label: "Previous score (historical)", value: HomeDisplay.prediction(prior.prediction))) }
         }
         return try record(AssistantCard(
             kind: .current, title: "Current TwinTrack",
-            message: snapshot.missing.isEmpty ? status
+            message: snapshot.missing.isEmpty ? (snapshot.eligibilityIssue ?? status)
                 : "Prediction unavailable — missing: \(snapshot.missing.joined(separator: ", ")).",
             prediction: fresh ? snapshot.lastPrediction?.prediction : nil, fields: fields
         ))
@@ -174,7 +191,7 @@ final class AssistantToolRun {
                 return try record(AssistantCard(kind: .unavailable, title: "Scenario unavailable",
                     message: "I can't run that scenario yet because these inputs are unavailable: \(snapshot.missing.joined(separator: ", "))."))
             }
-            guard snapshot.predictionStatus == .fresh, snapshot.lastPrediction?.provenance == "explicitRun.v1" else {
+            guard snapshot.isCurrentV2 else {
                 return try record(AssistantCard(kind: .unavailable, title: "Run Prediction first",
                     message: "The scenario needs a fresh explicit prediction. Review your inputs and use Run Prediction on Home, then ask again."))
             }
@@ -191,7 +208,7 @@ final class AssistantToolRun {
             }
             let result = scenario.evaluate()
             return try record(AssistantCard(kind: .scenario, title: "Model scenario",
-                message: "Predicted change · Not a guaranteed outcome. Your saved inputs are unchanged.",
+                message: "The V2 model estimate changes by the amount shown. Not a guaranteed outcome. Your saved inputs are unchanged.",
                 prediction: result.scenarioPrediction, baseline: result.baselinePrediction, delta: result.delta,
                 fields: inputFields(TwinTrackFeature.allCases.map { WhatIfScenario.value($0, in: result.scenario) }) + sourceFields()))
         } catch let error as WhatIfError {
@@ -226,12 +243,12 @@ final class AssistantToolRun {
             let days = PredictionHistoryTrend.days(now: snapshot.capturedAt, calendar: snapshot.calendar)
             let fields = days.map { day in
                 AssistantField(label: dateText(day), value: points.first(where: { $0.day == day })
-                    .map { HomeDisplay.prediction($0.snapshot.prediction) } ?? "No saved prediction")
+                    .map { "\(HomeDisplay.prediction($0.snapshot.prediction)) · \($0.snapshot.modelLabel)" } ?? "No saved prediction")
             }
-            let delta = points.count > 1 ? points.last!.snapshot.prediction - points.first!.snapshot.prediction : nil
+            let summary = PredictionTrendPresentation.summary(points: points)
             return try record(AssistantCard(kind: .history, title: "7-day prediction history",
-                message: delta == nil ? "Insufficient history for a trend." : "Change across available days. Missing days remain empty.",
-                delta: delta, fields: fields))
+                message: summary.description + ". Missing days remain empty.",
+                delta: summary.delta, fields: fields))
         }
     }
 
@@ -281,7 +298,7 @@ final class AssistantToolRun {
     }
 
     private func historyCard(_ snapshot: PredictionSnapshot) -> AssistantCard {
-        AssistantCard(kind: .history, title: "Saved model prediction", message: "Recorded \(dateText(snapshot.createdAt, time: true)). These are saved values, not current readings.",
+        AssistantCard(kind: .history, title: "Saved model prediction", message: "\(snapshot.modelLabel). Recorded \(dateText(snapshot.createdAt, time: true)). These are saved values, not current readings.",
             prediction: snapshot.prediction, fields: inputFields(TwinTrackFeature.allCases.map { WhatIfScenario.value($0, in: snapshot.inputs.profile) }))
     }
 
@@ -303,7 +320,8 @@ final class AssistantToolRun {
 
     private func sourceFields() -> [AssistantField] {
         var fields = [AssistantField(label: "Captured", value: dateText(snapshot.capturedAt, time: true)),
-                      AssistantField(label: "Manual values", value: "Current saved entries"),
+                      AssistantField(label: "Model", value: "TwinTrack Ridge V2 · 2.0-final.1"),
+                      AssistantField(label: "Manual values", value: "Yesterday’s subject study / recreational screens excluding study"),
                       AssistantField(label: "Capture time zone", value: snapshot.calendar.timeZone.identifier)]
         if let window = snapshot.window {
             // Travel after a refresh must not relabel the committed Health window.
@@ -311,6 +329,11 @@ final class AssistantToolRun {
             fields.append(AssistantField(label: "Steps / Exercise", value: "Previous completed day: \(dateText(window.day.start, zone: window.timeZone))"))
             fields.append(AssistantField(label: "Sleep window", value: "\(dateText(window.sleep.start, time: true, zone: window.timeZone)) – \(dateText(window.sleep.end, time: true, zone: window.timeZone))"))
             fields.append(AssistantField(label: "Resting Heart Rate", value: "Latest valid sample within the preceding 72 hours"))
+        }
+        if let context = snapshot.predictionContext {
+            fields.append(AssistantField(label: "Assessment", value: context.summary))
+            fields.append(AssistantField(label: "Manual source day", value: dateText(context.manualDay, zone: TimeZone(identifier: context.timeZoneIdentifier))))
+            fields.append(AssistantField(label: "Previous assessment", value: dateText(context.previousDate, zone: TimeZone(identifier: context.timeZoneIdentifier))))
         }
         if let date = snapshot.health.restingHeartRateSampleDate { fields.append(AssistantField(label: "Resting sample", value: dateText(date, time: true, zone: snapshot.window?.timeZone))) }
         return fields
@@ -337,7 +360,7 @@ nonisolated struct ReadCurrentTwinTool: Tool {
 
 nonisolated struct RunWhatIfTool: Tool {
     let name = "runWhatIf"
-    let description = "Run all explicit scenario changes together through the existing frozen Ridge engine using this request's immutable baseline. Never saves a scenario. Use exact quoted evidence and original units."
+    let description = "Run explicit changes through TwinTrack Ridge V2 2.0-final.1 using the immutable eligible baseline. Study is yesterday's outside-class selected-subject total; screen is yesterday's recreational total excluding study. Never saves a scenario. Use exact quoted evidence and original units."
     let run: AssistantToolRun
     func call(arguments: AssistantScenarioArguments) async throws -> String { try await run.runScenario(arguments) }
 }

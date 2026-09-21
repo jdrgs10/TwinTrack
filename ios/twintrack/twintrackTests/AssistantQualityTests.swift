@@ -57,9 +57,15 @@ final class AssistantQualityTests: XCTestCase {
         let read = try await service.respond(to: [user("How much sleep did my Watch record?")], snapshot: complete())
         XCTAssertEqual(read.cards.first?.kind, .current)
         XCTAssertEqual(read.provenance?.origin, .sleepReading)
-        for prompt in ["Then ask again: ‘What if I sleep eight hours?’", "Please, repeat the question: What if I sleep for six MORE hours?"] {
+        let scenarios: [(String, AssistantCard.Kind)] = [
+            ("Then ask again: ‘What if I sleep eight hours?’", .scenario),
+            ("Please, repeat the question: What if I sleep for five MORE hours?", .scenario),
+            ("Please, repeat the question: What if I sleep for six MORE hours?", .clarification)
+        ]
+        for (prompt, expectedKind) in scenarios {
             let result = try await service.respond(to: [user(prompt)], snapshot: complete())
-            XCTAssertEqual(result.cards.first?.kind, .scenario)
+            XCTAssertEqual(result.cards.first?.kind, expectedKind)
+            if expectedKind == .clarification { XCTAssertNil(result.cards.first?.prediction) }
             XCTAssertEqual(result.provenance?.origin, .scenario)
             XCTAssertFalse(result.text.contains("synthetic"))
         }
@@ -211,8 +217,9 @@ final class AssistantQualityTests: XCTestCase {
 
     private func complete() -> AssistantSnapshot {
         let profile = TwinTrackProfile(sleepHours: 7, steps: 5000, exerciseMinutes: 30, restingHeartRate: 60, studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75)
-        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: Date(), healthWindow: nil, provenance: "explicitRun.v1")
-        return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75], predictionStatus: .fresh, lastPrediction: prediction)
+        let context = V2PredictionContext.fixture()
+        let prediction = PredictionSnapshot.realBaseline(profile: profile, createdAt: Date(), healthWindow: nil, provenance: TwinTrackModel.provenance, predictionContext: context)
+        return AssistantSnapshot(values: [7, 5000, 30, 60, 120, 240, 75], predictionStatus: .fresh, lastPrediction: prediction, predictionContext: context)
     }
     private func user(_ text: String) -> AssistantMessage { AssistantMessage(role: .user, text: text) }
     private func finish(_ chat: AssistantConversation) async {
