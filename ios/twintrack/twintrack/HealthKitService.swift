@@ -34,6 +34,30 @@ final class HealthKitService: HealthDataProviding {
         )
     }
 
+    func readRestingHeartRateTrend(now: Date, calendar: Calendar) async -> RestingHeartRateTrend? {
+        guard isAvailable else { return nil }
+        let window = RestingHeartRateTrend.window(now: now, calendar: calendar)
+        let predicate = NSPredicate(
+            format: "%K >= %@ AND %K < %@",
+            HKPredicateKeyPathStartDate, window.start as NSDate,
+            HKPredicateKeyPathStartDate, window.end as NSDate
+        )
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.restingHeartRate), predicate: predicate)],
+            sortDescriptors: []
+        )
+        do {
+            let samples = try await descriptor.result(for: store)
+            // Only the assessment survives this query; raw samples never enter app state or storage.
+            return RestingHeartRateTrend.assess(samples: samples.compactMap {
+                guard let bpm = HealthUnits.restingBPM($0.quantity) else { return nil }
+                return RestingHeartRateReading(bpm: bpm, date: $0.startDate)
+            }, now: now, calendar: calendar)
+        } catch {
+            return nil
+        }
+    }
+
     private func readQuantity(
         _ identifier: HKQuantityTypeIdentifier,
         window: DateInterval,

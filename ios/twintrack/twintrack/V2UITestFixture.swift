@@ -34,6 +34,15 @@ enum V2UITestFixture {
     private struct Readings: HealthDataProviding {
         let isAvailable = true
         func requestAccess() async throws {}
+        func readRestingHeartRateTrend(now: Date, calendar: Calendar) async -> RestingHeartRateTrend? {
+            guard ProcessInfo.processInfo.arguments.contains("--synthetic-rhr-ui-tests") else { return nil }
+            let window = RestingHeartRateTrend.window(now: now, calendar: calendar)
+            let samples = (0..<33).map { i in
+                RestingHeartRateReading(bpm: i < 28 ? Double(58 + i % 5) : 80,
+                    date: calendar.date(byAdding: .day, value: i, to: window.start)!)
+            }
+            return RestingHeartRateTrend.assess(samples: samples, now: now, calendar: calendar)
+        }
         func read(window: HealthDataWindow) async -> HealthReadings {
             HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30),
                 restingHeartRate: .available(60), restingHeartRateSampleDate: window.day.start)

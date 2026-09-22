@@ -555,6 +555,177 @@ final class twintrackUITests: XCTestCase {
     }
 
     @MainActor
+    func testRHRWellbeingIsSecondaryAndReadableInLightAndDark() throws {
+        let app = XCUIApplication(), fixtureID = UUID().uuidString
+        app.launchArguments = ["--synthetic-v2-ui-tests", fixtureID,
+            "--synthetic-profile-ui-tests", fixtureID,
+            "--synthetic-appearance-ui-tests", fixtureID, "--synthetic-rhr-ui-tests"]
+        app.launch()
+        for mode in ["Light", "Dark"] {
+            app.tabBars.buttons["Profile"].tap()
+            let picker = app.segmentedControls["appearancePicker"]
+            for _ in 0..<8 { if picker.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(picker.isHittable)
+            picker.buttons[mode].tap()
+            app.tabBars.buttons["Home"].tap()
+            let header = app.staticTexts["pageTitle.Home"]
+            XCTAssertTrue(header.waitForExistence(timeout: 5))
+            XCTAssertEqual(header.value as? String, "\(mode) appearance")
+            let trend = app.staticTexts["rhrTrendState"]
+            for _ in 0..<8 { if trend.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(trend.isHittable)
+            XCTAssertEqual(trend.label, "Persistently different from your recent usual range")
+            let disclosure = app.staticTexts.matching(NSPredicate(format: "label == %@",
+                "Experimental wellbeing comparison, not a diagnosis. Comparison rules are development assumptions. No effect on your assessment prediction.")).firstMatch
+            for _ in 0..<3 { if disclosure.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(disclosure.isHittable)
+            XCTAssertEqual(app.tabBars.firstMatch.buttons.count, 3)
+        }
+    }
+
+    @MainActor
+    func testManualInputsPolishedLabelsFeedbackSaveCancelAndAppearance() throws {
+        let app = XCUIApplication(), fixtureID = UUID().uuidString
+        app.launchArguments = ["--synthetic-v2-ui-tests", fixtureID,
+            "--synthetic-profile-ui-tests", fixtureID,
+            "--synthetic-appearance-ui-tests", fixtureID]
+        app.launch()
+
+        func openManualInputs() {
+            app.tabBars.buttons["Profile"].tap()
+            let button = app.buttons["manualInputsButton"]
+            for _ in 0..<6 { if button.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(button.isHittable)
+            button.tap()
+            XCTAssertTrue(app.navigationBars["Manual Inputs"].waitForExistence(timeout: 5))
+        }
+
+        func replace(_ field: XCUIElement, with text: String) {
+            field.tap()
+            let currentValue = (field.value as? String) ?? ""
+            field.typeText(
+                String(repeating: XCUIKeyboardKey.delete.rawValue, count: currentValue.count) + text
+            )
+        }
+
+        func turnOn(_ toggle: XCUIElement) {
+            XCTAssertTrue(toggle.isHittable)
+            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        }
+
+        openManualInputs()
+        XCTAssertTrue(app.staticTexts["manualSection.YESTERDAY"].exists)
+        XCTAssertTrue(app.buttons["Study Time"].exists)
+        XCTAssertEqual(app.buttons["Study Time"].value as? String, "2h 0m")
+        XCTAssertTrue(app.buttons["Recreational Screen Time"].exists)
+        XCTAssertEqual(app.buttons["Recreational Screen Time"].value as? String, "4h 0m")
+
+        let subject = app.textFields["v2Subject"]
+        XCTAssertEqual(subject.value as? String, "Synthetic maths")
+        XCTAssertTrue(app.staticTexts["Subject"].exists)
+        XCTAssertTrue(app.staticTexts["Assessment Name"].exists)
+        XCTAssertTrue(app.staticTexts["Next Assessment"].exists)
+        XCTAssertTrue(app.staticTexts["Previous Score"].exists)
+        XCTAssertTrue(app.staticTexts["Previous Result Date"].exists)
+
+        let status = app.staticTexts["manualEligibilityStatus"]
+        for _ in 0..<7 { if status.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(status.isHittable)
+        XCTAssertEqual(status.label, "Prediction unavailable")
+        XCTAssertTrue(app.staticTexts["• Confirm the assessment details."].exists)
+        for otherReason in [
+            "• Enter yesterday’s study time.",
+            "• Enter yesterday’s recreational screen time.",
+            "• Enter the subject.",
+            "• Enter the next assessment name.",
+            "• Enter a previous score from 0 to 100.",
+            "• Next assessment must be within 1–7 days.",
+            "• Previous result must be 1–90 days old.",
+        ] {
+            XCTAssertFalse(app.staticTexts[otherReason].exists, otherReason)
+        }
+        let confirmation = app.switches["v2ConfirmContext"]
+        turnOn(confirmation)
+        let confirmationOn = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", "1"), object: confirmation
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [confirmationOn], timeout: 3), .completed)
+        let readyStatus = app.staticTexts["Ready for V2 Prediction"]
+        XCTAssertTrue(readyStatus.waitForExistence(timeout: 3))
+
+        for _ in 0..<7 { if subject.isHittable { break }; app.swipeDown() }
+        XCTAssertTrue(subject.isHittable)
+        replace(subject, with: "Unsaved subject")
+        for _ in 0..<7 { if status.isHittable { break }; app.swipeUp() }
+        let unavailableStatus = app.staticTexts["Prediction unavailable"]
+        XCTAssertTrue(unavailableStatus.waitForExistence(timeout: 3))
+        app.buttons["Cancel"].tap()
+        openManualInputs()
+        XCTAssertEqual(app.textFields["v2Subject"].value as? String, "Synthetic maths")
+
+        replace(app.textFields["v2Subject"], with: "Chemistry")
+        for _ in 0..<7 { if app.switches["v2ConfirmContext"].isHittable { break }; app.swipeUp() }
+        turnOn(app.switches["v2ConfirmContext"])
+        let savedReadyStatus = app.staticTexts["Ready for V2 Prediction"]
+        XCTAssertTrue(savedReadyStatus.waitForExistence(timeout: 3))
+        app.buttons["saveManualInputsButton"].tap()
+        app.terminate(); app.launch()
+        openManualInputs()
+        XCTAssertEqual(app.textFields["v2Subject"].value as? String, "Chemistry")
+        app.buttons["Cancel"].tap()
+
+        for mode in ["Light", "Dark"] {
+            app.tabBars.buttons["Profile"].tap()
+            let picker = app.segmentedControls["appearancePicker"]
+            for _ in 0..<8 { if picker.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(picker.isHittable)
+            picker.buttons[mode].tap()
+            openManualInputs()
+            XCTAssertTrue(app.staticTexts["manualSection.YESTERDAY"].exists)
+            XCTAssertTrue(app.staticTexts["manualSection.ASSESSMENT"].exists)
+            app.buttons["Cancel"].tap()
+        }
+        XCTAssertEqual(app.tabBars.firstMatch.buttons.count, 3)
+    }
+
+    @MainActor
+    func testManualInputsLargestDynamicTypeRemainsReachable() throws {
+        let app = XCUIApplication(), fixtureID = UUID().uuidString
+        app.launchArguments = ["--synthetic-v2-ui-tests", fixtureID,
+            "--synthetic-profile-ui-tests", fixtureID,
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let profileTab = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Profile"))
+            .firstMatch
+        XCTAssertTrue(profileTab.waitForExistence(timeout: 5))
+        profileTab.tap()
+        let manualInputs = app.buttons["manualInputsButton"]
+        for _ in 0..<8 { if manualInputs.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(manualInputs.isHittable)
+        manualInputs.tap()
+        XCTAssertTrue(app.navigationBars["Manual Inputs"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["manualSection.YESTERDAY"].exists)
+        XCTAssertTrue(app.buttons["Study Time"].isHittable)
+        XCTAssertTrue(app.buttons["Recreational Screen Time"].isHittable)
+
+        let assessment = app.staticTexts["manualSection.ASSESSMENT"]
+        for _ in 0..<6 { if assessment.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(assessment.isHittable)
+        XCTAssertTrue(app.textFields["v2Subject"].exists)
+        XCTAssertTrue(app.textFields["v2Assessment"].exists)
+
+        let status = app.staticTexts["manualEligibilityStatus"]
+        for _ in 0..<10 { if status.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(status.isHittable)
+        XCTAssertTrue(app.switches["v2ConfirmContext"].isHittable)
+        XCTAssertTrue(app.buttons["saveManualInputsButton"].isHittable)
+        XCTAssertTrue(app.buttons["Cancel"].isHittable)
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["pageTitle.Profile"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testV2PredictionVersionManualMeaningAndHistoryPersist() throws {
         let app = XCUIApplication()
         let fixtureID = UUID().uuidString
@@ -575,8 +746,8 @@ final class twintrackUITests: XCTestCase {
         manualInputs.tap()
         XCTAssertTrue(app.textFields["v2Subject"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.textFields["v2Subject"].value as? String, "Synthetic maths")
-        XCTAssertTrue(app.staticTexts["Yesterday’s outside-class study for this subject, including study on screens. Exclude classes, breaks and overlaps."].exists)
-        XCTAssertTrue(app.staticTexts["Yesterday’s recreational screens. Exclude study; count overlapping devices once."].exists)
+        XCTAssertTrue(app.staticTexts["Outside-class study for this subject yesterday."].exists)
+        XCTAssertTrue(app.staticTexts["Recreational screen use yesterday, excluding study."].exists)
         app.buttons["Cancel"].tap()
         let privacy = app.buttons["dataPrivacyButton"]
         for _ in 0..<6 { if privacy.isHittable { break }; app.swipeUp() }

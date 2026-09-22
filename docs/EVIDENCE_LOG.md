@@ -627,3 +627,77 @@ Suggested logical commits, after A's physical review:
 3. `feat: add persistent System Light and Dark appearance` — one root preference, Profile selector, inherited themes, approved asset-variant verification and tests.
 
 Some Swift/UI/test/documentation files span these logical commits; they require deliberate hunk staging and a buildable intermediate tree rather than broad folder staging. This is a review plan, not a claim that commits have been created.
+
+
+## RHR wellbeing trend — native implementation, 2026-09-21
+
+Scope: experimental on-device wellbeing awareness, separate from Ridge V2 academic sensitivity. This is not a diagnosis, emergency detector, healthy-range verdict or teenage-validated threshold. The baseline/coverage/persistence choices are development assumptions from `V2_PRODUCTION_ALIGNMENT_DECISION.md` §9, preserved by `V2_FINAL_BLOCKER_RESOLUTION.md` §16.
+
+Implemented comparison:
+- Query the existing HealthKit restingHeartRate type over 33 completed local calendar days, excluding today. One latest finite-positive sample per local day; equal timestamps choose higher bpm. Absolute timestamps resolve repeated DST hours. No new permission type.
+- Baseline: earliest 28 days; recent: latest five days. Require ≥21 baseline days and ≥4 days in each fixed seven-day baseline block; ≥4/5 recent days and yesterday present.
+- Range: median ±3×1.4826×MAD; equality is inside. Zero/nonfinite scale or failed coverage/query means insufficient data. No bpm floor, adult threshold, imputation, repeated-sample day inflation or zero-fill.
+- Within: both latest consecutive calendar days observed and inside, or all observed recent values inside. Otherwise persistent: ≥3 same-side recent days and no opposite-side excursion. Other excursions are different/varied. Two latest inside days reset; a missing day breaks that reset. Recompute every refresh, without a stored latch.
+- One transient assessment in TwinTrackState. Historical query runs alongside current metric queries; current readings commit without waiting for history and are released from refreshing status immediately. Cancellation/generation checks prevent late publication. Failed history queries, refresh start and health-state clearing remove old trend assessments. No raw samples, source IDs or trend database are persisted or sent to the assistant/backend.
+- Home: secondary card immediately below Today's Inputs and above prediction history/trends, using the existing light/dark palette. Latest 72-hour RHR remains in its existing input card; the wellbeing card labels the completed-day cutoff and baseline/recent coverage. Calm text, experimental/non-diagnostic disclosure and explicit no-effect-on-prediction wording. No Profile/navigation redesign.
+- V1/V2 coefficients, seven-feature order, golden outputs, latest72-hour RHR semantics, other HealthKit windows, What-If and assistant routing are unchanged. Trend values are not prediction inputs or emergency signals.
+
+Validation: **AUTOMATED PASS; physical review pending A.** Final focused RHR unit run **27/27 PASS**; focused light/dark UI regression **1/1 PASS**. Complete configured Xcode suite **382/382 PASS** (**363 unit +19 UI**, zero failed/skipped), 23:45:14–23:56:30 Asia/Dubai on 2026-09-21, **676.307 seconds**. This includes all 354 previously passing tests plus 27 trend unit tests and one UI test. V2 iOS parity **176/176**, preserved V1 iOS parity **21/21**, at their unchanged 1e-6 tolerance. Explicit **Build PASS** and **Analyze PASS**, both 23:57; unfiltered Issue navigator empty, **compiler/analyzer warnings 0, errors 0**. Test-runtime diagnostics separately contain **26 debugger code-9 termination warnings**, grouped as one summary warning; no other warning messages. Do not report zero total runtime warnings.
+
+Protection: both Swift model engines and both golden fixture files remain byte-for-byte equal to the pre-feature baseline. Diff formatting passes. Current metric query windows/authorization types and all assistant safety/routing sources are unchanged. No real health data, private screenshot, device identifier, credential, certificate or provisioning material was used or added. Local handoff remains excluded by .git/info/exclude. Nothing staged, committed or pushed.
+
+Initial focused unit run also passed 27/27. Initial focused UI run hit XCTest's 128-character string-identifier limit; the test now uses an exact-label predicate, preserving the assertion and requiring no app behavior change. Existing launch-only screenshot-test exclusion is retained.
+
+Physical approval remains pending A: inspect the card in Light/Dark, scrolling and larger text; refresh/foreground; verify actual coverage honestly stays unavailable when inadequate; verify the completed-day cutoff differs intentionally from the latest RHR input. No private screenshot/value upload is requested. Never manufacture health samples to force a persistent state. Synthetic tests cover persistent/reset states.
+
+Limits: quantized/low-variation baselines can prevent range estimation; very small positive MAD may produce nuisance flags. Missing wear/sync/read access reduces coverage. Sustained changes can enter the rolling baseline. No sensitivity/specificity, medical or real-student predictive validity is established. No background observer, notifications, clinical thresholds or grade changes are introduced.
+
+
+Files for this feature's eventual commit:
+- `ios/twintrack/twintrack/RestingHeartRateTrend.swift` (new)
+- `ios/twintrack/twintrack/HealthData.swift`
+- `ios/twintrack/twintrack/HealthKitService.swift`
+- `ios/twintrack/twintrack/TwinTrackState.swift`
+- `ios/twintrack/twintrack/HomeView.swift`
+- `ios/twintrack/twintrack/V2UITestFixture.swift`
+- `ios/twintrack/twintrackTests/RestingHeartRateTrendTests.swift` (new)
+- `ios/twintrack/twintrackUITests/twintrackUITests.swift`
+- `docs/EVIDENCE_LOG.md`
+
+Updated locally only: `.twintrack-local/TWINTRACK_MASTER_HANDOFF.md`. Xcode automatically changed its tracked `UserInterfaceState.xcuserstate`; do not include it. No .DS_Store, DerivedData, simulator/runtime artifacts, private evidence or signing material belongs in this feature commit. Recommended message: `feat: add experimental personal RHR wellbeing trend`.
+
+## Manual Inputs V2 UI polish — automated validation, 2026-09-22
+
+Scope: presentation, guidance and accessibility polish for the existing Manual Inputs workflow. The saved meanings, V2 eligibility windows, one-subject comparison rule, persistence behavior and native `Cancel | Manual Inputs | Save` navigation remain unchanged.
+
+Implemented screen structure:
+- `YESTERDAY`: Study Time and Recreational Screen Time in one clearly labelled card, with short descriptions and the applicable local source day.
+- `ASSESSMENT`: labelled Subject, Assessment Name, Next Assessment, Previous Score and Previous Result Date fields, followed by the concise same-subject/comparability confirmation.
+- A secondary eligibility card reports either `Ready for V2 Prediction` or only the reasons currently preventing a prediction. Missing data remains unavailable and is never invented.
+- Improved spacing, card hierarchy, Dynamic Type wrapping, VoiceOver labels/values/hints and stable accessibility identifiers. The same hierarchy inherits the approved Light/Dark palette and remains scrollable on iPhone and iPad.
+
+No Ridge V1/V2 implementation, coefficient, feature order, golden fixture, HealthKit query/meaning, Foundation Models behavior or app architecture changed. The existing experimental model limitation remains visible in the app.
+
+Validation: **AUTOMATED PASS; physical visual review pending A.**
+- Focused validation tests: **8/8 PASS** for complete eligibility, missing manual durations, subject/assessment labels, score bounds, local-calendar date windows, confirmation and stable relevant-reason ordering.
+- iPhone full Manual Inputs workflow: **1/1 PASS**, 85.387 seconds. Verified labels/descriptions, relevant eligibility feedback, confirmation, Cancel isolation, Save/relaunch persistence, Light/Dark presentation and exactly three tabs.
+- iPhone largest Dynamic Type reachability: **1/1 PASS**, 42.267 seconds.
+- iPad Air 11-inch largest Dynamic Type reachability: **1/1 PASS**, 32.122 seconds.
+- Complete configured Xcode suite: **392/392 PASS** (**371 unit + 21 UI**), zero failed/skipped, 868.598 seconds, 16:17:01.235–16:31:29.833 Asia/Dubai.
+- V2 iOS golden parity: **176/176 PASS** at the unchanged tolerance.
+- Preserved V1 iOS golden parity: **21/21 PASS** at the unchanged tolerance.
+- Explicit **Build PASS** at 16:36 and **Analyze PASS** at 16:37. Unfiltered Issue navigator empty: **compiler/analyzer warnings 0, errors 0**.
+- The test result contains one summarized debugger warning representing **29** expected code-9 terminations between test launches; it is separate from compiler/analyzer diagnostics. Its two Insights are duration outlier notices, not failures or code warnings.
+- `git diff --check`: PASS.
+
+Focused-test development exposed three XCTest-only interaction assumptions: large-text switch targeting, Command-A replacement appending text, and the iPad floating tab item being surfaced as a cell. The tests now use a separate large-text reachability check, deterministic field clearing and a cross-form-factor accessibility-label query. No product eligibility or persistence behavior was weakened. Final focused and complete runs pass.
+
+Physical review checklist: open Manual Inputs on an iPhone and supported iPad; inspect Light/Dark hierarchy; verify Study and Recreational Screen Time meanings; verify Subject, Assessment Name, both dates and score labels; confirm only relevant unavailable reasons show; test confirmation, Cancel, Save and relaunch persistence; repeat with a large accessibility text size and confirm every control remains reachable. Use synthetic values and do not provide private HealthKit or device evidence.
+
+Milestone files:
+- `ios/twintrack/twintrack/ProfileView.swift`
+- `ios/twintrack/twintrackTests/ManualInputsValidationTests.swift` (new)
+- `ios/twintrack/twintrackUITests/twintrackUITests.swift`
+- `docs/EVIDENCE_LOG.md`
+
+Local-only update: `.twintrack-local/TWINTRACK_MASTER_HANDOFF.md`. Xcode's generated `UserInterfaceState.xcuserstate` remains excluded from the commit. Nothing was staged, committed or pushed. Recommended message after physical approval: `feat: polish Manual Inputs for V2 eligibility`.

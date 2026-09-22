@@ -112,6 +112,12 @@ protocol HealthDataProviding {
     var isAvailable: Bool { get }
     func requestAccess() async throws
     func read(window: HealthDataWindow) async -> HealthReadings
+    func readRestingHeartRateTrend(now: Date, calendar: Calendar) async -> RestingHeartRateTrend?
+}
+
+extension HealthDataProviding {
+    // Providers without historical coverage never fabricate a trend from the current RHR.
+    func readRestingHeartRateTrend(now: Date, calendar: Calendar) async -> RestingHeartRateTrend? { nil }
 }
 
 /// Only the value and measurement timestamp cross the query boundary; no sample/device IDs.

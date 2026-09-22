@@ -44,6 +44,7 @@ final class TwinTrackState: ObservableObject {
     // One published snapshot replaces all four values together. Computed properties
     // preserve the existing Ridge boundary without creating duplicate health storage.
     @Published private(set) var healthReadings = HealthReadings()
+    @Published private(set) var restingHeartRateTrend: RestingHeartRateTrend?
     @Published private(set) var healthWindow: HealthDataWindow?
     @Published private(set) var healthAccess: HealthAccessState
     @Published private(set) var isRefreshingHealth = false
@@ -158,14 +159,21 @@ final class TwinTrackState: ObservableObject {
         let generation = healthGeneration
         let window = HealthDataWindow(now: now, calendar: calendar)
         isRefreshingHealth = true
+        restingHeartRateTrend = nil
+        async let trend = healthService.readRestingHeartRateTrend(now: now, calendar: calendar)
         let readings = await healthService.read(window: window)
         guard generation == healthGeneration else { return }
-        defer { isRefreshingHealth = false }
+        defer { if generation == healthGeneration { isRefreshingHealth = false } }
         guard !Task.isCancelled else { return }
         // Keep the last committed values and their source window while awaiting
         // queries. Commit all four results together, with no intervening suspension.
         healthWindow = window
         healthReadings = readings
+        // Historical coverage must not keep the current prediction inputs in a refreshing state.
+        isRefreshingHealth = false
+        let assessment = await trend
+        guard generation == healthGeneration, !Task.isCancelled else { return }
+        restingHeartRateTrend = assessment
     }
 
     func clearHealthValues() {
@@ -173,6 +181,7 @@ final class TwinTrackState: ObservableObject {
         // invalidate in-flight work so it cannot overwrite a later foreground refresh.
         healthGeneration += 1
         healthReadings = HealthReadings()
+        restingHeartRateTrend = nil
         healthWindow = nil
         isRefreshingHealth = false
     }

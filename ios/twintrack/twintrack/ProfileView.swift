@@ -799,6 +799,50 @@ struct ProfileDetailView: View {
     }
 }
 
+struct ManualInputsValidation {
+    nonisolated static func reasons(
+        studyMinutes: Int?,
+        screenTimeMinutes: Int?,
+        previousScoreText: String,
+        subject: String,
+        assessmentName: String,
+        assessmentDate: Date,
+        previousDate: Date,
+        confirmed: Bool,
+        now: Date,
+        calendar: Calendar
+    ) -> [String] {
+        var reasons: [String] = []
+        if studyMinutes == nil { reasons.append("Enter yesterday’s study time.") }
+        if screenTimeMinutes == nil { reasons.append("Enter yesterday’s recreational screen time.") }
+        if subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            reasons.append("Enter the subject.")
+        }
+        if assessmentName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            reasons.append("Enter the next assessment name.")
+        }
+        if PreviousScoreInput.parse(previousScoreText) == nil {
+            reasons.append("Enter a previous score from 0 to 100.")
+        }
+
+        let today = calendar.startOfDay(for: now)
+        let horizon = calendar.dateComponents(
+            [.day], from: today, to: calendar.startOfDay(for: assessmentDate)
+        ).day ?? 0
+        if !(1...7).contains(horizon) {
+            reasons.append("Next assessment must be within 1–7 days.")
+        }
+        let age = calendar.dateComponents(
+            [.day], from: calendar.startOfDay(for: previousDate), to: today
+        ).day ?? 0
+        if !(1...90).contains(age) {
+            reasons.append("Previous result must be 1–90 days old.")
+        }
+        if !confirmed { reasons.append("Confirm the assessment details.") }
+        return reasons
+    }
+}
+
 private struct ManualInputsSheet: View {
     @EnvironmentObject private var state: TwinTrackState
     @Environment(\.dismiss) private var dismiss
@@ -838,53 +882,92 @@ private struct ManualInputsSheet: View {
     }
     private var card: Color { colorScheme == .dark ? Color.white.opacity(0.028) : .white }
     private var isScoreValid: Bool { PreviousScoreInput.isValidDraft(previousScoreText) }
+    private var eligibilityReasons: [String] {
+        ManualInputsValidation.reasons(
+            studyMinutes: draftStudyMinutes,
+            screenTimeMinutes: draftScreenTimeMinutes,
+            previousScoreText: previousScoreText,
+            subject: subject,
+            assessmentName: assessmentName,
+            assessmentDate: assessmentDate,
+            previousDate: previousDate,
+            confirmed: confirmed,
+            now: Date(),
+            calendar: .current
+        )
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 9) {
-                    timeField(title: "Study Time", value: $draftStudyMinutes, input: .study)
-                    Text("Yesterday’s outside-class study for this subject, including study on screens. Exclude classes, breaks and overlaps.").font(.caption).foregroundStyle(.secondary)
-                    timeField(title: "Screen Time", value: $draftScreenTimeMinutes, input: .screen)
-                    Text("Yesterday’s recreational screens. Exclude study; count overlapping devices once.").font(.caption).foregroundStyle(.secondary)
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Previous Score").font(.caption).foregroundStyle(.secondary)
-                                TextField("Not entered", text: $previousScoreText)
-                                    .keyboardType(.decimalPad)
-                                    .font(.body.weight(.medium))
-                                    .accessibilityIdentifier("previousScoreField")
-                            }
-                            Text("manual").font(.caption).foregroundStyle(.tertiary)
+                VStack(alignment: .leading, spacing: 22) {
+                    manualSection(title: "YESTERDAY") {
+                        VStack(spacing: 0) {
+                            timeField(
+                                title: "Study Time",
+                                description: "Outside-class study for this subject yesterday.",
+                                value: $draftStudyMinutes,
+                                input: .study
+                            )
+                            Divider().padding(.leading, 14)
+                            timeField(
+                                title: "Recreational Screen Time",
+                                description: "Recreational screen use yesterday, excluding study.",
+                                value: $draftScreenTimeMinutes,
+                                input: .screen
+                            )
                         }
-                        if !isScoreValid {
-                            Text("Enter a number from 0 to 100.").font(.caption).foregroundStyle(.red)
+                        .background(card, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay { RoundedRectangle(cornerRadius: 14).stroke(border) }
+
+                        Text("Applies to \(manualDay.formatted(date: .abbreviated, time: .omitted)) · entered manually")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    manualSection(title: "ASSESSMENT") {
+                        VStack(alignment: .leading, spacing: 16) {
+                            labeledTextField(
+                                title: "Subject",
+                                prompt: "e.g. Chemistry",
+                                text: $subject,
+                                identifier: "v2Subject"
+                            )
+                            labeledTextField(
+                                title: "Assessment Name",
+                                prompt: "e.g. Unit quiz",
+                                text: $assessmentName,
+                                identifier: "v2Assessment"
+                            )
+                            labeledDatePicker(
+                                title: "Next Assessment",
+                                note: "Same-subject individual assessment, 1–7 days ahead.",
+                                selection: $assessmentDate,
+                                identifier: "v2AssessmentDate"
+                            )
+                            previousScoreField
+                            labeledDatePicker(
+                                title: "Previous Result Date",
+                                note: "Latest comparable result from 1–90 days ago.",
+                                selection: $previousDate,
+                                identifier: "v2PreviousDate"
+                            )
+                            Divider()
+                            Toggle(
+                                "I confirm these assessment details are comparable and for the same subject.",
+                                isOn: $confirmed
+                            )
+                            .font(.subheadline)
+                            .accessibilityIdentifier("v2ConfirmContext")
                         }
+                        .padding(14)
+                        .background(card, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay { RoundedRectangle(cornerRadius: 14).stroke(border) }
                     }
-                    .padding(.horizontal, 14).padding(.vertical, 11)
-                    .background(card, in: RoundedRectangle(cornerRadius: 14))
-                    .overlay { RoundedRectangle(cornerRadius: 14).stroke(isScoreValid ? border : .red) }
-                    Text("Latest comparable same-subject result, as a percentage (for example, 40/50 = 80).").font(.caption).foregroundStyle(.secondary)
-                    VStack(alignment: .leading, spacing: 12) {
-                        TextField("Subject", text: $subject).accessibilityIdentifier("v2Subject")
-                        TextField("Next quiz / test / exam", text: $assessmentName).accessibilityIdentifier("v2Assessment")
-                        DatePicker("Next assessment · 1–7 days ahead", selection: $assessmentDate, displayedComponents: .date)
-                            .accessibilityIdentifier("v2AssessmentDate")
-                        DatePicker("Previous result · 1–90 days old", selection: $previousDate, displayedComponents: .date)
-                            .accessibilityIdentifier("v2PreviousDate")
-                        Toggle("I confirm the next individual assessment, latest comparable individual result, and study time are for this subject.", isOn: $confirmed)
-                            .font(.caption).accessibilityIdentifier("v2ConfirmContext")
-                        Text("Saving confirms the manual durations are for \(manualDay.formatted(date: .abbreviated, time: .omitted)).")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    .padding(14).background(card, in: RoundedRectangle(cornerRadius: 14))
-                    if let saveIssue { Text(saveIssue).font(.caption).foregroundStyle(.red) }
-                    Text("Saved without confirmation, these values remain unavailable for V2. They are manual entries, not Apple Health data.")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 4)
+
+                    eligibilityStatus
                 }
-                .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 24)
+                .padding(.horizontal, 16).padding(.top, 18).padding(.bottom, 28)
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Manual Inputs")
@@ -905,32 +988,142 @@ private struct ManualInputsSheet: View {
     }
 
     @ViewBuilder
-    private func timeField(title: String, value: Binding<Int?>, input: TimeInput) -> some View {
+    private func manualSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .tracking(1.1)
+                .foregroundStyle(.secondary)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("manualSection.\(title)")
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func timeField(
+        title: String,
+        description: String,
+        value: Binding<Int?>,
+        input: TimeInput
+    ) -> some View {
         VStack(spacing: 0) {
             Button {
                 if value.wrappedValue == nil { value.wrappedValue = 0 }
                 openPicker = openPicker == input ? nil : input
             } label: {
                 HStack {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(title).font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title).font(.subheadline.weight(.medium))
                         Text(formattedDuration(value.wrappedValue)).font(.body.weight(.medium))
+                        Text(description).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Text("manual").font(.caption).foregroundStyle(.tertiary)
                     Image(systemName: openPicker == input ? "chevron.up" : "chevron.down")
                         .font(.caption.weight(.semibold)).foregroundStyle(.tertiary).accessibilityHidden(true)
                 }
                 .padding(.horizontal, 14).padding(.vertical, 11).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(title)
+            .accessibilityValue(formattedDuration(value.wrappedValue))
+            .accessibilityHint("Opens hour and minute pickers")
             if openPicker == input {
                 Divider()
                 DurationWheelPicker(hours: hoursBinding(for: value), minutes: minutesBinding(for: value))
             }
         }
+        .overlay {
+            if openPicker == input {
+                RoundedRectangle(cornerRadius: 14).stroke(Color.accentColor.opacity(0.45))
+            }
+        }
+    }
+
+    private func labeledTextField(
+        title: String,
+        prompt: String,
+        text: Binding<String>,
+        identifier: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            TextField(prompt, text: text)
+                .textInputAutocapitalization(.words)
+                .font(.body.weight(.medium))
+                .accessibilityLabel(title)
+                .accessibilityIdentifier(identifier)
+        }
+    }
+
+    private func labeledDatePicker(
+        title: String,
+        note: String,
+        selection: Binding<Date>,
+        identifier: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            DatePicker(title, selection: selection, displayedComponents: .date)
+                .font(.subheadline.weight(.medium))
+                .accessibilityIdentifier(identifier)
+            Text(note).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var previousScoreField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Previous Score").font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Text("0–100").font(.caption).foregroundStyle(.tertiary)
+            }
+            TextField("Not entered", text: $previousScoreText)
+                .keyboardType(.decimalPad)
+                .font(.body.weight(.medium))
+                .accessibilityLabel("Previous Score, 0 to 100")
+                .accessibilityIdentifier("previousScoreField")
+            Text("Latest comparable same-subject assessment result.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if !isScoreValid {
+                Text("Enter a number from 0 to 100.")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .accessibilityIdentifier("previousScoreError")
+            }
+        }
+    }
+
+    private var eligibilityStatus: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label {
+                Text(eligibilityReasons.isEmpty ? "Ready for V2 Prediction" : "Prediction unavailable")
+                    .font(.subheadline.weight(.semibold))
+                    .accessibilityIdentifier("manualEligibilityStatus")
+            } icon: {
+                Image(systemName: eligibilityReasons.isEmpty ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+            }
+            .foregroundStyle(eligibilityReasons.isEmpty ? Color.green : Color.orange)
+
+            ForEach(eligibilityReasons, id: \.self) { reason in
+                Text("• \(reason)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let saveIssue {
+                Text(saveIssue).font(.footnote).foregroundStyle(.red)
+            }
+            Text("Manual entries are stored locally. Missing values are never filled automatically.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
         .background(card, in: RoundedRectangle(cornerRadius: 14))
-        .overlay { RoundedRectangle(cornerRadius: 14).stroke(openPicker == input ? Color.accentColor.opacity(0.45) : border) }
+        .overlay { RoundedRectangle(cornerRadius: 14).stroke(border) }
+        .accessibilityElement(children: .contain)
     }
 
     private func hoursBinding(for total: Binding<Int?>) -> Binding<Int> {

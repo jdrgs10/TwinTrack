@@ -25,6 +25,7 @@ struct HomeView: View {
                     healthStatus
                     TimelineView(.periodic(from: .now, by: 60)) { _ in predictionHero }
                     inputSection
+                    restingHeartRateWellbeing
                     PredictionTrendView(snapshots: state.predictionHistory)
                     insightCard
                     openAIButton
@@ -239,6 +240,39 @@ struct HomeView: View {
         Text("Health source periods vary")
             .font(.caption2)
             .foregroundStyle(palette.tertiaryText)
+    }
+
+    private var restingHeartRateWellbeing: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("RESTING HEART RATE · WELLBEING")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(palette.secondaryText)
+            Text(state.restingHeartRateTrend?.state.rawValue ?? "Not enough recent data")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(palette.primaryText)
+                .accessibilityIdentifier("rhrTrendState")
+            Text(state.restingHeartRateTrend?.explanation
+                 ?? "Not enough recent data to compare your resting heart rate with your usual pattern.")
+                .font(.footnote)
+                .foregroundStyle(palette.secondaryText)
+            if let trend = state.restingHeartRateTrend {
+                Text("Through \(trend.completedDay.formatted(date: .abbreviated, time: .omitted)) · \(trend.baselineDays)/28 baseline days · \(trend.recentDays)/5 recent days")
+                    .font(.caption2)
+                    .foregroundStyle(palette.secondaryText)
+            }
+            Text("Experimental wellbeing comparison, not a diagnosis. Comparison rules are development assumptions. No effect on your assessment prediction.")
+                .font(.caption2)
+                .foregroundStyle(palette.secondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(palette.card, in: RoundedRectangle(cornerRadius: 16))
+        .overlay { RoundedRectangle(cornerRadius: 16).stroke(palette.border, lineWidth: 1) }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .privacySensitive()
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("rhrWellbeingCard")
     }
 
     private var insightCard: some View {
