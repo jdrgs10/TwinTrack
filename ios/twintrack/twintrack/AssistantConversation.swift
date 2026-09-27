@@ -48,6 +48,7 @@ nonisolated struct AssistantMessage: Identifiable, Equatable, Codable, Sendable 
     var safetyRefusal: Bool? = nil
     var provenance: AssistantProvenance? = nil
     var sourceIDs: [String]? = nil
+    var scenarioContext: AssistantScenarioContext? = nil
 
     init(id: UUID = UUID(), role: Role, text: String, cards: [AssistantCard] = [], createdAt: Date = Date()) {
         self.id = id
@@ -64,6 +65,8 @@ struct AssistantAnswer {
     var safetyRefusal = false
     var provenance: AssistantProvenance? = nil
     var sourceIDs: [String]? = nil
+    var scenarioContext: AssistantScenarioContext? = nil
+    var reviewReason: String? = nil
 }
 
 @MainActor
@@ -143,14 +146,13 @@ final class AssistantConversation: ObservableObject {
 
     func checkAvailability() { availability = AssistantPerformance.measure(.availability) { service.availability } }
 
-    func send(_ text: String, snapshot: AssistantSnapshot? = nil) {
+    @discardableResult
+    func send(_ text: String, snapshot: AssistantSnapshot? = nil) -> Bool {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !isGenerating, !text.isEmpty else { return }
-        checkAvailability()
-        guard availability == .available else { return }
+        guard !isGenerating, !text.isEmpty else { return false }
         guard text.count <= 2000, text.utf8.count <= 4000 else {
             failure = .contextLimit
-            return
+            return false
         }
         messages.append(AssistantMessage(role: .user, text: text))
         if activeID == nil {
@@ -161,12 +163,12 @@ final class AssistantConversation: ObservableObject {
         needsFreshRetry = false
         requestSnapshot = snapshot ?? AssistantSnapshot()
         start()
+        return true
     }
 
     func retry() {
         guard !isGenerating, !needsFreshRetry, failure != .safety, messages.last?.safetyRefusal != true, messages.last?.role == .user else { return }
         checkAvailability()
-        guard availability == .available else { return }
         start()
     }
 
@@ -213,7 +215,6 @@ final class AssistantConversation: ObservableObject {
     func retryWithCurrentInputs(_ snapshot: AssistantSnapshot) {
         guard needsFreshRetry, !isGenerating, messages.last?.role == .user else { return }
         checkAvailability()
-        guard availability == .available else { return }
         requestSnapshot = snapshot
         needsFreshRetry = false
         start()
@@ -229,13 +230,13 @@ final class AssistantConversation: ObservableObject {
             return false
         }
         checkAvailability()
-        guard availability == .available else { return false }
 
         messages[index].text = replacement
         messages[index].cards = []
         messages[index].safetyRefusal = nil
         messages[index].provenance = nil
         messages[index].sourceIDs = nil
+        messages[index].scenarioContext = nil
         if index + 1 < messages.endIndex {
             messages.removeSubrange((index + 1)..<messages.endIndex)
         }
@@ -306,22 +307,26 @@ final class AssistantConversation: ObservableObject {
         failure = nil
         wasCancelled = false
         isGenerating = true
-        persistActive(.generating)
         task = Task { [weak self, service] in
+            // Return the accepted send to SwiftUI before file IO/model setup.
+            await Task.yield()
+            guard let self, self.generation == requestGeneration, !Task.isCancelled else { return }
+            self.persistActive(.generating)
             do {
                 let response = try await service.respond(to: transcript, snapshot: snapshot)
-                guard let self, self.generation == requestGeneration, !Task.isCancelled else { return }
+                guard self.generation == requestGeneration, !Task.isCancelled else { return }
                 var message = AssistantMessage(role: .assistant, text: response.text, cards: response.cards)
                 message.safetyRefusal = response.safetyRefusal ? true : nil
                 message.provenance = response.provenance
                 message.sourceIDs = response.sourceIDs
+                message.scenarioContext = response.scenarioContext
                 self.liveReplyIDs.insert(message.id)
                 self.messages.append(message)
                 self.isGenerating = false
                 self.task = nil
                 self.persistActive(.idle)
             } catch {
-                guard let self, self.generation == requestGeneration else { return }
+                guard self.generation == requestGeneration else { return }
                 self.isGenerating = false
                 self.task = nil
                 let failure = AssistantFailure.classify(error)

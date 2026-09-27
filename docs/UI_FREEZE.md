@@ -1,5 +1,39 @@
 # TwinTrack UI Freeze
 
+## 2026-09-22 BMI-for-age wellbeing update — automated PASS, physical review pending
+
+A authorized a separate optional **Profile → Wellbeing → Body & Wellbeing** screen. The profile now stores optional date of birth and the selected male/female CDC growth reference alongside height and weight. There is no current Goals/Rewards screen. The existing three tabs, Home hierarchy, manual semantics, RHR trend, assistant, chat export, histories and seven-input V2 contract are preserved.
+
+Native SwiftUI numerical BMI dial, height/weight entry, live draft calculation, Save/Cancel, later editing and confirmed removal. Formula: `weightKG / pow(heightCM / 100, 2)`; one-decimal display. Height50–250cm and weight10–400kg are broad entry sanity limits, not recommended ranges. Missing/invalid inputs have no BMI or needle. The 0–60 dial is a numeric drawing scale; values above60 retain their true number with an explicit scale-overflow note. The cyan needle is not a health-status color.
+
+For ages 2–19, interpretation uses the official monthly [CDC 2022 Extended BMI-for-Age reference data](https://www.cdc.gov/growthcharts/extended-bmi-data-files.htm): LMS percentiles through the 95th percentile and the CDC extended half-normal method above it. Category boundaries use the published age/sex-specific P5, P85 and P95 values: Underweight, Healthy weight, Overweight and Obesity. Date of birth resolves completed Gregorian months in the current time zone; each month uses its official midpoint row. Missing date of birth or growth-reference sex keeps raw BMI visible and makes category unavailable. Ages20+ use [CDC adult BMI cutoffs](https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html). No red/green risk bands, target weights, diagnostic claim or prescription is added.
+
+Only the latest date of birth, growth-reference sex, height/weight pair and schema version are stored locally in a separate Application Support directory, excluded from backup and written atomically with complete iOS file protection. Version1 height/weight records remain readable with age/sex honestly unavailable. No measurement history, backend, uploads, HealthKit permissions, logs or ranking. BMI is absent from Ridge, What-If, prediction history, assistant prompts/tools and exported chats. A separate store owns only these optional profile values, not prediction state.
+
+Current feature/freeze audit:
+
+| Area | Current boundary |
+| --- | --- |
+| Prediction / What-If / history | V2 2.0-final.1 remains deployed with the original seven features; V1 history/golden artifacts preserved. BMI is excluded. |
+| Home / RHR | Existing real-data Home and separate experimental personal RHR trend retained; no BMI dashboard redesign. |
+| Manual Inputs | Previous-day study/recreation and same-subject dated assessment rules retained; only a concurrency annotation was corrected. |
+| Assistant / chats / export | Existing routing, safety, message editing, saved chats and export retained; no measurement access added. |
+| Profile | Existing stack/photo/appearance/privacy destinations plus the new optional wellbeing destination. |
+| Goals / Rewards | Not implemented. No current-product navigation or availability claim. See Future Work below. |
+| BMI | Raw BMI plus official CDC BMI-for-age percentile/category for complete ages2–19 profiles; adult cutoff path at20+; honest unavailable state otherwise. |
+| Privacy | Local latest profile only; no HealthKit height/weight access, assistant access, backup inclusion or cloud sync. |
+| Final freeze | Still requires A’s visual/device approval; automated results do not approve physical UI quality. |
+
+Focused checks passed:16/16 unit,3/3 iPhone UI and3/3 iPad UI. Complete final-source validation passed411/411 (387 unit +24 UI), with0 failed/skipped; V2 parity176/176 and V1 parity21/21. Explicit Build and Analyze passed with0 compiler/analyzer warnings and0 errors. Rounded percentile extremes are expressed as below1st/above99th rather than0th/100th. Categories remain based on the published CDC cutoffs, independent of display rounding. The U.S. reference does not establish individual diagnosis or a UAE-specific standard.
+
+The final test result retains1 grouped debugger-termination warning and1 editor-focus runtime layout warning (`Invalid frame dimension (negative or non-finite)`). Its source is not established; physical editor/keyboard review remains required. Focused iPad checks preceded the final arithmetic/calendar and adult-preview wording corrections; the full final-source suite was run on iPhone. See EVIDENCE_LOG for exact run times, iteration history and qualifications. No physical verification or UI freeze is claimed.
+
+### Future Work — Not Implemented
+
+Goals and rewards: A future version could add optional wellbeing goals, progress milestones and non-competitive rewards to encourage healthy routines. This is not part of the current prototype. Any future design must not reward weight change, BMI category or predicted grades, and must not imply an unconfirmed school/provider partnership.
+
+Final freeze remains blocked on A’s physical review of this addition and any previously outstanding physical checks. Prior milestone records below are historical; their passing totals are not this change’s validation. See the latest BMI entry in `EVIDENCE_LOG.md` for final automated results and remaining limitations.
+
 ## 2026-09-21 V2 model-dependent update — automated PASS, physical review pending
 
 The approved experimental **TwinTrack Ridge V2 2.0-final.1** integration adds only model-dependent UI: Home/history version labels, legacy V1 identification, a mixed-version trend warning without a comparison delta, concise manual source-period help and local subject/assessment dates/confirmation, V2 What-If labels/ranges, and updated Model Information/Methodology. Existing wheels, three tabs, logo rule, chat layout, navigation and HealthKit windows are unchanged.

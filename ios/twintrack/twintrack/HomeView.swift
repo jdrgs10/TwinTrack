@@ -5,7 +5,10 @@ struct HomeView: View {
     @EnvironmentObject private var state: TwinTrackState
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .largeTitle) private var scoreSize = 62.0
+    @ScaledMetric(relativeTo: .largeTitle) private var scoreSize = 48.0
+
+    @State private var showingPredictionDetails = false
+    @State private var showingManualInputs = false
 
     let openAI: () -> Void
 
@@ -50,6 +53,28 @@ struct HomeView: View {
                         .zIndex(10)
                 }
             }
+            .sheet(isPresented: $showingPredictionDetails) {
+                if let snapshot = state.lastPrediction {
+                    PredictionHistoryDetailView(snapshot: snapshot, currentInputIssue: predictionDetails)
+                } else {
+                    NavigationStack {
+                        ScrollView { Text(predictionDetails).frame(maxWidth: .infinity, alignment: .leading).padding() }
+                            .navigationTitle("Prediction Details")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar { ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") { showingPredictionDetails = false }
+                            } }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingManualInputs) {
+                ManualInputsSheet(initialStudyMinutes: state.studyMinutes,
+                    initialScreenTimeMinutes: state.screenTimeMinutes, initialPreviousScore: state.previousScore,
+                    initialContext: state.predictionContext)
+                    .environmentObject(state)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
             .navigationTitle("Home")
             .toolbar(.hidden, for: .navigationBar)
             .toolbarBackground(palette.background, for: .tabBar)
@@ -89,79 +114,117 @@ struct HomeView: View {
         .allowsHitTesting(false)
     }
 
+    private var predictionPresentation: HomePredictionPresentation {
+        HomePredictionPresentation(status: state.predictionStatus(), hasSaved: state.lastPrediction != nil,
+            needsManualUpdate: state.predictionContext?.issue(now: Date(), calendar: .current) != nil
+                || state.predictionContext == nil || state.studyMinutes == nil
+                || state.screenTimeMinutes == nil || state.previousScore == nil)
+    }
+
+    private var predictionDetails: String {
+        var lines = [predictionPresentation.stateLine]
+        if !state.missingInputs.isEmpty {
+            lines.append("Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))")
+        }
+        if state.predictionStatus() == .needsRefresh {
+            lines.append("Refresh Apple Health to establish current source periods.")
+        }
+        if let issue = state.v2EligibilityIssue() { lines.append(issue) }
+        if let issue = state.predictionIssue { lines.append(issue) }
+        lines.append("Saved estimates retain the inputs and assessment used when calculated. Refreshing Health or reconfirming manual inputs does not recalculate an estimate; run a new prediction when inputs are eligible.")
+        lines.append("Experimental estimate, not a guaranteed assessment result. This model is not a diagnosis or a substitute for educational or medical advice.")
+        return lines.joined(separator: "\n\n")
+    }
+
     private var predictionHero: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let presentation = predictionPresentation
+        return VStack(alignment: .leading, spacing: 8) {
             Text("PREDICTED ASSESSMENT SCORE")
                 .font(.subheadline.weight(.semibold))
                 .tracking(0.6)
                 .foregroundStyle(palette.accentText)
                 .fixedSize(horizontal: false, vertical: true)
 
+            if let context = state.lastPrediction == nil ? state.predictionContext : state.lastPrediction?.predictionContext {
+                Text(context.summary).font(.caption).foregroundStyle(palette.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let saved = state.lastPrediction {
-                Text(state.predictionStatus() == .fresh ? "Current explicit run" : "Previous · Inputs changed or awaiting refresh")
-                    .font(.footnote).foregroundStyle(palette.secondaryText)
-                Text(saved.createdAt, format: .dateTime.month().day().hour().minute()).font(.caption)
-                Text(saved.modelLabel).font(.caption).foregroundStyle(palette.secondaryText)
-                if let context = saved.predictionContext { Text(context.summary).font(.caption) }
-                let prediction = saved.prediction
-                HStack(alignment: .lastTextBaseline, spacing: 10) {
-                    Text(HomeDisplay.prediction(prediction))
+                HStack(alignment: .lastTextBaseline, spacing: 8) {
+                    Text(HomeDisplay.prediction(saved.prediction))
                         .font(.system(size: scoreSize, weight: .semibold))
-                        .tracking(-2.4)
                         .monospacedDigit()
                         .foregroundStyle(palette.heroText)
-                    Text("/ 100")
-                        .font(.body)
-                        .foregroundStyle(palette.tertiaryText)
+                    Text("/ 100").font(.body).foregroundStyle(palette.tertiaryText)
                     Spacer(minLength: 0)
                 }
-
-                ProgressView(value: prediction, total: 100)
+                ProgressView(value: saved.prediction, total: 100)
                     .tint(palette.accent)
                     .accessibilityLabel("Predicted assessment score")
-                    .accessibilityValue("\(HomeDisplay.prediction(prediction)) out of 100")
+                    .accessibilityValue("\(HomeDisplay.prediction(saved.prediction)) out of 100")
             } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(state.missingInputs.isEmpty && state.v2EligibilityIssue() == nil ? "Ready to predict" : "Prediction unavailable")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(palette.heroText)
-                    Text(state.missingInputs.isEmpty ? "Run Prediction when your current inputs are ready." : "Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))")
-                        .font(.footnote)
-                        .foregroundStyle(palette.secondaryText)
-                }
+                Text(presentation.canRun ? "Ready to predict" : "Prediction unavailable")
+                    .font(.title3.weight(.semibold)).foregroundStyle(palette.heroText)
             }
+            Text(presentation.stateLine)
+                .font(.footnote).foregroundStyle(palette.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("homePredictionState")
 
-            if !state.missingInputs.isEmpty, state.lastPrediction != nil {
-                Text("Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))").font(.footnote)
-            }
-            if state.predictionStatus() == .needsRefresh {
-                Text("Refresh Apple Health to establish current source periods.").font(.footnote)
-            }
-            if let issue = state.v2EligibilityIssue() { Text(issue).font(.footnote).foregroundStyle(palette.secondaryText) }
-            if state.predictionStatus() != .fresh {
+            if presentation.canRun {
                 Button(state.lastPrediction == nil ? "Run Prediction" : "Run Prediction Again") { state.runPrediction() }
                     .buttonStyle(.borderedProminent)
-                    .disabled(![PredictionStatus.ready, .stale].contains(state.predictionStatus()))
                     .accessibilityIdentifier("runPrediction")
+            } else if presentation.needsManualUpdate {
+                Button { showingManualInputs = true } label: {
+                    HStack {
+                        Text("Update Manual Inputs")
+                        Image(systemName: "chevron.right").font(.caption)
+                    }.font(.footnote.weight(.medium)).frame(minHeight: 44)
+                }
+                .accessibilityIdentifier("homeUpdateManualInputs")
             }
             if let issue = state.predictionIssue { Text(issue).font(.footnote) }
 
-            Text("TwinTrack Ridge V2 • 7 inputs • Experimental")
-                .font(.caption)
-                .foregroundStyle(palette.secondaryText)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    qualification
+                    Spacer(minLength: 0)
+                    predictionDetailsButton
+                }
+                VStack(alignment: .leading, spacing: 0) {
+                    qualification
+                    predictionDetailsButton
+                }
+            }
         }
-        .padding(.top, 20)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 18)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
         .background(palette.accentSurface, in: RoundedRectangle(cornerRadius: 24))
         .overlay {
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(palette.accentBorder, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 24).stroke(palette.accentBorder, lineWidth: 1)
         }
         .padding(.horizontal, 16)
-        .padding(.top, 14)
+        .padding(.top, 12)
         .privacySensitive()
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("homePredictionCard")
+    }
+
+    private var qualification: some View {
+        Text("Experimental estimate").font(.caption).foregroundStyle(palette.secondaryText)
+    }
+
+    private var predictionDetailsButton: some View {
+        Button { showingPredictionDetails = true } label: {
+            HStack(spacing: 4) {
+                Text("Details")
+                Image(systemName: "chevron.right").font(.caption2)
+            }
+            .font(.caption.weight(.medium))
+            .frame(minWidth: 44, minHeight: 44)
+        }
+        .accessibilityIdentifier("homePredictionDetails")
     }
 
     private var inputSection: some View {

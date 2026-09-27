@@ -202,7 +202,7 @@ final class WhatIfScenarioTests: XCTestCase {
             let precise = feature == .restingHeartRate ? 67.123456789123 : 7.123456789123
             XCTAssertEqual(WhatIfInputDraft(feature: feature, value: precise).parsedValue, precise)
         }
-        XCTAssertEqual(WhatIfDisplay.value(119.9999, feature: .studyMinutes), "2h 0m")
+        XCTAssertEqual(WhatIfDisplay.value(119.9999, feature: .studyMinutes), "2h")
         XCTAssertEqual(WhatIfInputDraft(feature: .studyMinutes, value: 119.9999).minutes, "0")
     }
 

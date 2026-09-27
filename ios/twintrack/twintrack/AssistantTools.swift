@@ -1,8 +1,16 @@
 import Foundation
 import FoundationModels
+import CryptoKit
 
-/// A value copy captured once at Send. Tool calls cannot read later refreshes or
-/// mutate the real store; every baseline/scenario/delta in this request agrees.
+/// Part of the visible conversation's operation metadata, not another transcript.
+nonisolated struct AssistantScenarioContext: Codable, Equatable, Sendable {
+    let feature: String
+    let baselineKey: String
+}
+
+/// A value copy captured once at Send. Reads/scenarios cannot mutate the store.
+/// Only the explicit calculation capability may commit, after checking that the
+/// authoritative state still matches this request's inputs and source context.
 struct AssistantSnapshot: Sendable {
     let values: [Double?]
     let health: HealthReadings
@@ -14,6 +22,8 @@ struct AssistantSnapshot: Sendable {
     let lastPrediction: PredictionSnapshot?
     let predictionContext: V2PredictionContext?
     let eligibilityIssue: String?
+    var calculatePrediction: (@MainActor @Sendable () -> AssistantSnapshot?)?
+    var calculationIssue: String?
 
     @MainActor init(state: TwinTrackState, now: Date = Date(), calendar: Calendar = .current) {
         values = [state.sleepHours, state.steps, state.exerciseMinutes, state.restingHeartRate,
@@ -27,6 +37,16 @@ struct AssistantSnapshot: Sendable {
         lastPrediction = state.lastPrediction
         predictionContext = state.predictionContext
         eligibilityIssue = state.v2EligibilityIssue(now: now, calendar: calendar)
+        calculationIssue = state.predictionIssue
+        let expectedValues = values, expectedWindow = window, expectedContext = predictionContext
+        calculatePrediction = { [weak state] in
+            guard let state else { return nil }
+            let current = AssistantSnapshot(state: state)
+            guard current.values == expectedValues, current.window == expectedWindow,
+                  current.predictionContext == expectedContext else { return nil }
+            _ = state.runPrediction()
+            return AssistantSnapshot(state: state)
+        }
     }
 
     init(values: [Double?] = Array(repeating: nil, count: 7), health: HealthReadings = HealthReadings(),
@@ -59,6 +79,20 @@ struct AssistantSnapshot: Sendable {
         TwinTrackFeature.allCases.filter { values[$0.rawValue] == nil }.map(HomeDisplay.featureName)
     }
 
+    var scenarioIdentity: String {
+        struct Identity: Encodable {
+            let values: [Double?]
+            let source: PredictionHealthWindow?
+            let assessment: V2PredictionContext?
+            let run: UUID?
+        }
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let source = window.map { PredictionHealthWindow($0, restingHeartRateSampleDate: health.restingHeartRateSampleDate) }
+        let value = Identity(values: values, source: source, assessment: predictionContext, run: lastPrediction?.id)
+        guard let data = try? encoder.encode(value) else { return "unavailable" }
+        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
     var profile: TwinTrackProfile? {
         guard missing.isEmpty else { return nil }
         return TwinTrackProfile(sleepHours: values[0]!, steps: values[1]!, exerciseMinutes: values[2]!,
@@ -74,7 +108,7 @@ nonisolated struct AssistantField: Codable, Equatable, Sendable {
 
 /// All card fields are constructed by Swift, never decoded from model prose.
 nonisolated struct AssistantCard: Identifiable, Codable, Equatable, Sendable {
-    enum Kind: String, Codable, Sendable { case current, scenario, history, clarification, unavailable }
+    enum Kind: String, Codable, Sendable { case current, scenario, history, wellbeing, clarification, unavailable }
     let id: UUID
     let kind: Kind
     let title: String
@@ -83,9 +117,10 @@ nonisolated struct AssistantCard: Identifiable, Codable, Equatable, Sendable {
     var baseline: Double?
     var delta: Double?
     var fields: [AssistantField]
+    var wellbeingSummary: AssistantWellbeingSummary?
 
     init(kind: Kind, title: String, message: String, prediction: Double? = nil,
-         baseline: Double? = nil, delta: Double? = nil, fields: [AssistantField] = []) {
+         baseline: Double? = nil, delta: Double? = nil, fields: [AssistantField] = [], wellbeingSummary: AssistantWellbeingSummary? = nil) {
         id = UUID()
         self.kind = kind
         self.title = title
@@ -94,6 +129,7 @@ nonisolated struct AssistantCard: Identifiable, Codable, Equatable, Sendable {
         self.baseline = baseline
         self.delta = delta
         self.fields = fields
+        self.wellbeingSummary = wellbeingSummary
     }
 }
 
@@ -145,12 +181,34 @@ nonisolated struct AssistantHistoryArguments: Sendable {
 final class AssistantToolRun {
     let snapshot: AssistantSnapshot
     let userMessage: String
+    let scenarioContext: AssistantScenarioContext?
     private(set) var cards: [AssistantCard] = []
     private(set) var toolNames: [String] = []
 
-    init(snapshot: AssistantSnapshot, userMessage: String) {
+    init(snapshot: AssistantSnapshot, userMessage: String, scenarioContext: AssistantScenarioContext? = nil) {
         self.snapshot = snapshot
         self.userMessage = userMessage
+        self.scenarioContext = scenarioContext
+    }
+
+    func calculate() throws -> String {
+        try begin("runPrediction")
+        guard snapshot.missing.isEmpty else {
+            return try record(AssistantCard(kind: .unavailable, title: "Prediction unavailable",
+                message: "Missing inputs: \(snapshot.missing.joined(separator: ", "))."))
+        }
+        guard snapshot.eligibilityIssue == nil, [.ready, .fresh, .stale].contains(snapshot.predictionStatus) else {
+            return try record(AssistantCard(kind: .unavailable, title: "Prediction unavailable",
+                message: snapshot.eligibilityIssue ?? "Wait for any refresh to finish and refresh Apple Health to establish the current source periods."))
+        }
+        guard let refreshed = snapshot.calculatePrediction?(), refreshed.isCurrentV2 else {
+            return try record(AssistantCard(kind: .unavailable, title: "Prediction not completed",
+                message: snapshot.calculationIssue ?? "The inputs changed or the result could not be saved. Review the current inputs and try again."))
+        }
+        let output = AssistantToolRun(snapshot: refreshed, userMessage: userMessage)
+        _ = try output.readCurrent()
+        guard let card = output.cards.last else { throw AssistantFailure.toolFailure }
+        return try record(card)
     }
 
     func readCurrent() throws -> String {
@@ -166,7 +224,7 @@ final class AssistantToolRun {
             if !fresh { fields.append(AssistantField(label: "Previous score (historical)", value: HomeDisplay.prediction(prior.prediction))) }
         }
         return try record(AssistantCard(
-            kind: .current, title: "Current TwinTrack",
+            kind: .current, title: "Saved assessment estimate",
             message: snapshot.missing.isEmpty ? (snapshot.eligibilityIssue ?? status)
                 : "Prediction unavailable — missing: \(snapshot.missing.joined(separator: ", ")).",
             prediction: fresh ? snapshot.lastPrediction?.prediction : nil, fields: fields
@@ -274,8 +332,13 @@ final class AssistantToolRun {
 
     private func evidenceSupports(_ change: AssistantChange) -> Bool {
         let evidence = change.evidence.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !evidence.isEmpty, userMessage.lowercased().contains(evidence),
-              let parsed = AssistantScenarioParser.change(from: evidence) else { return false }
+        guard !evidence.isEmpty, userMessage.lowercased().contains(evidence) else { return false }
+        var parsed = AssistantScenarioParser.change(from: evidence)
+        if parsed == nil, let context = scenarioContext, context.baselineKey == snapshot.scenarioIdentity,
+           let feature = AssistantFeature(rawValue: context.feature) {
+            parsed = AssistantScenarioParser.change(from: evidence, inheriting: feature)
+        }
+        guard let parsed else { return false }
         return parsed.feature == change.feature && parsed.operation == change.operation
             && parsed.unit == change.unit && parsed.value == change.value
     }

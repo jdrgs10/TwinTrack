@@ -285,6 +285,14 @@ enum PredictionTrendPresentation {
         guard points.allSatisfy({ $0.snapshot.modelVersion == first.modelVersion }) else {
             return PredictionTrendSummary(description: "Different model versions · scores are not directly comparable", delta: nil)
         }
+        guard points.allSatisfy({ point in
+            let context = point.snapshot.predictionContext
+            return context?.subject == first.predictionContext?.subject
+                && context?.assessmentName == first.predictionContext?.assessmentName
+                && context?.assessmentDate == first.predictionContext?.assessmentDate
+        }) else {
+            return PredictionTrendSummary(description: "Different assessments · review saved results separately", delta: nil)
+        }
         let delta = last.prediction - first.prediction
         let description: String
         if delta > 0.05 {
@@ -359,6 +367,7 @@ private struct PredictionTrendPalette {
 
 struct PredictionHistoryDetailView: View {
     let snapshot: PredictionSnapshot
+    var currentInputIssue: String? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -378,6 +387,12 @@ struct PredictionHistoryDetailView: View {
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("historyDetailDate")
                     Text(snapshot.modelLabel).font(.caption).accessibilityIdentifier("historyModelVersion")
+                    Text("Calculation source: \(snapshot.provenance ?? "Not recorded for this legacy estimate")")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if let currentInputIssue {
+                        Text(currentInputIssue).font(.footnote).foregroundStyle(.secondary)
+                            .accessibilityIdentifier("predictionCurrentInputDetails")
+                    }
                     if let context = snapshot.predictionContext { Text(context.summary).font(.caption) }
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -435,7 +450,21 @@ struct PredictionHistoryDetailView: View {
                         RoundedRectangle(cornerRadius: 18).stroke(border, lineWidth: 1)
                     }
 
-                    Text("This prediction was generated using the TwinTrack model and the values recorded at that time.")
+                    if let window = snapshot.healthWindow {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("SOURCE PERIODS").font(.caption.weight(.semibold))
+                            Text("Activity: \(window.dayStart.formatted()) – \(window.dayEnd.formatted())")
+                            Text("Sleep: \(window.sleepStart.formatted()) – \(window.sleepEnd.formatted())")
+                            if let sample = window.restingHeartRateSampleDate {
+                                Text("Resting heart rate reading: \(sample.formatted())")
+                            }
+                            Text("Source time zone: \(window.timeZoneIdentifier)")
+                            if let context = snapshot.predictionContext {
+                                Text("Manual source day: \(context.manualDay.formatted(date: .abbreviated, time: .omitted)) · \(context.timeZoneIdentifier)")
+                            }
+                        }.font(.caption).foregroundStyle(.secondary)
+                    }
+                    Text("Experimental estimate. This prediction was generated using the TwinTrack model and the values recorded at that time.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -537,7 +566,7 @@ struct DataPrivacyView: View {
                 )
                 privacyDescription(
                     title: "Foundation Models and Tools",
-                    text: "For a personalized request, current summarized TwinTrack values and relevant conversation content may be provided to Apple's on-device Foundation Models framework. Numerical predictions remain separate and are calculated by the local Ridge model."
+                    text: "Relevant conversation text may be provided to Apple’s on-device Foundation Models framework. App-owned operations read saved records and calculate numerical predictions separately. BMI access is optional and off by default; the local operation shares a derived summary without your date of birth, photo or full profile. Revoking permission stops future reads; previously shared chat messages and exports remain until you remove them."
                 )
                 privacyDescription(
                     title: "External Services",

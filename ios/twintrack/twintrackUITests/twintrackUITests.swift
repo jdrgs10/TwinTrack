@@ -3,6 +3,165 @@ import XCTest
 final class twintrackUITests: XCTestCase {
 
     @MainActor
+    func testSendClearsImmediatelyAndLateFailurePreservesNewDraft() throws {
+        let app = XCUIApplication(), id = UUID().uuidString
+        app.launchArguments = ["--synthetic-chat-ui-tests", "--synthetic-chat-slow-error",
+                               "--synthetic-chat-library", id, "--synthetic-profile-ui-tests", id]
+        app.launch(); app.tabBars.buttons["TwinTrack AI"].tap()
+        let field = app.textFields["assistantComposer"].exists ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+        field.tap(); field.typeText("Synthetic pending request")
+        app.buttons["assistantSend"].tap()
+        XCTAssertTrue(app.buttons["assistantStop"].waitForExistence(timeout: 3))
+        XCTAssertNotEqual(field.value as? String, "Synthetic pending request")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantUserMessage").count, 1)
+        field.tap(); field.typeText("New draft")
+        XCTAssertTrue(app.buttons["assistantRetry"].waitForExistence(timeout: 20))
+        XCTAssertEqual(field.value as? String, "New draft")
+        XCTAssertEqual(app.staticTexts.matching(identifier: "assistantUserMessage").count, 1)
+        app.buttons["assistantDismissKeyboard"].tap()
+        XCTAssertTrue(app.tabBars.buttons["Home"].isHittable)
+    }
+
+    @MainActor
+    func testTrendsHistoryLightDarkLargestTextAndTabReachability() throws {
+        let app = XCUIApplication(), id = UUID().uuidString
+        app.launchArguments = ["--synthetic-profile-ui-tests", id, "--synthetic-v2-ui-tests", id,
+                               "--synthetic-appearance-ui-tests", id,
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        for mode in ["Light", "Dark"] {
+            let profile = app.tabBars.buttons["Profile"].exists ? app.tabBars.buttons["Profile"] : app.buttons["Profile"].firstMatch
+            profile.tap()
+            let appearance = app.segmentedControls["appearancePicker"]
+            for _ in 0..<20 { if appearance.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(appearance.isHittable); appearance.buttons[mode].tap()
+            let trends = app.buttons["wellbeingTrendsButton"]
+            for _ in 0..<20 { if trends.isHittable { break }; app.swipeDown() }
+            XCTAssertTrue(trends.isHittable); trends.tap()
+            let range = app.segmentedControls["wellbeingTrendRange"]
+            for _ in 0..<8 { if range.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(range.isHittable)
+            XCTAssertTrue(range.buttons["7 days"].isSelected)
+            range.buttons["30 days"].tap()
+            XCTAssertTrue(range.buttons["30 days"].isSelected)
+            XCTAssertEqual(app.staticTexts["wellbeingTrendCount"].label, "0 recorded observations")
+            let footer = app.staticTexts["Body & Wellbeing keeps your latest saved measurements only. No body-measurement history is inferred from predictions or chat."]
+            for _ in 0..<45 { if footer.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(footer.isHittable, "Last content must scroll clear of the tab bar")
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+    }
+
+    @MainActor
+    func testBodyWellbeingEmptySaveEditCancelRelaunchAndRemove() throws {
+        let app = XCUIApplication(), id = UUID().uuidString
+        app.launchArguments = ["--synthetic-profile-ui-tests", id, "--synthetic-v2-ui-tests", id]
+        func openBody() {
+            let profile = app.tabBars.buttons["Profile"].exists ? app.tabBars.buttons["Profile"] : app.buttons["Profile"].firstMatch
+            profile.tap()
+            let link = app.buttons["bodyWellbeingButton"]
+            for _ in 0..<6 { if link.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(link.isHittable); link.tap()
+            XCTAssertTrue(app.buttons["editBodyMeasurements"].waitForExistence(timeout: 5))
+        }
+        app.launch(); openBody()
+        XCTAssertTrue(app.staticTexts["bmiEmptyState"].exists)
+        app.buttons["editBodyMeasurements"].tap()
+        XCTAssertFalse(app.buttons["saveBodyMeasurements"].isEnabled)
+        app.textFields["bodyHeight"].tap(); app.textFields["bodyHeight"].typeText("160")
+        app.textFields["bodyWeight"].tap(); app.textFields["bodyWeight"].typeText("64")
+        XCTAssertEqual(app.staticTexts["bmiDraftValue"].label, "BMI: 25.0")
+        app.buttons["saveBodyMeasurements"].tap()
+        XCTAssertEqual(app.staticTexts["bmiValue"].label, "25.0")
+        XCTAssertTrue(app.staticTexts["bmiCategoryUnavailable"].exists)
+        let consent = app.switches["bodyAssistantConsent"]
+        for _ in 0..<8 { if consent.isHittable { break }; app.swipeUp() }
+        XCTAssertEqual(consent.value as? String, "0")
+        consent.tap()
+        XCTAssertEqual(consent.value as? String, "1")
+        for _ in 0..<8 { if app.buttons["editBodyMeasurements"].isHittable { break }; app.swipeDown() }
+        app.buttons["editBodyMeasurements"].tap()
+        let height = app.textFields["bodyHeight"]
+        height.tap()
+        let count = (height.value as? String)?.count ?? 0
+        height.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: count) + "200")
+        app.buttons["cancelBodyMeasurements"].tap()
+        XCTAssertEqual(app.staticTexts["bmiValue"].label, "25.0")
+        app.buttons["editBodyMeasurements"].tap()
+        height.tap()
+        height.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: (height.value as? String)?.count ?? 0) + "200")
+        app.buttons["saveBodyMeasurements"].tap()
+        XCTAssertEqual(app.staticTexts["bmiValue"].label, "16.0")
+        app.terminate(); app.launch(); openBody()
+        XCTAssertEqual(app.staticTexts["bmiValue"].label, "16.0")
+        for _ in 0..<8 { if consent.isHittable { break }; app.swipeUp() }
+        XCTAssertEqual(consent.value as? String, "1")
+        consent.tap()
+        XCTAssertEqual(consent.value as? String, "0")
+        let remove = app.buttons["removeBodyMeasurements"]
+        for _ in 0..<6 { if remove.isHittable { break }; app.swipeUp() }
+        remove.tap()
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["bmiValue"].exists)
+        remove.tap()
+        app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@", "Remove Wellbeing Profile", "removeBodyMeasurements")).firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["bmiEmptyState"].exists)
+    }
+
+    @MainActor
+    func testBodyWellbeingLightDarkAndLargestText() throws {
+        let app = XCUIApplication(), id = UUID().uuidString
+        app.launchArguments = ["--synthetic-profile-ui-tests", id, "--synthetic-v2-ui-tests", id,
+                               "--synthetic-appearance-ui-tests", id,
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        for mode in ["Light", "Dark"] {
+            let profile = app.tabBars.buttons["Profile"].exists ? app.tabBars.buttons["Profile"] : app.buttons["Profile"].firstMatch
+            profile.tap()
+            let picker = app.segmentedControls["appearancePicker"]
+            for _ in 0..<20 { if picker.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(picker.isHittable); picker.buttons[mode].tap()
+            let body = app.buttons["bodyWellbeingButton"]
+            for _ in 0..<20 { if body.isHittable { break }; app.swipeDown() }
+            XCTAssertTrue(body.isHittable); body.tap()
+            let gauge = app.otherElements["bmiGauge"]
+            XCTAssertTrue(gauge.waitForExistence(timeout: 5))
+            XCTAssertEqual(gauge.value as? String, "No measurements")
+            let edit = app.buttons["editBodyMeasurements"]
+            for _ in 0..<8 { if edit.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(edit.isHittable); edit.tap()
+            XCTAssertTrue(app.buttons["cancelBodyMeasurements"].isHittable)
+            let birthField = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@", "Add date of birth")).firstMatch
+            for _ in 0..<8 { if birthField.exists { break }; app.swipeUp() }
+            XCTAssertTrue(birthField.exists)
+            let sexField = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@", "Sex used by CDC growth reference")).firstMatch
+            for _ in 0..<8 { if sexField.exists { break }; app.swipeUp() }
+            XCTAssertTrue(sexField.exists)
+            app.buttons["cancelBodyMeasurements"].tap()
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+    }
+
+    @MainActor
+    func testCurrentProfileDoesNotPresentRewardsAsAvailable() throws {
+        let app = XCUIApplication(), id = UUID().uuidString
+        app.launchArguments = ["--synthetic-profile-ui-tests", id, "--synthetic-v2-ui-tests", id]
+        app.launch()
+        let profile = app.tabBars.buttons["Profile"].exists ? app.tabBars.buttons["Profile"] : app.buttons["Profile"].firstMatch
+        profile.tap()
+        XCTAssertFalse(app.staticTexts["Rewards"].exists)
+        XCTAssertFalse(app.buttons["Rewards"].exists)
+        XCTAssertFalse(app.staticTexts["Badges"].exists)
+        XCTAssertFalse(app.buttons["Badges"].exists)
+        XCTAssertFalse(app.staticTexts["Points"].exists)
+        XCTAssertFalse(app.buttons["Points"].exists)
+    }
+
+
+    @MainActor
     func testExportCurrentAndSavedChatCancelPreservesConversation() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--synthetic-chat-ui-tests", "--synthetic-chat-export-ui-tests",
@@ -18,7 +177,7 @@ final class twintrackUITests: XCTestCase {
         field.typeText("Synthetic export test")
         app.buttons["assistantSend"].tap()
         XCTAssertTrue(app.staticTexts["assistantReplyMessage"].waitForExistence(timeout: 5))
-        app.buttons["assistantDismissKeyboard"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
         app.buttons["assistantChatOptions"].tap()
         app.buttons["Export Chat"].tap()
         let dismissShare = app.otherElements["PopoverDismissRegion"]
@@ -52,7 +211,7 @@ final class twintrackUITests: XCTestCase {
         app.buttons["About on-device chat"].tap()
         let build = app.staticTexts["assistantBuild"]
         XCTAssertTrue(build.waitForExistence(timeout: 5))
-        XCTAssertEqual(build.label, "Build · FMQ-2026-09-15-E")
+        XCTAssertEqual(build.label, "Build · FMQ-2026-09-24-A")
         app.buttons["Done"].tap()
         XCTAssertTrue(app.buttons["assistantNewChat"].isHittable)
     }
@@ -222,6 +381,10 @@ final class twintrackUITests: XCTestCase {
         XCTAssertTrue(response.waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["How can I help?"].exists)
         XCTAssertFalse(app.staticTexts["Ask about studying, habits and wellbeing, or explore your TwinTrack data."].exists)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3), "Send dismisses focus")
+        field.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
+        field.typeText("Unsent keyboard test")
         XCTAssertTrue(app.buttons["assistantDismissKeyboard"].isHittable)
         // Drag through the keyboard edge; a swipe confined to the scroll view
         // can end before native interactive dismissal has completed.
@@ -438,7 +601,7 @@ final class twintrackUITests: XCTestCase {
         let retry = app.buttons["assistantRetry"]
         XCTAssertTrue(retry.waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["assistantWelcome"].exists)
-        app.buttons["assistantDismissKeyboard"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
         retry.tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Synthetic response:")).firstMatch.waitForExistence(timeout: 5))
         XCTAssertFalse(retry.exists)
@@ -737,9 +900,18 @@ final class twintrackUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [eligible], timeout: 10), .completed)
         for _ in 0..<4 { if run.isHittable { break }; app.swipeUp() }
         run.tap()
-        XCTAssertTrue(app.staticTexts["TwinTrack Ridge V2 · 2.0-final.1"].firstMatch.waitForExistence(timeout: 5))
+        let details = app.buttons["homePredictionDetails"]
+        XCTAssertTrue(details.waitForExistence(timeout: 5))
+        details.tap()
+        XCTAssertTrue(app.staticTexts["historyModelVersion"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["historyModelVersion"].label, "TwinTrack Ridge V2 · 2.0-final.1")
+        app.buttons["Done"].tap()
         app.terminate(); app.launch()
-        XCTAssertTrue(app.staticTexts["TwinTrack Ridge V2 · 2.0-final.1"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(details.waitForExistence(timeout: 10))
+        details.tap()
+        XCTAssertTrue(app.staticTexts["historyModelVersion"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["historyModelVersion"].label, "TwinTrack Ridge V2 · 2.0-final.1")
+        app.buttons["Done"].tap()
         app.tabBars.buttons["Profile"].tap()
         let manualInputs = app.buttons["manualInputsButton"]
         for _ in 0..<4 { if manualInputs.isHittable { break }; app.swipeUp() }

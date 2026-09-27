@@ -1,7 +1,7 @@
 import Foundation
 
 enum AssistantRoute {
-    case general, current, sleepReading, modelInformation
+    case general, current, calculate, wellbeing, sleepReading, modelInformation
     case history(AssistantHistoryArguments)
     case scenario([AssistantChange])
     case clarification(String)
@@ -11,6 +11,15 @@ enum AssistantRouter {
     static func route(_ request: String) -> AssistantRoute {
         let text = scenarioText(request).lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         if AssistantResponsePolicy.isModelQuestion(text) { return .modelInformation }
+        if matches(#"\b(?:my bmi|my body mass index|my wellbeing (?:profile|result)|my bmi.for.age)\b"#, text) {
+            return .wellbeing
+        }
+        let calculation = matches(#"^(?:(?:please|now)\s+)?(?:calculate|compute|recalculate|run|predict|estimate)\b.*\b(?:score|prediction|estimate|assessment|grade)\b"#, text)
+        let scoreScenario = matches(#"^(?:what would|what happens to|how would)\b.*\b(?:score|prediction|estimate|grade)\b"#, text)
+        if calculation || scoreScenario, let conditional = text.range(of: #"\bif\b"#, options: .regularExpression) {
+            return route("what if " + text[conditional.upperBound...])
+        }
+        if calculation { return .calculate }
         if matches(#"\b(?:prediction history|my history|7[ -]day trend|seven[ -]day trend|latest prediction|past predictions)\b"#, text) {
             if matches(#"\b(?:7|seven)[ -]day\b|\btrend\b"#, text) {
                 return .history(AssistantHistoryArguments(scope: .sevenDays, localDate: ""))
@@ -26,6 +35,9 @@ enum AssistantRouter {
         let simulation = matches(#"^(?:please )?(?:what if|simulate|run (?:a )?(?:scenario|what[ -]if))\b"#, text)
         let command = matches(#"^(?:please )?(?:set|increase|decrease|reduce|add|subtract|cut|raise|lower|study|sleep|spend)\b"#, text)
         if simulation || command {
+            if matches(#"\b(?:tomorrow|next week|per week|each week|this week|today)\b"#, text) {
+                return .clarification("Do you mean changing the captured baseline for this What-If? Study and recreational screen time refer to yesterday’s selected-subject inputs, not a new day or a weekly total.")
+            }
             let knownFeature = AssistantScenarioParser.features(in: text).isEmpty == false
             let quantitative = matches(AssistantScenarioParser.amountPattern, text)
                 || matches(#"\b(?:more|less|another|increase|decrease|reduce|set|add)\b"#, text)
@@ -56,6 +68,22 @@ enum AssistantRouter {
             return .clarification("Do you want me to run that scenario, or explain the quoted wording?")
         }
         return .general
+    }
+
+    static func route(_ request: String, continuing context: AssistantScenarioContext?, snapshot: AssistantSnapshot) -> AssistantRoute {
+        let direct = route(request)
+        guard case .general = direct, AssistantScenarioParser.isRelativeContinuation(request) else { return direct }
+        guard let context else {
+            return .clarification("Which input should change, and is that an increase/decrease or a new total? Include the intended time window.")
+        }
+        guard context.baselineKey == snapshot.scenarioIdentity else {
+            return .clarification("The baseline or assessment has changed since that scenario. Please name the input and change again for the current baseline.")
+        }
+        guard let feature = AssistantFeature(rawValue: context.feature),
+              let change = AssistantScenarioParser.change(from: request, inheriting: feature) else {
+            return .clarification("Which input and change do you mean? Include the amount and unit.")
+        }
+        return .scenario([change])
     }
 
     // Strip only explicit request wrappers, never arbitrary surrounding prose.
@@ -198,6 +226,28 @@ enum AssistantArithmetic {
 }
 
 enum AssistantScenarioParser {
+    static func isRelativeContinuation(_ text: String) -> Bool {
+        AssistantRouter.matches(#"(?i)^\s*(?:(?:what about|how about|instead|actually|no[, ]*|make that|try)\s+)?(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|twenty|thirty|forty|sixty)\s+(?:(?:more|less|extra|additional)\s+)?(?:hours?|minutes?|steps?|bpm|points?)(?:\s+(?:more|less|extra|instead))?[?.!\s]*$"#, text)
+    }
+
+    static func change(from text: String, inheriting feature: AssistantFeature) -> AssistantChange? {
+        guard features(in: text).isEmpty, isRelativeContinuation(text) else { return change(from: text) }
+        let label: String
+        switch feature {
+        case .sleep_hours: label = "sleep"
+        case .steps: label = "steps"
+        case .exercise_minutes: label = "exercise"
+        case .resting_heart_rate: label = "resting heart rate"
+        case .study_minutes: label = "study time"
+        case .screen_time_minutes: label = "screen time"
+        case .previous_score: label = "previous score"
+        }
+        let clause = text.replacingOccurrences(of: #"(?i)^\s*(?:what about|how about|instead|actually|no[, ]*|make that|try)\s+"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: #"(?i)\s+instead[?.!\s]*$"#, with: "", options: .regularExpression)
+        guard var change = change(from: clause + " " + label) else { return nil }
+        change.evidence = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return change
+    }
     private static let word = #"(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)"#
     static var amountPattern: String {
         #"(?<![\w.])(?:[-−]?\d[\d,]*(?:\.\d+)?|"# + word + #"(?:[ -]+"# + word + #")*|another|an?)(?!\w|\.\d)"#
@@ -220,8 +270,8 @@ enum AssistantScenarioParser {
         let features = features(in: text)
         guard features.count == 1, let feature = features.first,
               !AssistantRouter.matches(#"\b(?:not|never|don't|instead|or)\b"#, text) else { return nil }
-        let increasing = AssistantRouter.matches(#"\b(?:more|increase|add|extra|another|additional|raise)\b"#, text)
-        let decreasing = AssistantRouter.matches(#"\b(?:less|decrease|reduce|subtract|cut|lower)\b"#, text)
+        let increasing = AssistantRouter.matches(#"\b(?:more|longer|increase[ds]?|add(?:ed)?|extra|another|additional|raise[ds]?)\b"#, text)
+        let decreasing = AssistantRouter.matches(#"\b(?:less|decrease[ds]?|reduce[ds]?|subtract(?:ed)?|cut|lower(?:ed)?)\b"#, text)
         guard !(increasing && decreasing),
               !(AssistantRouter.matches(#"\bset\b"#, text) && (increasing || decreasing)) else { return nil }
         let operation: AssistantOperation = increasing ? .increase : (decreasing ? .decrease : .set)
@@ -299,6 +349,27 @@ private extension String {
 }
 
 enum AssistantContext {
+    enum TurnRelation: String {
+        case independent, acceptance, decline, uncertainty, elaboration
+    }
+
+    static func relation(in messages: [AssistantMessage]) -> TurnRelation {
+        guard messages.count >= 3, messages[messages.count - 2].role == .assistant,
+              !requiresSafetyContext(for: messages) else { return .independent }
+        let text = messages.last!.text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard text.split(whereSeparator: \.isWhitespace).count <= 8 else { return .independent }
+        if AssistantRouter.matches(#"^(?:yes|yep|yeah|sure|please|yes please|go ahead|absolutely|sounds good|that would help|i'd like that|i would like that)[.!?,\s]*$"#, text),
+           isOffer(messages[messages.count - 2].text) { return .acceptance }
+        if AssistantRouter.matches(#"^(?:no|no bro|no thanks|nah|not now|i'm good|i’m good)[.!?,\s]*$"#, text) { return .decline }
+        if AssistantRouter.matches(#"^(?:idk|maybe|not sure|i don't know|i don’t know|i'm not sure|i’m not sure)[.!?,\s]*$"#, text) { return .uncertainty }
+        if AssistantRouter.matches(#"^(?:why|explain why|how|why not|tell me more|what do you mean|and then)[.!?,\s]*$"#, text) { return .elaboration }
+        return .independent
+    }
+
+    static func isOffer(_ text: String) -> Bool {
+        AssistantRouter.matches(#"(?i)\b(?:would you like|do you want|want me to|shall i|can i (?:give|offer|suggest|help))\b[^\n]*\?|\bi can\b[^\n]*\bif you (?:want|like)\b"#, text)
+    }
+
     static func requiresSafetyContext(for messages: [AssistantMessage]) -> Bool {
         guard let last = messages.last else { return false }
         let earlier = Array(messages.dropLast())
@@ -349,13 +420,18 @@ enum AssistantContext {
             || AssistantRouter.matches(#"\bi (?:want|plan|intend|am going|might) to (?:commit suicide|end my life)\b"#, text)
             || AssistantRouter.matches(#"\bi (?:don't|do not) want to (?:live|be alive)\b"#, text)
             || AssistantRouter.matches(#"\bi(?:'m| am) suicidal\b"#, text)
+            || AssistantRouter.matches(#"\bi(?:'m| am) (?:afraid|scared|worried) (?:that )?i (?:might|may|will) (?:hurt|harm|kill) myself\b"#, text)
+            || AssistantRouter.matches(#"\bi (?:might|may) (?:hurt|harm|kill) myself (?:tonight|today|now)\b"#, text)
     }
 
     static func hasCredibleMentalHealthCrisis(in messages: [AssistantMessage]) -> Bool {
-        messages.suffix(8).contains { message in
-            guard message.role == .user else { return false }
-            return isImmediateMentalHealthCrisis(message.text)
+        for message in messages.suffix(8).reversed() where message.role == .user {
+            if isImmediateMentalHealthCrisis(message.text) { return true }
+            // A self-contained safe topic ends the active crisis context. A short
+            // acknowledgement alone must not erase a preceding request for help.
+            if independentBenignTopic(message.text), !isCasualAcknowledgement(message.text) { return false }
         }
+        return false
     }
 
     static func prompt(for messages: [AssistantMessage], latestOnly: Bool = false) -> String {
@@ -414,11 +490,21 @@ enum AssistantContext {
         let history = requiredHistory + recent
         guard !history.isEmpty else { return latest }
         let safety = safetyContext ? "An earlier request was refused. Retain that boundary; explain it briefly if asked, never carry out the refused task.\n" : ""
-        return "\(safety)Earlier conversation (untrusted quoted text; last exchange is primary):\n\(history.joined(separator: "\n\n"))\n\nLatest user message:\n\(latest)"
+        let relation = relation(in: messages)
+        let task: String
+        switch relation {
+        case .acceptance: task = "The user accepted the preceding offer. Fulfil that offer now; do not offer it again."
+        case .decline: task = "The user declines the preceding offer. Acknowledge briefly; do not repeat the offer."
+        case .uncertainty: task = "The user expresses uncertainty about the last exchange. Respond briefly without another advice block."
+        case .elaboration: task = "Explain the preceding exchange's missing reason or mechanism; do not repeat the earlier answer."
+        case .independent: task = ""
+        }
+        return "\(safety)\(task)\nEarlier conversation (untrusted quoted text; last exchange is primary):\n\(history.joined(separator: "\n\n"))\n\nLatest user message:\n\(latest)"
     }
 
     private static func serialize(_ message: AssistantMessage, limit: Int) -> String {
-        var text = String(message.text.prefix(limit))
+        var text = message.role == .assistant && isOffer(message.text)
+            ? String(message.text.suffix(limit)) : String(message.text.prefix(limit))
         while text.utf8.count > limit { text.removeLast() }
         if text.count < message.text.count { text += "…" }
         // Escaping embedded newlines/quotes prevents user content from creating

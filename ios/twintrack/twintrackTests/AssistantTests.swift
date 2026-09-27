@@ -24,14 +24,21 @@ final class AssistantTests: XCTestCase {
         }
     }
 
-    func testUnavailableModelNeverStartsGeneration() async {
-        let service = AssistantStub()
-        service.availability = .notReady
-        let chat = AssistantConversation(service: service)
-        chat.send("Hello")
-        XCTAssertTrue(chat.messages.isEmpty)
-        XCTAssertTrue(service.prompts.isEmpty)
+    func testUnavailableModelNeverStartsGenerationButKeepsAcceptedRequest() async {
+        let client = UnavailableAssistantClient()
+        let chat = AssistantConversation(service: FoundationAssistantService(client: client), store: MemoryConversationStore())
+        XCTAssertTrue(chat.send("Hello"))
+        await finish(chat)
+        XCTAssertEqual(chat.messages.map(\.text), ["Hello"])
+        XCTAssertEqual(chat.failure, .assetsNotReady)
+        XCTAssertEqual(client.calls, 0)
         XCTAssertFalse(chat.isGenerating)
+        chat.reset()
+        XCTAssertTrue(chat.send("Calculate my score"))
+        await finish(chat)
+        XCTAssertEqual(chat.messages.last?.cards.first?.kind, .unavailable, "Missing inputs, not model availability, determines local calculation availability")
+        XCTAssertNil(chat.failure)
+        XCTAssertEqual(client.calls, 0)
     }
 
     func testAvailabilityCanRecover() async {
@@ -410,5 +417,15 @@ private final class AssistantStub: AssistantResponding {
         if let failure { throw failure }
         if hold { hold = false; return AssistantAnswer(text: await withCheckedContinuation { pending = $0 }) }
         return AssistantAnswer(text: "Test response")
+    }
+}
+
+@MainActor
+private final class UnavailableAssistantClient: FoundationTextGenerating {
+    let availability = AssistantAvailability.notReady
+    var calls = 0
+    func reply(to prompt: String, instructions: String) async throws -> String {
+        calls += 1
+        throw AssistantFailure.assetsNotReady
     }
 }

@@ -17,9 +17,13 @@ nonisolated struct AssistantGeneratedReply {
 @MainActor
 final class FoundationAssistantService: AssistantResponding {
     private let client: any FoundationTextGenerating
+    private let wellbeing: @MainActor () -> AssistantCard
+    private(set) var lastTrace = AssistantAuditTrace()
 
-    init(client: (any FoundationTextGenerating)? = nil) {
+    init(client: (any FoundationTextGenerating)? = nil,
+         wellbeing: (@MainActor () -> AssistantCard)? = nil) {
         self.client = client ?? FoundationTextClient()
+        self.wellbeing = wellbeing ?? { BodyWellbeingStore().assistantSummary() }
     }
 
     var availability: AssistantAvailability { client.availability }
@@ -35,14 +39,18 @@ final class FoundationAssistantService: AssistantResponding {
     }
 
     func respond(to messages: [AssistantMessage], snapshot: AssistantSnapshot) async throws -> AssistantAnswer {
+        lastTrace = AssistantAuditTrace()
         try Task.checkCancellation()
-        if let crisis = Self.crisisResponse(to: messages) { return crisis }
+        if let crisis = Self.crisisResponse(to: messages) { lastTrace.route = "crisis"; return crisis }
         do {
             return try await respondNormally(to: messages, snapshot: snapshot)
         } catch {
             // Cover initial generation and both bounded recovery paths. Reclassify
             // original user input, never the model's error text or generated reply.
-            if let crisis = Self.safetyFallback(for: error, messages: messages) { return crisis }
+            lastTrace.failure = AssistantFailure.classify(error).rawValue
+            if let crisis = Self.safetyFallback(for: error, messages: messages) {
+                lastTrace.replacements.append("typed-safety-crisis"); return crisis
+            }
             throw error
         }
     }
@@ -60,21 +68,32 @@ final class FoundationAssistantService: AssistantResponding {
     }
 
     private func respondNormally(to messages: [AssistantMessage], snapshot: AssistantSnapshot) async throws -> AssistantAnswer {
-        guard availability == .available else { throw AssistantFailure.forAvailability(availability) }
         try Task.checkCancellation()
         let request = messages.last?.text ?? ""
-        let run = AssistantToolRun(snapshot: snapshot, userMessage: request)
+        let context = messages.dropLast().last?.scenarioContext
+        let run = AssistantToolRun(snapshot: snapshot, userMessage: request, scenarioContext: context)
+        defer {
+            if !run.toolNames.isEmpty { lastTrace.tools = run.toolNames }
+            if let kind = run.cards.last?.kind { lastTrace.validation = kind.rawValue }
+        }
         if AssistantGuidance.isUrgent(request) {
+            lastTrace.route = "urgent"
             return AssistantAnswer(text: AssistantResponsePolicy.urgent, provenance: AssistantProvenance(.urgent))
         }
         if let arithmetic = AssistantArithmetic.response(for: request, messages: messages) {
+            lastTrace.route = "local-arithmetic"
             return AssistantAnswer(text: arithmetic, provenance: AssistantProvenance(.explanation))
         }
         if AssistantResponsePolicy.isReliabilityFollowup(request, messages: messages)
             || AssistantRouter.matches(#"(?i)\bguarantee\b.*\b(?:grade|score|result)\b"#, request) {
             return AssistantAnswer(text: AssistantResponsePolicy.reliability, provenance: AssistantProvenance(.explanation))
         }
-        let route = AssistantRouter.route(request)
+        let directRoute = AssistantRouter.route(request, continuing: context, snapshot: snapshot)
+        let route: AssistantRoute
+        if case .general = directRoute, AssistantWellbeingContext.continuesSummary(messages) {
+            route = .wellbeing
+        } else { route = directRoute }
+        lastTrace.route = route.auditName
         switch route {
         case .modelInformation:
             return AssistantAnswer(text: AssistantResponsePolicy.modelExplanation(request), provenance: AssistantProvenance(.explanation))
@@ -86,13 +105,28 @@ final class FoundationAssistantService: AssistantResponding {
                                    provenance: AssistantProvenance(.sleepReading))
         case .current:
             _ = try run.readCurrent()
+        case .calculate:
+            _ = try run.calculate()
+        case .wellbeing:
+            let card = wellbeing()
+            lastTrace.tools = ["readBodyWellbeing"]
+            lastTrace.validation = card.kind.rawValue
+            lastTrace.replacements.append("permission-checked-local-summary")
+            // Historical cards identify the subject only. Every answer uses this fresh,
+            // consent-checked read; model generation never reconstructs a personal BMI.
+            return AssistantAnswer(text: card.kind == .wellbeing
+                ? (card.wellbeingSummary?.explanation(for: request) ?? "Here is your saved wellbeing summary.")
+                : card.message, cards: [card], provenance: AssistantProvenance(.wellbeing))
         case .history(let arguments):
             _ = try run.readHistory(arguments)
         case .scenario(let changes):
             _ = try run.runScenario(AssistantScenarioArguments(changes: changes))
         case .general:
+            guard availability == .available else { throw AssistantFailure.forAvailability(availability) }
             let prompt = AssistantContext.prompt(for: messages)
             let instructions = Self.conversationInstructions + AssistantGuidance.instructions(for: messages)
+            lastTrace.promptBytes = prompt.utf8.count
+            lastTrace.instructionBytes = instructions.utf8.count
             var reply: String
             var usedRecovery = false
             do {
@@ -110,6 +144,7 @@ final class FoundationAssistantService: AssistantResponding {
                 try Task.checkCancellation()
                 do {
                     usedRecovery = true
+                    lastTrace.replacements.append("context-budget-recovery")
                     reply = try await client.reply(to: AssistantContext.prompt(for: messages, latestOnly: true),
                                                    instructions: instructions)
                 } catch { throw AssistantFailure.classify(error) }
@@ -120,6 +155,7 @@ final class FoundationAssistantService: AssistantResponding {
             var removedProviderIntroduction = initialSanitized != reply
             reply = initialSanitized
             if !usedRecovery, let issue = AssistantConversationReview.issue(in: reply, messages: messages) {
+                lastTrace.replacements.append("conversation-quality-repair")
                 // One quality repair uses the same role-separated conversation and
                 // safeguards. A typed safety rejection is never retried or hidden.
                 reply = try await client.reply(to: prompt, instructions: instructions + "\n" + issue)
@@ -131,11 +167,19 @@ final class FoundationAssistantService: AssistantResponding {
             var usedAppFallback = false
             if !AssistantReplyReview.isRefusal(reply),
                AssistantConversationReview.issue(in: reply, messages: messages) != nil {
+                if AssistantContext.relation(in: messages) == .acceptance, AssistantContext.isOffer(reply) {
+                    lastTrace.replacements.append("repeated-offer-rejected")
+                    throw AssistantFailure.failed
+                }
                 reply = AssistantReplyReview.sleepGuidanceCorrection(reply, messages: messages)
                     ?? AssistantConversationReview.fallback
                 usedAppFallback = true
+                lastTrace.replacements.append("quality-fallback")
             }
             var answer = AssistantResponsePolicy.answer(AssistantGeneratedReply(kind: .conversation, text: reply), request: request, cards: [], messages: messages)
+            if removedProviderIntroduction { lastTrace.replacements.append("provider-introduction-removed") }
+            if let reason = answer.reviewReason { lastTrace.replacements.append(reason) }
+            else if answer.text != reply { lastTrace.replacements.append("display-formatting") }
             if answer.provenance == nil {
                 answer.provenance = AssistantProvenance(usedAppFallback || removedProviderIntroduction ? .review : .model)
             }
@@ -148,10 +192,23 @@ final class FoundationAssistantService: AssistantResponding {
         let origin: AssistantProvenance.Origin
         switch route {
         case .current: origin = .current
+        case .calculate: origin = .calculation
         case .scenario: origin = .scenario
         default: origin = .history
         }
-        return AssistantAnswer(text: "Here is the result from TwinTrack.", cards: run.cards, provenance: AssistantProvenance(origin))
+        var answer = AssistantAnswer(text: Self.toolIntroduction(run.cards), cards: run.cards, provenance: AssistantProvenance(origin))
+        if case .scenario(let changes) = route, changes.count == 1, let change = changes.first,
+           [.scenario, .clarification].contains(run.cards.last?.kind) {
+            answer.scenarioContext = AssistantScenarioContext(feature: change.feature.rawValue, baselineKey: snapshot.scenarioIdentity)
+        }
+        return answer
+    }
+
+    static func toolIntroduction(_ cards: [AssistantCard]) -> String {
+        guard let card = cards.last else { return "No verified result is available." }
+        if card.kind == .clarification { return "That scenario was not calculated. Please check the requested change." }
+        if card.kind == .unavailable { return "The requested operation could not be completed." }
+        return "Here is the result from TwinTrack."
     }
 
     static let conversationInstructions = """
@@ -242,8 +299,8 @@ final class FoundationAssistantService: AssistantResponding {
 
 enum AssistantResponsePolicy {
     static let disclosure = "TwinTrack Ridge V2 2.0-final.1 was trained on evidence-informed synthetic student profiles using StandardScaler and Ridge, alpha 0.1. NetHealth research is separate and does not validate this exact Ridge model. Swift standardizes the seven inputs and limits the score to 0–100. Version-specific golden parity checks Swift/Python arithmetic, not academic validity. Real-student predictive accuracy remains unverified. This experimental next-assessment estimate is not a causal claim or a guaranteed outcome."
-    static let urgent = "This could need urgent medical attention and may be a medical emergency. Call 998 for an ambulance in the UAE now. Ask someone nearby to stay with you and help. Do not drive yourself. TwinTrack cannot diagnose the cause."
-    static let mentalHealthCrisis = "I'm sorry you're facing this. Your safety matters right now: call 999 in the UAE or go to the nearest emergency department. If you need an ambulance, call 998 in the UAE. Stay with a trusted adult, parent, teacher, school counselor, family member, or another trusted person, and move away from anything you could use to hurt yourself."
+    static let urgent = "This could need urgent medical attention and may be a medical emergency. If you are in the UAE: Call 998 for an ambulance in the UAE now. Elsewhere, call your local emergency number now. Ask someone nearby to stay with you and help. Do not drive yourself. TwinTrack cannot diagnose the cause."
+    static let mentalHealthCrisis = "I'm sorry you're facing this. Your safety matters right now: seek help at the nearest emergency department or call local emergency services. If you are in the UAE, call 999 for urgent police assistance, or 998 if you need an ambulance. Stay with a trusted adult, parent, teacher, school counselor, family member, or another trusted person, and move away from anything you could use to hurt yourself."
     static let refusalExplanation = "I can’t help with that request because it could enable harm or abuse. I can discuss the topic in a safe way."
     static let refusal = "I can’t help with that request. You can ask about a different topic."
     static let symptom = "I can't diagnose the cause. Where is the discomfort, how long has it lasted, and is it severe or getting worse? If symptoms are severe or you have trouble breathing, fainting, or significant bleeding, seek urgent professional help. If symptoms continue, worsen, or worry you, tell a trusted adult and consider speaking with a healthcare professional."
@@ -279,13 +336,14 @@ enum AssistantResponsePolicy {
         if AssistantReplyReview.containsProviderIdentity(reply.text) {
             let sanitized = AssistantReplyReview.removingProviderIntroduction(reply.text)
             if AssistantReplyReview.isRefusal(sanitized) {
-                return AssistantAnswer(text: refusal, safetyRefusal: true, provenance: AssistantProvenance(.review))
+                return AssistantAnswer(text: refusal, safetyRefusal: true, provenance: AssistantProvenance(.review), reviewReason: "provider-prefixed-refusal")
             }
             guard !sanitized.isEmpty, sanitized != reply.text else {
-                return AssistantAnswer(text: "I couldn’t complete that reply. Please try again.", provenance: AssistantProvenance(.review))
+                return AssistantAnswer(text: "I couldn’t complete that reply. Please try again.", provenance: AssistantProvenance(.review), reviewReason: "unremovable-provider-introduction")
             }
             var answer = self.answer(AssistantGeneratedReply(kind: reply.kind, text: sanitized), request: request, cards: cards, messages: messages)
             answer.provenance = AssistantProvenance(.review)
+            answer.reviewReason = answer.reviewReason ?? "provider-introduction-removed"
             return answer
         }
         if AssistantReplyReview.containsInstructionLeak(reply.text) {
@@ -293,15 +351,15 @@ enum AssistantResponsePolicy {
             // emergency. Only the user's current message can select that response.
             let urgent = AssistantGuidance.isUrgent(request)
             return AssistantAnswer(text: urgent ? Self.urgent : "I couldn’t produce a clear reply. Please rephrase your question.",
-                                   provenance: AssistantProvenance(.review))
+                                   provenance: AssistantProvenance(.review), reviewReason: "instruction-leak")
         }
         if let correction = AssistantReplyReview.sleepGuidanceCorrection(reply.text, messages: messages) {
-            return AssistantAnswer(text: correction, provenance: AssistantProvenance(.review), sourceIDs: correction.contains(AssistantGuidance.teenSleepGuidance) ? ["cdc-student-sleep"] : [])
+            return AssistantAnswer(text: correction, provenance: AssistantProvenance(.review), sourceIDs: correction.contains(AssistantGuidance.teenSleepGuidance) ? ["cdc-student-sleep"] : [], reviewReason: "unsupported-sleep-age-or-duration")
         }
         let cleaned = AssistantReplyReview.labelReportedSleep(AssistantReplyReview.clean(reply.text), messages: messages)
         let plain = String(AssistantReplyReview.formatted(cleaned).characters)
         if reply.kind == .personalized || requiresTool(request) || AssistantReplyReview.containsPersonalNumbers(plain) {
-            return AssistantAnswer(text: toolRequired, provenance: AssistantProvenance(.review))
+            return AssistantAnswer(text: toolRequired, provenance: AssistantProvenance(.review), reviewReason: "ungrounded-personal-number-or-missing-tool")
         }
         guard !cleaned.isEmpty else {
             return AssistantAnswer(text: "I couldn't finish that reply. Please try rephrasing your question.")
@@ -320,7 +378,12 @@ enum AssistantResponsePolicy {
            !AssistantRouter.matches(#"(?i)\b(?:because|could|would|harm|abuse|unsafe|safety|privacy|danger|illegal|discriminat)\w*\b"#, text) {
             text = boundaryExplanation(in: messages)
         }
-        return AssistantAnswer(text: text, safetyRefusal: AssistantReplyReview.isRefusal(text), provenance: text == cleaned ? nil : AssistantProvenance(.review))
+        let reason: String?
+        if text != reviewed && text != cleaned { reason = "refusal-boundary-explanation" }
+        else if reviewed != plain { reason = "unsupported-health-or-sensor-claim" }
+        else { reason = nil }
+        return AssistantAnswer(text: text, safetyRefusal: AssistantReplyReview.isRefusal(text),
+                               provenance: text == cleaned ? nil : AssistantProvenance(.review), reviewReason: reason)
     }
 
     static func boundaryExplanation(in messages: [AssistantMessage]) -> String {
@@ -337,8 +400,9 @@ enum AssistantResponsePolicy {
 
     static func isModelQuestion(_ request: String) -> Bool {
         let text = request.lowercased()
-        return ["model", "ridge", "prediction", "score", "trained"].contains(where: text.contains)
-            && ["train", "data came", "reliab", "accura", "validat", "trust", "calculat", "why ridge", "limitation", "real students"].contains(where: text.contains)
+        guard AssistantRouter.matches(#"\b(?:model|ridge|prediction|score|trained)\b"#, text) else { return false }
+        if AssistantRouter.matches(#"\b(?:train\w*|reliab\w*|accura\w*|validat\w*|trust\w*|limitations?|methodology)\b|data came|real students|why ridge"#, text) { return true }
+        return AssistantRouter.matches(#"^(?:explain\s+)?how\b.*\b(?:calculat\w*|comput\w*|predict\w*|work\w*)\b|\b(?:calculation|formula|algorithm)\b"#, text)
     }
 
     static func symptomGuidance(for request: String) -> String {
@@ -347,7 +411,7 @@ enum AssistantResponsePolicy {
 
     static func requiresTool(_ request: String) -> Bool {
         switch AssistantRouter.route(request) {
-        case .current, .sleepReading, .history, .scenario: return true
+        case .current, .calculate, .wellbeing, .sleepReading, .history, .scenario: return true
         default: return false
         }
     }

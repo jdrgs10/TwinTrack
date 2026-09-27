@@ -187,6 +187,7 @@ struct WhatIfView: View {
                     } label: {
                         Text(WhatIfDisplay.value(scenario.scenarioValue(for: feature), feature: feature))
                             .font(.subheadline.weight(.semibold)).monospacedDigit()
+                            .fixedSize(horizontal: true, vertical: false)
                             .foregroundStyle(changed ? palette.accent : palette.primary)
                             .frame(minWidth: 74, minHeight: 44)
                     }
@@ -361,13 +362,16 @@ struct WhatIfValueEditor: View {
 
 enum WhatIfDisplay {
     static func value(_ value: Double, feature: TwinTrackFeature) -> String {
-        if feature == .sleepHours || feature == .studyMinutes || feature == .screenTimeMinutes {
-            let total = feature == .sleepHours ? value * 60 : value
-            let parts = durationParts(total)
-            return "\(number(parts.hours))h \(number(parts.minutes))m"
+        switch feature {
+        case .sleepHours: return HomeDisplay.sleep(value) ?? "Unavailable"
+        case .studyMinutes, .screenTimeMinutes:
+            guard value.isFinite, value >= 0, value < Double(Int.max) else { return "Unavailable" }
+            return HomeDisplay.duration(minutes: Int(value.rounded())) ?? "Unavailable"
+        case .steps: return HomeDisplay.steps(value) ?? "Unavailable"
+        case .exerciseMinutes: return HomeDisplay.exercise(value) ?? "Unavailable"
+        case .restingHeartRate: return HomeDisplay.restingHeartRate(value) ?? "Unavailable"
+        case .previousScore: return HomeDisplay.previousScore(value) ?? "Unavailable"
         }
-        let unit = feature == .exerciseMinutes ? " min" : (feature == .restingHeartRate ? " bpm" : "")
-        return number(value) + unit
     }
 
     static func number(_ value: Double) -> String {

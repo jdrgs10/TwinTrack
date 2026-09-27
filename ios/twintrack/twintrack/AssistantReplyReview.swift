@@ -98,7 +98,9 @@ enum AssistantReplyReview {
         // unrelated bedtime/quantity elsewhere in the answer.
         let score = #"(?:your (?:predicted |assessment |what-if |scenario )?(?:score|prediction|delta)|(?:predicted|assessment|scenario) score)\b[^.!?\n]{0,70}"# + number
         let reading = #"(?:your (?:steps|resting heart rate|rhr|sleep|exercise|study time|screen time)\s+(?:is|are|was|were|averages?|total(?:s|ed)?|reached|has been)|you (?:slept|walked|exercised|studied))\s+(?:(?:about|around|roughly|approximately)\s+)?"# + number
-        if AssistantRouter.matches("(?i)" + score, text) { return true }
+        let bmiClaim = #"\b(?:your|the current|the saved) (?:bmi(?:[ -]for[ -]age)?|body mass index|percentile)\b[^.!?\n]{0,45}"# + number
+        if AssistantRouter.matches("(?i)" + score, text)
+            || AssistantRouter.matches("(?i)" + bmiClaim, text) { return true }
         // Conditional examples and explicitly negated claims are not assertions that
         // TwinTrack measured something. Remove only their local reading clause.
         let assertions = text.replacingOccurrences(of: #"(?i)\b(?:the phrase|the words|you quoted|you wrote) [“‘"][^”’"\n]+[”’"]"#, with: "", options: .regularExpression)
@@ -208,6 +210,9 @@ enum AssistantConversationReview {
         // The established app-owned invented-age correction has priority over
         // generative quality repair, so a retry cannot obscure that safeguard.
         if AssistantReplyReview.inventsSleepAge(text, messages: messages) { return nil }
+        if AssistantContext.relation(in: messages) == .acceptance, AssistantContext.isOffer(text) {
+            return "The previous offer was accepted. Deliver its requested content directly, without asking permission again. Keep the same safeguards and do not invent personal facts."
+        }
         if AssistantReplyReview.hasUnfoundedSleepDuration(text, messages: messages) {
             return "The user's age is unknown. Do not apply a fixed sleep-duration recommendation to them. Answer the actual question; if duration is relevant, explain that recommendations vary by age."
         }

@@ -16,6 +16,11 @@ struct twintrackApp: App {
     private static func makeState() -> TwinTrackState {
 #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
+#if targetEnvironment(simulator)
+        if arguments.contains(ScreenshotDemo.launchArgument) {
+            return ScreenshotDemo.state(arguments: arguments)
+        }
+#endif
         if let index = arguments.firstIndex(of: "--synthetic-v2-ui-tests"),
            arguments.indices.contains(index + 1), let id = UUID(uuidString: arguments[index + 1]) {
             return V2UITestFixture.state(id: id)

@@ -100,7 +100,7 @@ struct TwinTrackAIView: View {
                                 }
 #endif
                                 if !message.cards.isEmpty {
-                                    Text("Historical result · \(message.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                                    Text("\(chat.liveReplyIDs.contains(message.id) ? "Captured for this request" : "Saved result") · \(message.createdAt.formatted(date: .abbreviated, time: .shortened))")
                                         .font(.caption).foregroundStyle(.secondary)
                                     ForEach(message.cards) { AssistantResultCard(card: $0) }
                                 }
@@ -181,7 +181,9 @@ struct TwinTrackAIView: View {
             if isActive && composerFocused { AssistantPerformance.mark(.keyboardVisible) }
         }
 #endif
-        .onChange(of: chat.activeID) {
+        .onChange(of: chat.activeID) { previous, _ in
+            // The first accepted send creates the chat; it must not erase a newer draft.
+            if previous == nil && chat.isGenerating { return }
             editingMessageID = nil
             draft = ""
             followsLatest = true
@@ -232,8 +234,7 @@ struct TwinTrackAIView: View {
                         .accessibilityIdentifier("assistantEditCancel")
                     Button("Save") { saveEditing() }
                         .fontWeight(.semibold)
-                        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                  || chat.availability != .available)
+                        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         .accessibilityIdentifier("assistantEditSave")
                 }
                 .padding(.bottom, 8)
@@ -262,13 +263,15 @@ struct TwinTrackAIView: View {
                 } else {
                     Button {
                         followsLatest = true
-                        let count = chat.messages.count
-                        chat.send(draft, snapshot: AssistantSnapshot(state: state))
-                        if chat.messages.count > count { draft = "" }
+                        let acceptedDraft = draft
+                        if chat.send(acceptedDraft, snapshot: AssistantSnapshot(state: state)) {
+                            draft = ""
+                            composerFocused = false
+                        }
                     } label: {
                         Image(systemName: "arrow.up.circle.fill").font(.title).frame(width: 44, height: 44)
                     }
-                    .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || chat.availability != .available)
+                    .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .accessibilityLabel("Send").accessibilityIdentifier("assistantSend")
                 }
             }
@@ -487,6 +490,11 @@ private final class SyntheticChatUIService: AssistantResponding {
     private var hasFailed = false
     let availability = AssistantAvailability.available
     func respond(to messages: [AssistantMessage], snapshot: AssistantSnapshot) async throws -> AssistantAnswer {
+        if ProcessInfo.processInfo.arguments.contains("--synthetic-chat-slow-error") {
+            // Test-only latency fixture: no production response is delayed.
+            try await Task.sleep(for: .seconds(12))
+            throw AssistantFailure.decoding
+        }
         if ProcessInfo.processInfo.arguments.contains("--synthetic-chat-error"), !hasFailed {
             hasFailed = true
             throw AssistantFailure.decoding

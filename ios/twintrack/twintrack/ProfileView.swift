@@ -167,6 +167,23 @@ struct ProfileView: View {
                         .accessibilityIdentifier("manualInputsButton")
                     }
 
+                    sectionTitle("WELLBEING")
+                    groupedRows {
+                        profileLink(
+                            title: "Body & Wellbeing",
+                            detail: "Optional profile, BMI and BMI-for-age",
+                            destination: AnyView(BodyWellbeingView()),
+                            identifier: "bodyWellbeingButton"
+                        )
+                        Divider().padding(.leading, 15)
+                        profileLink(
+                            title: "Trends & History",
+                            detail: "Recorded habits and saved estimates",
+                            destination: AnyView(WellbeingTrendsView()),
+                            identifier: "wellbeingTrendsButton"
+                        )
+                    }
+
                     sectionTitle("PREDICTION & AI")
                     VStack(spacing: 9) {
                         featureLink(
@@ -800,7 +817,7 @@ struct ProfileDetailView: View {
 }
 
 struct ManualInputsValidation {
-    nonisolated static func reasons(
+    static func reasons(
         studyMinutes: Int?,
         screenTimeMinutes: Int?,
         previousScoreText: String,
@@ -843,7 +860,7 @@ struct ManualInputsValidation {
     }
 }
 
-private struct ManualInputsSheet: View {
+struct ManualInputsSheet: View {
     @EnvironmentObject private var state: TwinTrackState
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
