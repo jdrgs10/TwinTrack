@@ -4,6 +4,7 @@
 
 Completed the approved Home guidance, directed Manual Inputs review, exact saved-estimate explanation, dark composer refinement and bounded reliability/accessibility fixes. No physical acceptance or feature freeze is claimed. Nothing staged, committed or pushed.
 
+**Final complete gate: 527/527 PASS (486 unit + 41 UI executions), 0 failed/skipped**, 01:38:57.832–02:20:06.021 Asia/Dubai, **2468.189 seconds**. All 38 UI methods were included, with launch coverage in four configurations. V1 **21/21** and V2 **176/176** golden parity pass within their unit methods. Final explicit simulator **Build PASS at 02:22** and **Analyze PASS at 02:23**; compiler/analyzer warnings **0/0**, errors **0**. All 79 Swift source/test files match the passing gate after cleanup.
 
 The final focused gate passed **489/489 (486 unit + 3 UI)**. Relevant iPad coverage reached **9/9 passing cases across focused runs**, including **2/2** after the saved-record row's full-width hit-area correction. Initial failures, the interrupted run, an accidentally altered test line restored before rerunning, and all reruns are retained in [FINAL_APP_PASS.md](FINAL_APP_PASS.md). A complete intermediate gate passed 513/527: its landscape viewport exposed missing portrait setup in five layout-test suites. Explicit portrait setup resolved all 14 failures with unchanged app source and functional assertions; multi-orientation launch smoke coverage remains enabled.
 
