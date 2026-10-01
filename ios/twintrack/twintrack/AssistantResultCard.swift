@@ -37,6 +37,7 @@ struct AssistantResultCard: View {
         .background(palette.accent.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
         .overlay { RoundedRectangle(cornerRadius: 20).stroke(palette.accent.opacity(0.2)) }
         .privacySensitive()
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("assistantResultCard.\(card.kind.rawValue)")
     }
 

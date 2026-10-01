@@ -1,5 +1,18 @@
 # TwinTrack UI Freeze
 
+## 2026-09-30 final app pass — automated PASS; physical acceptance pending
+
+This section supersedes older current-product descriptions below; their results remain historical evidence. This pass covers Home guidance, directed manual review, exact saved-estimate explanations, dark composer refinement and the bounded reliability/accessibility fixes recorded in the ledger. See [implementation and validation ledger](FINAL_APP_PASS.md) and [physical acceptance script](FINAL_PHYSICAL_ACCEPTANCE.md).
+
+The current app retains three tabs, frozen V2 2.0-final.1 with preserved V1 artifacts, seven prediction inputs, existing HealthKit windows, deterministic What-If, 7/30-day Trends, manual entry, local chats/edit/export, profile/photo and appearance controls. The blue Ridge and purple Foundation Models cards remain on Profile. Optional BMI chat access is read-only and permission-controlled; the old September 22 statements that all BMI assistant access is absent describe that earlier build only.
+
+Recorded Week Summary, reminders, shortcuts, extra health/body inputs, new tabs, cloud features and model changes remain out of scope. Development screenshots/videos have not been reorganized. No learning status is inferred for A.
+
+Final automated gate: **527/527 PASS** (486 unit + 41 UI), V1 **21/21**, V2 **176/176**, explicit Build and Analyze **PASS**, compiler/analyzer warnings and errors **0**. Relevant iPad checks have **9/9** passing focused executions with the qualifications in the ledger. Two Body editor runtime-warning entries and one grouped debugger-termination notice remain disclosed.
+
+**Feature freeze is not declared.** A must accept the affected physical flows after the final automated gate. Existing Body editor runtime diagnostics must remain disclosed until their cause is established; automated PASS does not establish real-model conversational quality or physical visual approval.
+
+
 ## 2026-09-22 BMI-for-age wellbeing update — automated PASS, physical review pending
 
 A authorized a separate optional **Profile → Wellbeing → Body & Wellbeing** screen. The profile now stores optional date of birth and the selected male/female CDC growth reference alongside height and weight. There is no current Goals/Rewards screen. The existing three tabs, Home hierarchy, manual semantics, RHR trend, assistant, chat export, histories and seven-input V2 contract are preserved.

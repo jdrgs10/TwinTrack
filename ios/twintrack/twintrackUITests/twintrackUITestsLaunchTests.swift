@@ -20,12 +20,13 @@ final class twintrackUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
+        let session = UUID().uuidString
+        app.launchArguments = ["--synthetic-v2-ui-tests", session,
+                               "--synthetic-profile-ui-tests", session,
+                               "--synthetic-appearance-ui-tests", session,
+                               "--synthetic-chat-library", session,
+                               "--synthetic-chat-ui-tests"]
         app.launch()
-
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Launch Screen"

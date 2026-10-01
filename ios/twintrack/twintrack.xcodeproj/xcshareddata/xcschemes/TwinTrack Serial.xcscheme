@@ -48,11 +48,6 @@
                BlueprintName = "twintrackUITests"
                ReferencedContainer = "container:twintrack.xcodeproj">
             </BuildableReference>
-            <SelectedTests>
-               <Test
-                  Identifier = "twintrackUITests">
-               </Test>
-            </SelectedTests>
          </TestableReference>
       </Testables>
    </TestAction>

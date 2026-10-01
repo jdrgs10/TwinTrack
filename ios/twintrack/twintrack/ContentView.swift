@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedTab = TwinTrackTab.home
+    @State private var explanationRequest: ExplainSavedEstimateRequest?
 
     private var accent: Color {
         colorScheme == .dark
@@ -19,7 +20,8 @@ struct ContentView: View {
                 .tag(TwinTrackTab.home)
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
-            TwinTrackAIView(isActive: selectedTab == .ai)
+            TwinTrackAIView(isActive: selectedTab == .ai, explanationRequest: explanationRequest,
+                            consumeExplanation: { explanationRequest = nil })
                 .tag(TwinTrackTab.ai)
                 .tabItem { Label("TwinTrack AI", systemImage: "sparkles") }
 
@@ -28,6 +30,10 @@ struct ContentView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(accent)
+        .environment(\.explainSavedEstimate, { id in
+            explanationRequest = ExplainSavedEstimateRequest(snapshotID: id)
+            select(.ai)
+        })
     }
 
     private var tabSelection: Binding<TwinTrackTab> {

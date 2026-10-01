@@ -4,7 +4,20 @@ import Foundation
 /// Opt-in, isolated synthetic data for the V2 UI regression; never uses HealthKit.
 @MainActor
 enum V2UITestFixture {
-    static func state(id: UUID) -> TwinTrackState {
+    nonisolated enum Scenario: String, CaseIterable {
+        case complete
+        case missingHealth = "missing-health"
+        case partialHealth = "partial-health"
+        case missingManual = "missing-manual"
+
+        static func from(arguments: [String]) -> Self {
+            guard let index = arguments.firstIndex(of: "--synthetic-journey-scenario"),
+                  arguments.indices.contains(index + 1) else { return .complete }
+            return Self(rawValue: arguments[index + 1]) ?? .complete
+        }
+    }
+
+    static func state(id: UUID, scenario: Scenario = .from(arguments: ProcessInfo.processInfo.arguments)) -> TwinTrackState {
         let defaults = UserDefaults(suiteName: "TwinTrack.V2UITests.\(id.uuidString)")!
         let calendar = Calendar.current
         let now = Date(), today = calendar.startOfDay(for: Date())
@@ -18,24 +31,26 @@ enum V2UITestFixture {
             try? UserDefaultsPredictionHistoryStore(defaults: defaults).save([legacy])
             defaults.set(true, forKey: "twintrack.health.fourTypeRequestCompleted")
         }
-        let state = TwinTrackState(defaults: defaults, healthService: Readings())
-        if firstLaunch {
+        let state = TwinTrackState(defaults: defaults, healthService: Readings(scenario: scenario))
+        if firstLaunch, scenario != .missingManual {
             let context = V2PredictionContext(subject: "Synthetic maths", assessmentName: "Synthetic quiz",
                 assessmentDate: calendar.date(byAdding: .day, value: 3, to: today)!,
                 previousDate: calendar.date(byAdding: .day, value: -14, to: today)!,
                 manualDay: calendar.date(byAdding: .day, value: -1, to: today)!, timeZoneIdentifier: calendar.timeZone.identifier,
                 sameSubjectConfirmed: true, nextIndividualAssessmentConfirmed: true, latestComparablePriorConfirmed: true)
             state.saveManualInputs(studyMinutes: 120, screenTimeMinutes: 240, previousScore: 75, now: now, context: context)
-            defaults.set(true, forKey: "fixtureSeeded")
         }
+        defaults.set(true, forKey: "fixtureSeeded")
         return state
     }
 
     private struct Readings: HealthDataProviding {
+        let scenario: Scenario
         let isAvailable = true
         func requestAccess() async throws {}
         func readRestingHeartRateTrend(now: Date, calendar: Calendar) async -> RestingHeartRateTrend? {
-            guard ProcessInfo.processInfo.arguments.contains("--synthetic-rhr-ui-tests") else { return nil }
+            guard scenario != .missingHealth,
+                  ProcessInfo.processInfo.arguments.contains("--synthetic-rhr-ui-tests") else { return nil }
             let window = RestingHeartRateTrend.window(now: now, calendar: calendar)
             let samples = (0..<33).map { i in
                 RestingHeartRateReading(bpm: i < 28 ? Double(58 + i % 5) : 80,
@@ -44,8 +59,16 @@ enum V2UITestFixture {
             return RestingHeartRateTrend.assess(samples: samples, now: now, calendar: calendar)
         }
         func read(window: HealthDataWindow) async -> HealthReadings {
-            HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30),
-                restingHeartRate: .available(60), restingHeartRateSampleDate: window.day.start)
+            switch scenario {
+            case .missingHealth:
+                return HealthReadings()
+            case .partialHealth:
+                return HealthReadings(sleep: .missing, steps: .available(5000), exercise: .missing,
+                    restingHeartRate: .available(60), restingHeartRateSampleDate: window.day.start)
+            case .complete, .missingManual:
+                return HealthReadings(sleep: .available(7), steps: .available(5000), exercise: .available(30),
+                    restingHeartRate: .available(60), restingHeartRateSampleDate: window.day.start)
+            }
         }
     }
 }

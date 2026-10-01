@@ -1,9 +1,13 @@
 import XCTest
 
 final class ScreenshotDemoUITests: XCTestCase {
+    override func setUp() async throws {
+        continueAfterFailure = false
+        await MainActor.run { XCUIDevice.shared.orientation = .portrait }
+    }
+
     @MainActor
     func testScreenshotReadingsManualAccessRefreshAndDisable() throws {
-        continueAfterFailure = false
         let app = XCUIApplication(), id = UUID().uuidString
         app.launchArguments = ["--screenshot-mode", "--screenshot-session", id,
                                "--synthetic-profile-ui-tests", id]

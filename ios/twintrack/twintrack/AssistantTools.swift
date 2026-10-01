@@ -24,6 +24,7 @@ struct AssistantSnapshot: Sendable {
     let eligibilityIssue: String?
     var calculatePrediction: (@MainActor @Sendable () -> AssistantSnapshot?)?
     var calculationIssue: String?
+    var lookupSavedEstimate: (@MainActor @Sendable (UUID) -> PredictionSnapshot?)?
 
     @MainActor init(state: TwinTrackState, now: Date = Date(), calendar: Calendar = .current) {
         values = [state.sleepHours, state.steps, state.exerciseMinutes, state.restingHeartRate,
@@ -38,6 +39,9 @@ struct AssistantSnapshot: Sendable {
         predictionContext = state.predictionContext
         eligibilityIssue = state.v2EligibilityIssue(now: now, calendar: calendar)
         calculationIssue = state.predictionIssue
+        lookupSavedEstimate = { [weak state] id in
+            state?.predictionHistory.first { $0.id == id && $0.isValid }
+        }
         let expectedValues = values, expectedWindow = window, expectedContext = predictionContext
         calculatePrediction = { [weak state] in
             guard let state else { return nil }
@@ -64,6 +68,11 @@ struct AssistantSnapshot: Sendable {
         self.lastPrediction = lastPrediction
         self.predictionContext = predictionContext
         self.eligibilityIssue = eligibilityIssue
+    }
+
+    @MainActor func savedEstimate(id: UUID) -> PredictionSnapshot? {
+        if let lookupSavedEstimate { return lookupSavedEstimate(id) }
+        return history.first { $0.id == id && $0.isValid }
     }
 
     var isCurrentV2: Bool {

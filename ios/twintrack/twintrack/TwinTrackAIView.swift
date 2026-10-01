@@ -6,8 +6,6 @@ struct TwinTrackAIView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var chat = AssistantConversation.forApp()
     @FocusState private var composerFocused: Bool
-    @State private var draft = ""
-    @State private var editingMessageID: UUID?
     @State private var showingWhatIf = false
     @State private var showingLibrary = false
     @State private var showingInfo = false
@@ -16,6 +14,8 @@ struct TwinTrackAIView: View {
 #endif
     @State private var followsLatest = true
     let isActive: Bool
+    var explanationRequest: ExplainSavedEstimateRequest? = nil
+    var consumeExplanation: () -> Void = {}
 
     private var palette: AssistantPalette { AssistantPalette(colorScheme) }
 
@@ -46,8 +46,17 @@ struct TwinTrackAIView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 12) {
                             if chat.messages.isEmpty { welcome }
+                            if chat.canReturnFromExplanation {
+                                Button("Return to previous chat") {
+                                    composerFocused = false
+                                    chat.returnFromExplanation()
+                                }
+                                .font(.caption)
+                                .frame(minHeight: 44)
+                                .accessibilityIdentifier("returnFromSavedExplanation")
+                            }
                             if chat.reopened {
-                                Text("Saved cards are historical. New requests use your current TwinTrack inputs.")
+                                Text("Saved cards are historical. Questions about that saved estimate keep its context; explicit current-data requests use current inputs.")
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                             if chat.availability != .available {
@@ -108,7 +117,7 @@ struct TwinTrackAIView: View {
                             if chat.isGenerating { ProgressView("Thinking…").accessibilityIdentifier("assistantGenerating") }
                             if let failure = chat.failure { failureCard(failure) }
                             if chat.needsFreshRetry {
-                                Button("Try again with current inputs") {
+                                Button(chat.retryUsesSavedEstimate ? "Try again with saved estimate" : "Try again with current inputs") {
                                     chat.retryWithCurrentInputs(AssistantSnapshot(state: state))
                                 }
                                 .accessibilityIdentifier("assistantFreshRetry")
@@ -151,7 +160,7 @@ struct TwinTrackAIView: View {
             .sheet(isPresented: $showingWhatIf) {
                 VStack(spacing: 0) {
                     HStack { Spacer(); Button("Done") { showingWhatIf = false }.padding() }
-                    WhatIfView(isActive: isActive && showingWhatIf)
+                    WhatIfView(isActive: isActive)
                 }
             }
             .sheet(isPresented: $showingInfo) {
@@ -184,16 +193,16 @@ struct TwinTrackAIView: View {
         .onChange(of: chat.activeID) { previous, _ in
             // The first accepted send creates the chat; it must not erase a newer draft.
             if previous == nil && chat.isGenerating { return }
-            editingMessageID = nil
-            draft = ""
+            composerFocused = false
             followsLatest = true
         }
+        .onChange(of: explanationRequest?.id, initial: true) { _, _ in
+            openRequestedExplanation()
+        }
         .onChange(of: isActive) { _, active in
-            if active { AssistantPerformance.mark(.tabActivationObserved) }
+            if active { AssistantPerformance.mark(.tabActivationObserved); openRequestedExplanation() }
             if !active {
                 composerFocused = false
-                editingMessageID = nil
-                draft = ""
                 chat.cancel()
                 showingWhatIf = false
                 showingLibrary = false
@@ -226,7 +235,7 @@ struct TwinTrackAIView: View {
 
     private var composer: some View {
         VStack(spacing: 0) {
-            if editingMessageID != nil {
+            if chat.editingMessageID != nil {
                 HStack(spacing: 12) {
                     Text("Editing message").font(.caption.weight(.semibold))
                     Spacer(minLength: 0)
@@ -234,28 +243,31 @@ struct TwinTrackAIView: View {
                         .accessibilityIdentifier("assistantEditCancel")
                     Button("Save") { saveEditing() }
                         .fontWeight(.semibold)
-                        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(chat.composerDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         .accessibilityIdentifier("assistantEditSave")
                 }
                 .padding(.bottom, 8)
             }
             HStack(alignment: .bottom, spacing: 8) {
-                TextField("Ask TwinTrack AI…", text: $draft, axis: .vertical)
+                TextField("Ask TwinTrack AI…", text: $chat.composerDraft,
+                          prompt: Text("Ask TwinTrack AI…").foregroundStyle(palette.composerPlaceholder), axis: .vertical)
+                    .foregroundStyle(palette.composerText)
                     .focused($composerFocused)
 #if DEBUG
                     .simultaneousGesture(TapGesture().onEnded { AssistantPerformance.mark(.composerTapped) })
 #endif
                     .lineLimit(1...4).padding(12)
-                    .background(palette.aiSurface, in: RoundedRectangle(cornerRadius: 18))
+                    .background(palette.composerSurface, in: RoundedRectangle(cornerRadius: 18))
                     .overlay {
                         RoundedRectangle(cornerRadius: 18)
-                            .stroke(composerFocused ? palette.aiAccent : palette.aiBorder,
-                                    lineWidth: composerFocused ? 2 : 1)
+                            .stroke(composerFocused ? palette.composerFocusBorder : palette.composerBorder,
+                                    lineWidth: composerFocused ? (colorScheme == .dark ? 1.5 : 2) : 1)
                             .allowsHitTesting(false)
                     }
                     .tint(palette.aiAccent)
+                    .accessibilityLabel("Ask TwinTrack AI")
                     .accessibilityIdentifier("assistantComposer")
-                if editingMessageID != nil {
+                if chat.editingMessageID != nil {
                     EmptyView()
                 } else if chat.isGenerating {
                     Button { chat.cancel() } label: { Image(systemName: "stop.fill").frame(width: 44, height: 44) }
@@ -263,15 +275,15 @@ struct TwinTrackAIView: View {
                 } else {
                     Button {
                         followsLatest = true
-                        let acceptedDraft = draft
+                        let acceptedDraft = chat.composerDraft
                         if chat.send(acceptedDraft, snapshot: AssistantSnapshot(state: state)) {
-                            draft = ""
+                            chat.composerDraft = ""
                             composerFocused = false
                         }
                     } label: {
                         Image(systemName: "arrow.up.circle.fill").font(.title).frame(width: 44, height: 44)
                     }
-                    .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(chat.composerDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .accessibilityLabel("Send").accessibilityIdentifier("assistantSend")
                 }
             }
@@ -348,36 +360,44 @@ struct TwinTrackAIView: View {
         .accessibilityIdentifier("assistantError")
     }
 
+    private func openRequestedExplanation() {
+        guard isActive, let explanationRequest else { return }
+        composerFocused = false
+        if chat.openExplanation(explanationRequest, snapshot: AssistantSnapshot(state: state)) {
+            followsLatest = true
+        }
+        consumeExplanation()
+    }
+
     private func newChat() {
         composerFocused = false
-        editingMessageID = nil
         chat.reset()
-        if chat.activeID == nil { draft = ""; followsLatest = true }
+        if chat.activeID == nil { followsLatest = true }
     }
 
     private func beginEditing(_ message: AssistantMessage) {
         guard message.role == .user, !chat.isGenerating else { return }
-        editingMessageID = message.id
-        draft = message.text
+        chat.editingMessageID = message.id
+        chat.composerDraft = message.text
         composerFocused = true
     }
 
     private func cancelEditing() {
-        editingMessageID = nil
-        draft = ""
+        chat.editingMessageID = nil
+        chat.composerDraft = ""
         composerFocused = false
     }
 
     private func saveEditing() {
-        guard let editingMessageID else { return }
+        guard let editingMessageID = chat.editingMessageID else { return }
         let saved = chat.editUserMessage(
             editingMessageID,
-            to: draft,
+            to: chat.composerDraft,
             snapshot: AssistantSnapshot(state: state)
         )
         guard saved else { return }
-        self.editingMessageID = nil
-        draft = ""
+        chat.editingMessageID = nil
+        chat.composerDraft = ""
         composerFocused = false
         followsLatest = true
     }
@@ -525,6 +545,19 @@ struct AssistantPalette {
     var aiBorder: Color {
         scheme == .dark ? Color(red: 139/255, green: 127/255, blue: 232/255).opacity(0.16) : Color(red: 218/255, green: 212/255, blue: 246/255)
     }
+    var composerSurface: Color {
+        scheme == .dark ? Color(red: 18/255, green: 26/255, blue: 37/255) : aiSurface
+    }
+    var composerText: Color {
+        scheme == .dark ? Color(red: 238/255, green: 242/255, blue: 248/255) : .primary
+    }
+    var composerPlaceholder: Color {
+        scheme == .dark ? Color(red: 163/255, green: 175/255, blue: 191/255) : Color(uiColor: .placeholderText)
+    }
+    var composerBorder: Color {
+        scheme == .dark ? Color(red: 89/255, green: 104/255, blue: 124/255) : aiBorder
+    }
+    var composerFocusBorder: Color { scheme == .dark ? accent.opacity(0.8) : aiAccent }
     var accent: Color {
         scheme == .dark ? Color(red: 90/255, green: 200/255, blue: 240/255) : Color(red: 14/255, green: 127/255, blue: 184/255)
     }

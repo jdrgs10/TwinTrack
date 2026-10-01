@@ -829,17 +829,28 @@ struct ManualInputsValidation {
         now: Date,
         calendar: Calendar
     ) -> [String] {
-        var reasons: [String] = []
-        if studyMinutes == nil { reasons.append("Enter yesterday’s study time.") }
-        if screenTimeMinutes == nil { reasons.append("Enter yesterday’s recreational screen time.") }
+        issues(studyMinutes: studyMinutes, screenTimeMinutes: screenTimeMinutes,
+            previousScoreText: previousScoreText, subject: subject, assessmentName: assessmentName,
+            assessmentDate: assessmentDate, previousDate: previousDate, confirmed: confirmed,
+            now: now, calendar: calendar).map(\.message)
+    }
+
+    static func issues(
+        studyMinutes: Int?, screenTimeMinutes: Int?, previousScoreText: String,
+        subject: String, assessmentName: String, assessmentDate: Date, previousDate: Date,
+        confirmed: Bool, now: Date, calendar: Calendar
+    ) -> [ManualReviewIssue] {
+        var issues: [ManualReviewIssue] = []
+        if studyMinutes == nil { issues.append(.init(field: .study, message: "Enter yesterday’s study time.")) }
+        if screenTimeMinutes == nil { issues.append(.init(field: .screen, message: "Enter yesterday’s recreational screen time.")) }
         if subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            reasons.append("Enter the subject.")
+            issues.append(.init(field: .subject, message: "Enter the subject."))
         }
         if assessmentName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            reasons.append("Enter the next assessment name.")
+            issues.append(.init(field: .assessment, message: "Enter the next assessment name."))
         }
         if PreviousScoreInput.parse(previousScoreText) == nil {
-            reasons.append("Enter a previous score from 0 to 100.")
+            issues.append(.init(field: .previousScore, message: "Enter a previous score from 0 to 100."))
         }
 
         let today = calendar.startOfDay(for: now)
@@ -847,16 +858,16 @@ struct ManualInputsValidation {
             [.day], from: today, to: calendar.startOfDay(for: assessmentDate)
         ).day ?? 0
         if !(1...7).contains(horizon) {
-            reasons.append("Next assessment must be within 1–7 days.")
+            issues.append(.init(field: .assessmentDate, message: "Next assessment must be within 1–7 days."))
         }
         let age = calendar.dateComponents(
             [.day], from: calendar.startOfDay(for: previousDate), to: today
         ).day ?? 0
         if !(1...90).contains(age) {
-            reasons.append("Previous result must be 1–90 days old.")
+            issues.append(.init(field: .previousDate, message: "Previous result must be 1–90 days old."))
         }
-        if !confirmed { reasons.append("Confirm the assessment details.") }
-        return reasons
+        if !confirmed { issues.append(.init(field: .confirmation, message: "Confirm the assessment details.")) }
+        return issues
     }
 }
 
@@ -876,10 +887,14 @@ struct ManualInputsSheet: View {
     @State private var saveIssue: String?
     @State private var manualDay: Date
     @State private var sourceTimeZone: String
+    @State private var didDirectReview = false
+    let reviewTarget: ManualReviewField?
 
     private enum TimeInput { case study, screen }
 
-    init(initialStudyMinutes: Int?, initialScreenTimeMinutes: Int?, initialPreviousScore: Double?, initialContext: V2PredictionContext? = nil) {
+    init(initialStudyMinutes: Int?, initialScreenTimeMinutes: Int?, initialPreviousScore: Double?, initialContext: V2PredictionContext? = nil,
+         reviewTarget: ManualReviewField? = nil) {
+        self.reviewTarget = reviewTarget
         _draftStudyMinutes = State(initialValue: initialStudyMinutes)
         _draftScreenTimeMinutes = State(initialValue: initialScreenTimeMinutes)
         _previousScoreText = State(initialValue: Self.scoreText(initialPreviousScore))
@@ -899,8 +914,8 @@ struct ManualInputsSheet: View {
     }
     private var card: Color { colorScheme == .dark ? Color.white.opacity(0.028) : .white }
     private var isScoreValid: Bool { PreviousScoreInput.isValidDraft(previousScoreText) }
-    private var eligibilityReasons: [String] {
-        ManualInputsValidation.reasons(
+    private var eligibilityIssues: [ManualReviewIssue] {
+        ManualInputsValidation.issues(
             studyMinutes: draftStudyMinutes,
             screenTimeMinutes: draftScreenTimeMinutes,
             previousScoreText: previousScoreText,
@@ -913,94 +928,137 @@ struct ManualInputsSheet: View {
             calendar: .current
         )
     }
+    private var eligibilityReasons: [String] { eligibilityIssues.map(\.message) }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    manualSection(title: "YESTERDAY") {
-                        VStack(spacing: 0) {
-                            timeField(
-                                title: "Study Time",
-                                description: "Outside-class study for this subject yesterday.",
-                                value: $draftStudyMinutes,
-                                input: .study
-                            )
-                            Divider().padding(.leading, 14)
-                            timeField(
-                                title: "Recreational Screen Time",
-                                description: "Recreational screen use yesterday, excluding study.",
-                                value: $draftScreenTimeMinutes,
-                                input: .screen
-                            )
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        manualSection(title: "YESTERDAY") {
+                            VStack(spacing: 0) {
+                                timeField(
+                                    title: "Study Time",
+                                    description: "Outside-class study for this subject yesterday.",
+                                    value: $draftStudyMinutes,
+                                    input: .study
+                                )
+                                .id(ManualReviewField.study)
+                                reviewNote(for: .study)
+                                Divider().padding(.leading, 14)
+                                timeField(
+                                    title: "Recreational Screen Time",
+                                    description: "Recreational screen use yesterday, excluding study.",
+                                    value: $draftScreenTimeMinutes,
+                                    input: .screen
+                                )
+                                .id(ManualReviewField.screen)
+                                reviewNote(for: .screen)
+                            }
+                            .background(card, in: RoundedRectangle(cornerRadius: 14))
+                            .overlay { RoundedRectangle(cornerRadius: 14).stroke(border) }
+
+                            Text("Applies to \(manualDay.formatted(date: .abbreviated, time: .omitted)) · entered manually")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
-                        .background(card, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay { RoundedRectangle(cornerRadius: 14).stroke(border) }
 
-                        Text("Applies to \(manualDay.formatted(date: .abbreviated, time: .omitted)) · entered manually")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    manualSection(title: "ASSESSMENT") {
-                        VStack(alignment: .leading, spacing: 16) {
-                            labeledTextField(
-                                title: "Subject",
-                                prompt: "e.g. Chemistry",
-                                text: $subject,
-                                identifier: "v2Subject"
-                            )
-                            labeledTextField(
-                                title: "Assessment Name",
-                                prompt: "e.g. Unit quiz",
-                                text: $assessmentName,
-                                identifier: "v2Assessment"
-                            )
-                            labeledDatePicker(
-                                title: "Next Assessment",
-                                note: "Same-subject individual assessment, 1–7 days ahead.",
-                                selection: $assessmentDate,
-                                identifier: "v2AssessmentDate"
-                            )
-                            previousScoreField
-                            labeledDatePicker(
-                                title: "Previous Result Date",
-                                note: "Latest comparable result from 1–90 days ago.",
-                                selection: $previousDate,
-                                identifier: "v2PreviousDate"
-                            )
-                            Divider()
-                            Toggle(
-                                "I confirm these assessment details are comparable and for the same subject.",
-                                isOn: $confirmed
-                            )
-                            .font(.subheadline)
-                            .accessibilityIdentifier("v2ConfirmContext")
+                        manualSection(title: "ASSESSMENT") {
+                            VStack(alignment: .leading, spacing: 16) {
+                                labeledTextField(
+                                    title: "Subject",
+                                    prompt: "e.g. Chemistry",
+                                    text: $subject,
+                                    identifier: "v2Subject"
+                                )
+                                .id(ManualReviewField.subject)
+                                reviewNote(for: .subject)
+                                labeledTextField(
+                                    title: "Assessment Name",
+                                    prompt: "e.g. Unit quiz",
+                                    text: $assessmentName,
+                                    identifier: "v2Assessment"
+                                )
+                                .id(ManualReviewField.assessment)
+                                reviewNote(for: .assessment)
+                                labeledDatePicker(
+                                    title: "Next Assessment",
+                                    note: "Same-subject individual assessment, 1–7 days ahead.",
+                                    selection: $assessmentDate,
+                                    identifier: "v2AssessmentDate"
+                                )
+                                .id(ManualReviewField.assessmentDate)
+                                reviewNote(for: .assessmentDate)
+                                previousScoreField
+                                    .id(ManualReviewField.previousScore)
+                                reviewNote(for: .previousScore)
+                                labeledDatePicker(
+                                    title: "Previous Result Date",
+                                    note: "Latest comparable result from 1–90 days ago.",
+                                    selection: $previousDate,
+                                    identifier: "v2PreviousDate"
+                                )
+                                .id(ManualReviewField.previousDate)
+                                reviewNote(for: .previousDate)
+                                Divider()
+                                Toggle(
+                                    "I confirm these assessment details are comparable and for the same subject.",
+                                    isOn: $confirmed
+                                )
+                                .font(.subheadline)
+                                .accessibilityIdentifier("v2ConfirmContext")
+                                .id(ManualReviewField.confirmation)
+                                reviewNote(for: .confirmation)
+                            }
+                            .padding(14)
+                            .background(card, in: RoundedRectangle(cornerRadius: 14))
+                            .overlay { RoundedRectangle(cornerRadius: 14).stroke(border) }
                         }
-                        .padding(14)
-                        .background(card, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay { RoundedRectangle(cornerRadius: 14).stroke(border) }
-                    }
 
-                    eligibilityStatus
+                        eligibilityStatus
+                    }
+                    .padding(.horizontal, 16).padding(.top, 18).padding(.bottom, 28)
                 }
-                .padding(.horizontal, 16).padding(.top, 18).padding(.bottom, 28)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .navigationTitle("Manual Inputs")
-            .onChange(of: subject) { _, _ in confirmed = false }
-            .onChange(of: assessmentName) { _, _ in confirmed = false }
-            .onChange(of: assessmentDate) { _, _ in confirmed = false }
-            .onChange(of: previousDate) { _, _ in confirmed = false }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .fontWeight(.semibold).disabled(!isScoreValid)
-                        .accessibilityIdentifier("saveManualInputsButton")
+                .scrollDismissesKeyboard(.interactively)
+                .onAppear {
+                    guard !didDirectReview, let reviewTarget else { return }
+                    didDirectReview = true
+                    proxy.scrollTo(reviewTarget, anchor: .top)
+                }
+                .navigationTitle("Manual Inputs")
+                .onChange(of: subject) { _, _ in confirmed = false }
+                .onChange(of: assessmentName) { _, _ in confirmed = false }
+                .onChange(of: assessmentDate) { _, _ in confirmed = false }
+                .onChange(of: previousDate) { _, _ in confirmed = false }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") { save() }
+                            .fontWeight(.semibold).disabled(!isScoreValid)
+                            .accessibilityIdentifier("saveManualInputsButton")
+                    }
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func reviewNote(for field: ManualReviewField) -> some View {
+        if reviewTarget == field {
+            Label {
+                Text(eligibilityIssues.first(where: { $0.field == field })?.message
+                     ?? "Review \(field.title.lowercased()) before saving.")
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "arrow.turn.down.right")
+            }
+            .font(.caption.weight(.medium))
+            .foregroundStyle(Color.accentColor)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10)
+            .background(Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.06), in: RoundedRectangle(cornerRadius: 8))
+            .accessibilityIdentifier("manualReview.\(field.rawValue)")
         }
     }
 
@@ -1115,7 +1173,7 @@ struct ManualInputsSheet: View {
     private var eligibilityStatus: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label {
-                Text(eligibilityReasons.isEmpty ? "Ready for V2 Prediction" : "Prediction unavailable")
+                Text(eligibilityReasons.isEmpty ? "Manual details complete" : "Prediction unavailable")
                     .font(.subheadline.weight(.semibold))
                     .accessibilityIdentifier("manualEligibilityStatus")
             } icon: {

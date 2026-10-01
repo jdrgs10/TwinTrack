@@ -8,7 +8,8 @@ struct HomeView: View {
     @ScaledMetric(relativeTo: .largeTitle) private var scoreSize = 48.0
 
     @State private var showingPredictionDetails = false
-    @State private var showingManualInputs = false
+    @State private var manualReviewTarget: ManualReviewField?
+    @State private var showingHealth = false
 
     let openAI: () -> Void
 
@@ -67,13 +68,16 @@ struct HomeView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingManualInputs) {
+            .sheet(item: $manualReviewTarget) { target in
                 ManualInputsSheet(initialStudyMinutes: state.studyMinutes,
                     initialScreenTimeMinutes: state.screenTimeMinutes, initialPreviousScore: state.previousScore,
-                    initialContext: state.predictionContext)
+                    initialContext: state.predictionContext, reviewTarget: target)
                     .environmentObject(state)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
+            }
+            .navigationDestination(isPresented: $showingHealth) {
+                HealthKitView().toolbar(.visible, for: .navigationBar)
             }
             .navigationTitle("Home")
             .toolbar(.hidden, for: .navigationBar)
@@ -89,12 +93,13 @@ struct HomeView: View {
                     .fill(healthStatusColor)
                     .frame(width: 7, height: 7)
                     .accessibilityHidden(true)
-                Text("Apple Health")
+                Text(guidance.healthLabel)
                     .font(.footnote)
                     .foregroundStyle(palette.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .combine)
-            .accessibilityValue(state.healthAccess.rawValue)
+            .accessibilityIdentifier("homeHealthStatus")
 
             Spacer()
         }
@@ -114,15 +119,10 @@ struct HomeView: View {
         .allowsHitTesting(false)
     }
 
-    private var predictionPresentation: HomePredictionPresentation {
-        HomePredictionPresentation(status: state.predictionStatus(), hasSaved: state.lastPrediction != nil,
-            needsManualUpdate: state.predictionContext?.issue(now: Date(), calendar: .current) != nil
-                || state.predictionContext == nil || state.studyMinutes == nil
-                || state.screenTimeMinutes == nil || state.previousScore == nil)
-    }
+    private var guidance: HomeGuidance { HomeGuidance(state: state) }
 
     private var predictionDetails: String {
-        var lines = [predictionPresentation.stateLine]
+        var lines = [guidance.stateLine]
         if !state.missingInputs.isEmpty {
             lines.append("Missing: \(state.missingInputs.map(HomeDisplay.featureName).joined(separator: ", "))")
         }
@@ -137,7 +137,7 @@ struct HomeView: View {
     }
 
     private var predictionHero: some View {
-        let presentation = predictionPresentation
+        let guidance = self.guidance
         return VStack(alignment: .leading, spacing: 8) {
             Text("PREDICTED ASSESSMENT SCORE")
                 .font(.subheadline.weight(.semibold))
@@ -163,26 +163,26 @@ struct HomeView: View {
                     .accessibilityLabel("Predicted assessment score")
                     .accessibilityValue("\(HomeDisplay.prediction(saved.prediction)) out of 100")
             } else {
-                Text(presentation.canRun ? "Ready to predict" : "Prediction unavailable")
+                Text(guidance.action == .run ? "Ready to predict" : "Prediction unavailable")
                     .font(.title3.weight(.semibold)).foregroundStyle(palette.heroText)
             }
-            Text(presentation.stateLine)
+            Text(guidance.stateLine)
                 .font(.footnote).foregroundStyle(palette.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("homePredictionState")
 
-            if presentation.canRun {
+            if guidance.action == .run {
                 Button(state.lastPrediction == nil ? "Run Prediction" : "Run Prediction Again") { state.runPrediction() }
                     .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("runPrediction")
-            } else if presentation.needsManualUpdate {
-                Button { showingManualInputs = true } label: {
+            } else if let actionTitle = guidance.actionTitle {
+                Button { perform(guidance.action) } label: {
                     HStack {
-                        Text("Update Manual Inputs")
+                        Text(actionTitle)
                         Image(systemName: "chevron.right").font(.caption)
                     }.font(.footnote.weight(.medium)).frame(minHeight: 44)
                 }
-                .accessibilityIdentifier("homeUpdateManualInputs")
+                .accessibilityIdentifier(actionIdentifier(guidance.action))
             }
             if let issue = state.predictionIssue { Text(issue).font(.footnote) }
 
@@ -209,6 +209,27 @@ struct HomeView: View {
         .privacySensitive()
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("homePredictionCard")
+    }
+
+    private func perform(_ action: HomeGuidance.Action) {
+        switch action {
+        case let .manual(field):
+            manualReviewTarget = field
+        case .health: showingHealth = true
+        case .refresh: Task { await state.refreshHealth() }
+        case .run: state.runPrediction()
+        case .none: break
+        }
+    }
+
+    private func actionIdentifier(_ action: HomeGuidance.Action) -> String {
+        switch action {
+        case .manual: "homeUpdateManualInputs"
+        case .health: "homeReviewHealth"
+        case .refresh: "homeRefreshHealth"
+        case .run: "runPrediction"
+        case .none: "homeNoAction"
+        }
     }
 
     private var qualification: some View {
@@ -392,10 +413,7 @@ struct HomeView: View {
     }
 
     private var healthStatusColor: Color {
-        switch state.healthAccess {
-        case .completed: palette.green
-        case .notRequested, .requesting, .failed, .unavailable: palette.amber
-        }
+        state.healthAccess == .completed && guidance.availableHealthCount == 4 ? palette.green : palette.amber
     }
 
     private func healthMetric(

@@ -132,6 +132,8 @@ struct WellbeingTrendsView: View {
                                 .font(.footnote)
                             Text(snapshot.createdAt, format: .dateTime.month().day().hour().minute()).font(.caption)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }.buttonStyle(.plain)
                 }
             }

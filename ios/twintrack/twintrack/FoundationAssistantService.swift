@@ -84,11 +84,14 @@ final class FoundationAssistantService: AssistantResponding {
             lastTrace.route = "local-arithmetic"
             return AssistantAnswer(text: arithmetic, provenance: AssistantProvenance(.explanation))
         }
+        let directRoute = AssistantRouter.route(request, continuing: context, snapshot: snapshot)
+        if let id = AssistantSavedEstimateContext.recordID(in: messages, route: directRoute) {
+            return try await explainSavedEstimate(id, messages: messages, snapshot: snapshot)
+        }
         if AssistantResponsePolicy.isReliabilityFollowup(request, messages: messages)
             || AssistantRouter.matches(#"(?i)\bguarantee\b.*\b(?:grade|score|result)\b"#, request) {
             return AssistantAnswer(text: AssistantResponsePolicy.reliability, provenance: AssistantProvenance(.explanation))
         }
-        let directRoute = AssistantRouter.route(request, continuing: context, snapshot: snapshot)
         let route: AssistantRoute
         if case .general = directRoute, AssistantWellbeingContext.continuesSummary(messages) {
             route = .wellbeing
@@ -101,7 +104,9 @@ final class FoundationAssistantService: AssistantResponding {
             return AssistantAnswer(text: question, provenance: AssistantProvenance(.explanation))
         case .sleepReading:
             _ = try run.readSleep()
-            return AssistantAnswer(text: run.cards.last?.message ?? "No accessible recent value.", cards: run.cards,
+            let contextLabel = AssistantSavedEstimateContext.hasHistoricalAntecedent(messages)
+                ? "Reading your current recorded sleep now, not the historical estimate. " : ""
+            return AssistantAnswer(text: contextLabel + (run.cards.last?.message ?? "No accessible recent value."), cards: run.cards,
                                    provenance: AssistantProvenance(.sleepReading))
         case .current:
             _ = try run.readCurrent()
@@ -196,10 +201,56 @@ final class FoundationAssistantService: AssistantResponding {
         case .scenario: origin = .scenario
         default: origin = .history
         }
-        var answer = AssistantAnswer(text: Self.toolIntroduction(run.cards), cards: run.cards, provenance: AssistantProvenance(origin))
+        var introduction = Self.toolIntroduction(run.cards)
+        if AssistantSavedEstimateContext.hasHistoricalAntecedent(messages) {
+            switch route {
+            case .current, .calculate, .sleepReading:
+                introduction = "Using your current TwinTrack inputs now, not the saved estimate. " + introduction
+            case .scenario:
+                introduction = "This What-If uses your current saved baseline, not the historical estimate. " + introduction
+            default: break
+            }
+        }
+        var answer = AssistantAnswer(text: introduction, cards: run.cards, provenance: AssistantProvenance(origin))
         if case .scenario(let changes) = route, changes.count == 1, let change = changes.first,
            [.scenario, .clarification].contains(run.cards.last?.kind) {
             answer.scenarioContext = AssistantScenarioContext(feature: change.feature.rawValue, baselineKey: snapshot.scenarioIdentity)
+        }
+        return answer
+    }
+
+    private func explainSavedEstimate(_ id: UUID, messages: [AssistantMessage],
+                                      snapshot: AssistantSnapshot) async throws -> AssistantAnswer {
+        lastTrace.route = "saved-estimate-explanation"
+        lastTrace.tools = ["readSavedEstimateByID"]
+        guard let record = snapshot.savedEstimate(id: id) else {
+            return AssistantSavedEstimateContext.unavailable(id)
+        }
+        let request = messages.last?.text ?? ""
+        if messages.last?.savedEstimateID == id && request == AssistantSavedEstimateContext.openingRequest {
+            return AssistantSavedEstimateContext.answer(for: record)
+        }
+        let fallback = AssistantSavedEstimateContext.fallback(for: request)
+        guard availability == .available else {
+            return AssistantSavedEstimateContext.answer(for: record, text: fallback)
+        }
+        let prompt = AssistantSavedEstimateContext.prompt(for: record, messages: messages)
+        let instructions = Self.conversationInstructions + "\n" + AssistantSavedEstimateContext.instructions
+        lastTrace.promptBytes = prompt.utf8.count
+        lastTrace.instructionBytes = instructions.utf8.count
+        let generated = try await client.reply(to: prompt, instructions: instructions)
+        try Task.checkCancellation()
+        guard snapshot.savedEstimate(id: id) != nil else { return AssistantSavedEstimateContext.unavailable(id) }
+        let cleaned = AssistantReplyReview.removingProviderIntroduction(generated)
+        if AssistantReplyReview.isRefusal(cleaned) {
+            return AssistantAnswer(text: AssistantResponsePolicy.refusal, safetyRefusal: true, provenance: AssistantProvenance(.review))
+        }
+        let reviewed = AssistantConversationReview.issue(in: cleaned, messages: messages) == nil
+            ? AssistantSavedEstimateContext.reviewed(cleaned, request: request, messages: messages) : nil
+        if reviewed == nil { lastTrace.replacements.append("historical-grounding-fallback") }
+        var answer = AssistantSavedEstimateContext.answer(for: record, text: reviewed ?? fallback)
+        if let reviewed {
+            answer.provenance = AssistantProvenance(reviewed == generated ? .model : .review)
         }
         return answer
     }

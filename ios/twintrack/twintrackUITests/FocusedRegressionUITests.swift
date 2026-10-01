@@ -1,7 +1,10 @@
 import XCTest
 
 final class FocusedRegressionUITests: XCTestCase {
-    override func setUpWithError() throws { continueAfterFailure = false }
+    override func setUp() async throws {
+        continueAfterFailure = false
+        await MainActor.run { XCUIDevice.shared.orientation = .portrait }
+    }
 
     @MainActor
     func testCompactHomeFreshSavedRefreshAndProfileRidgeCard() throws {

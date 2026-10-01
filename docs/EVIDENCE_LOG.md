@@ -1,5 +1,18 @@
 # Evidence Log
 
+## 2026-09-30 — Final app implementation pass: automated PASS, physical review pending
+
+Completed the approved Home guidance, directed Manual Inputs review, exact saved-estimate explanation, dark composer refinement and bounded reliability/accessibility fixes. No physical acceptance or feature freeze is claimed. Nothing staged, committed or pushed.
+
+
+The final focused gate passed **489/489 (486 unit + 3 UI)**. Relevant iPad coverage reached **9/9 passing cases across focused runs**, including **2/2** after the saved-record row's full-width hit-area correction. Initial failures, the interrupted run, an accidentally altered test line restored before rerunning, and all reruns are retained in [FINAL_APP_PASS.md](FINAL_APP_PASS.md). A complete intermediate gate passed 513/527: its landscape viewport exposed missing portrait setup in five layout-test suites. Explicit portrait setup resolved all 14 failures with unchanged app source and functional assertions; multi-orientation launch smoke coverage remains enabled.
+
+**Runtime findings are not zero:** the final result contains two Body editor frame-warning entries plus one grouped debugger-termination summary. The frame expression/value and app-versus-framework cause remain unproven. Three initially missed iPad taps passed unchanged; physical first-tap and layout review remains necessary. Automated results do not certify real Foundation Models conversational quality or physical VoiceOver/visual acceptance.
+
+Preservation: 209 tracked model/core paths match HEAD byte-for-byte; frozen artifacts, seven-feature order, shared prediction state, HealthKit semantics and deterministic What-If calculations are unchanged. The exact intended 27-file manifest and source fingerprint are in the ledger. Final diff/whitespace checks and manifest comparison pass; no files are staged. Temporary schemes were removed; the normal serial scheme includes both full test targets and keeps screenshot mode disabled. Local handoff remains Git-excluded. Generated workspace state, simulator output, private evidence and signing material are excluded from intended changes. No private Health records, physical device, credentials or physical-device identifiers were inspected. Xcode's destination menu incidentally returned a simulator identifier once; it was not used or copied into project files, and later outputs omit identifiers.
+
+A's manageable synthetic checklist is [FINAL_PHYSICAL_ACCEPTANCE.md](FINAL_PHYSICAL_ACCEPTANCE.md). Label new evidence **Final app pass — 2026-09-30**; existing screenshots/videos are untouched. Feature freeze awaits physical acceptance.
+
 ## 2026-09-21 — Experimental V2 native integration: automated PASS, physical review pending
 
 Integrated StandardScaler + Ridge alpha 0.1, version **2.0-final.1**, from `ml/v2/2026-09-21-final/results/new_ridge_seven_parameters.json` (SHA-256 `62cb14d443221f9f2e426280ebdf52d7ef8614812a89ef5031329642ff040024`). All 27 approved artifact hashes verified; no refit or parameter/feature-order alteration. V1 engine arithmetic, frozen exports and 21-profile evidence preserved separately.

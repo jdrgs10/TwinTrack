@@ -366,6 +366,7 @@ private struct PredictionTrendPalette {
 }
 
 struct PredictionHistoryDetailView: View {
+    @Environment(\.explainSavedEstimate) private var explainSavedEstimate
     let snapshot: PredictionSnapshot
     var currentInputIssue: String? = nil
 
@@ -463,6 +464,19 @@ struct PredictionHistoryDetailView: View {
                                 Text("Manual source day: \(context.manualDay.formatted(date: .abbreviated, time: .omitted)) · \(context.timeZoneIdentifier)")
                             }
                         }.font(.caption).foregroundStyle(.secondary)
+                    }
+                    if let explainSavedEstimate {
+                        Button {
+                            dismiss()
+                            explainSavedEstimate(snapshot.id)
+                        } label: {
+                            Label("Explain this saved estimate", systemImage: "sparkles")
+                                .font(.subheadline.weight(.medium))
+                                .frame(minHeight: 44)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .accessibilityHint("Opens a separate chat about this exact historical estimate")
+                        .accessibilityIdentifier("explainSavedEstimate")
                     }
                     Text("Experimental estimate. This prediction was generated using the TwinTrack model and the values recorded at that time.")
                         .font(.footnote)

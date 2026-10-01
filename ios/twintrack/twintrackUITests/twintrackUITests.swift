@@ -45,7 +45,11 @@ final class twintrackUITests: XCTestCase {
             XCTAssertTrue(range.buttons["7 days"].isSelected)
             range.buttons["30 days"].tap()
             XCTAssertTrue(range.buttons["30 days"].isSelected)
-            XCTAssertEqual(app.staticTexts["wellbeingTrendCount"].label, "0 recorded observations")
+            let count = app.staticTexts["wellbeingTrendCount"]
+            // At accessibility sizes the metric picker can push this lazy List row off-screen.
+            for _ in 0..<8 { if count.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(count.isHittable)
+            XCTAssertEqual(count.label, "0 recorded observations")
             let footer = app.staticTexts["Body & Wellbeing keeps your latest saved measurements only. No body-measurement history is inferred from predictions or chat."]
             for _ in 0..<45 { if footer.isHittable { break }; app.swipeUp() }
             XCTAssertTrue(footer.isHittable, "Last content must scroll clear of the tab bar")
@@ -61,9 +65,23 @@ final class twintrackUITests: XCTestCase {
             let profile = app.tabBars.buttons["Profile"].exists ? app.tabBars.buttons["Profile"] : app.buttons["Profile"].firstMatch
             profile.tap()
             let link = app.buttons["bodyWellbeingButton"]
+            func navigationDiagnostics() -> String {
+                // Failure-only geometry for this isolated synthetic journey; no labels or stored values.
+                func describe(_ name: String, _ control: XCUIElement) -> String {
+                    guard control.exists else { return "\(name): exists=false" }
+                    return "\(name): exists=true, hittable=\(control.isHittable), frame=\(control.frame)"
+                }
+                let scroll = app.scrollViews.firstMatch
+                let viewport = scroll.exists ? scroll.frame.intersection(app.frame) : .null
+                return [describe("Profile heading", app.staticTexts["pageTitle.Profile"]),
+                        describe("Body link", link), describe("Scroll container", scroll),
+                        "Scroll viewport: \(viewport)",
+                        describe("Body navigation", app.navigationBars["Body & Wellbeing"])]
+                    .joined(separator: "; ")
+            }
             for _ in 0..<6 { if link.isHittable { break }; app.swipeUp() }
-            XCTAssertTrue(link.isHittable); link.tap()
-            XCTAssertTrue(app.buttons["editBodyMeasurements"].waitForExistence(timeout: 5))
+            XCTAssertTrue(link.isHittable, navigationDiagnostics()); link.tap()
+            XCTAssertTrue(app.buttons["editBodyMeasurements"].waitForExistence(timeout: 5), navigationDiagnostics())
         }
         app.launch(); openBody()
         XCTAssertTrue(app.staticTexts["bmiEmptyState"].exists)
@@ -608,8 +626,9 @@ final class twintrackUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts.matching(identifier: "Synthetic retry question").count, 1)
     }
 
-    override func setUpWithError() throws {
+    override func setUp() async throws {
         continueAfterFailure = false
+        await MainActor.run { XCUIDevice.shared.orientation = .portrait }
     }
 
     @MainActor
@@ -813,7 +832,7 @@ final class twintrackUITests: XCTestCase {
             predicate: NSPredicate(format: "value == %@", "1"), object: confirmation
         )
         XCTAssertEqual(XCTWaiter.wait(for: [confirmationOn], timeout: 3), .completed)
-        let readyStatus = app.staticTexts["Ready for V2 Prediction"]
+        let readyStatus = app.staticTexts["Manual details complete"]
         XCTAssertTrue(readyStatus.waitForExistence(timeout: 3))
 
         for _ in 0..<7 { if subject.isHittable { break }; app.swipeDown() }
@@ -829,7 +848,7 @@ final class twintrackUITests: XCTestCase {
         replace(app.textFields["v2Subject"], with: "Chemistry")
         for _ in 0..<7 { if app.switches["v2ConfirmContext"].isHittable { break }; app.swipeUp() }
         turnOn(app.switches["v2ConfirmContext"])
-        let savedReadyStatus = app.staticTexts["Ready for V2 Prediction"]
+        let savedReadyStatus = app.staticTexts["Manual details complete"]
         XCTAssertTrue(savedReadyStatus.waitForExistence(timeout: 3))
         app.buttons["saveManualInputsButton"].tap()
         app.terminate(); app.launch()
