@@ -11,6 +11,11 @@ final class FinalProductPassUITests: XCTestCase {
         let app = launch()
         XCTAssertTrue(app.buttons["runPrediction"].waitForExistence(timeout: 10))
         app.buttons["runPrediction"].tap()
+        let currentResult = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label == %@", "Saved estimate · Inputs match"),
+            object: app.staticTexts["homePredictionState"])
+        XCTAssertEqual(XCTWaiter.wait(for: [currentResult], timeout: 5), .completed,
+            "Run must establish the current V2 result before opening its details.")
         XCTAssertTrue(app.buttons["homePredictionDetails"].waitForExistence(timeout: 5))
         app.buttons["homePredictionDetails"].tap()
         let currentScore = try decimalScore(from: element("historyDetailPrediction", in: app).label)
@@ -229,12 +234,24 @@ final class FinalProductPassUITests: XCTestCase {
     }
 
     @MainActor
-    private func reveal(_ target: XCUIElement, in app: XCUIApplication, down: Bool = false) {
+    private func reveal(_ target: XCUIElement, in app: XCUIApplication, down: Bool = false,
+                        file: StaticString = #filePath, line: UInt = #line) {
+        func visibleAboveComposer() -> Bool {
+            guard target.isHittable else { return false }
+            // A result-card container may extend past the viewport; its specific
+            // actionable descendants are checked separately before interaction.
+            guard target.elementType != .other,
+                  app.scrollViews["assistantMessages"].exists else { return true }
+            let field = composer(in: app)
+            // XCTest can call an inset-covered disclosure hittable. Require its
+            // visible bounds above its 10-point top + 12-point field padding.
+            return !field.exists || target.frame.maxY <= field.frame.minY - 22
+        }
         for _ in 0..<16 {
-            if target.isHittable { return }
+            if visibleAboveComposer() { return }
             guard scrollContent(in: app, down: down) else { return }
         }
-        XCTAssertTrue(target.isHittable)
+        XCTAssertTrue(visibleAboveComposer(), "The requested control must be visible above the chat composer.", file: file, line: line)
     }
 
     @MainActor
@@ -285,6 +302,12 @@ final class FinalProductPassUITests: XCTestCase {
         let tabs = app.tabBars.firstMatch
         if tabs.exists, tabs.frame.minY > bounds.minY {
             bounds.size.height = min(bounds.height, tabs.frame.minY - bounds.minY)
+        }
+        if app.scrollViews["assistantMessages"].exists {
+            let field = composer(in: app)
+            if field.exists, field.frame.minY > bounds.minY {
+                bounds.size.height = min(bounds.height, field.frame.minY - 22 - bounds.minY)
+            }
         }
         let keyboard = app.keyboards.firstMatch
         if keyboard.exists, keyboard.frame.minY > bounds.minY {

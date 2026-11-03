@@ -21,7 +21,7 @@ struct FoundationTextClient: FoundationTextGenerating {
         do {
             let session = AssistantPerformance.measure(.sessionInit) { LanguageModelSession(instructions: instructions) }
             let response = try await session.respond(to: prompt,
-                options: GenerationOptions(maximumResponseTokens: 450))
+                options: GenerationOptions(maximumResponseTokens: AssistantGenerationBudget.maximumResponseTokens(for: prompt)))
             try Task.checkCancellation()
             guard !response.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw AssistantFailure.emptyResponse

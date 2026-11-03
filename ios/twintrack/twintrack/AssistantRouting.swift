@@ -29,6 +29,10 @@ enum AssistantRouter {
             }
             return .history(AssistantHistoryArguments(scope: .latest, localDate: ""))
         }
+        // Qualitative conversation edits are not requests to change a Ridge input.
+        if matches(#"^(?:please )?make it (?:easier|harder|simpler|clearer|shorter|longer|more beginner.friendly)\b"#, text) {
+            return .general
+        }
         if matches(#"^(?:please )?make it\b"#, text) {
             return .clarification("Which input should I change, and should I set it or increase/decrease it? Include the unit.")
         }
@@ -477,10 +481,9 @@ enum AssistantContext {
             exchanges = exchanges.last?.last?.role == .assistant ? Array(exchanges.suffix(1)) : []
         }
         var recent: [String] = []
-        var bytesRemaining = 2200
+        var bytesRemaining = 2700
         for exchange in exchanges.suffix(3).reversed() {
-            let perTurnLimit = recent.isEmpty ? 650 : 350
-            let serialized = exchange.map { serialize($0, limit: perTurnLimit) }.joined(separator: "\n")
+            let serialized = exchange.map { serialize($0, limit: recent.isEmpty ? ($0.role == .assistant ? 1700 : 650) : 200) }.joined(separator: "\n")
             guard serialized.utf8.count <= bytesRemaining else { break }
             bytesRemaining -= serialized.utf8.count
             recent.insert(serialized, at: 0)

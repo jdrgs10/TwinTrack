@@ -4,6 +4,41 @@ import XCTest
 /// Deterministic boundary tests with synthetic output, not live model-quality evidence.
 @MainActor
 final class AssistantQualityTests: XCTestCase {
+    func testWarmRoutineRepliesSurviveReviewWithoutCoachingOrCrisisEscalation() async throws {
+        let client = QualityClient()
+        let service = FoundationAssistantService(client: client)
+        let exchanges = [
+            ("Hi", "Hey! How can I help?"),
+            ("Thanks", "You're welcome!"),
+            ("No bro", "No problem."),
+            ("I'm stressed about school.", "That sounds like a lot. We can take it one task at a time."),
+            ("I think studying earlier might be better.", "It might suit you. Try a short session and see how it feels.")
+        ]
+        for (request, response) in exchanges {
+            client.output = response
+            let answer = try await service.respond(to: [user(request)], snapshot: AssistantSnapshot())
+            XCTAssertEqual(answer.text, response, request)
+            XCTAssertEqual(answer.provenance?.origin, .model, request)
+            XCTAssertFalse(answer.safetyRefusal, request)
+            XCTAssertTrue(answer.cards.isEmpty, request)
+            XCTAssertEqual(service.lastTrace.route, "conversation", request)
+        }
+        XCTAssertEqual(client.prompts.count, exchanges.count)
+    }
+
+    func testWarmContextualAcknowledgementDoesNotRepeatAdvice() async throws {
+        let client = QualityClient()
+        client.output = "That's okay—try each time and see which feels easier."
+        let messages = [user("I think studying earlier might be better."),
+                        AssistantMessage(role: .assistant, text: "A short morning session could help you see what suits you."),
+                        user("Idk")]
+        let answer = try await FoundationAssistantService(client: client).respond(to: messages, snapshot: AssistantSnapshot())
+        XCTAssertEqual(answer.text, client.output)
+        XCTAssertEqual(client.prompts.count, 1)
+        XCTAssertFalse(answer.safetyRefusal)
+        XCTAssertTrue(client.prompts[0].contains("studying earlier"))
+    }
+
     func testSleepGuidanceSurvivesReviewAcrossBaselineStates() async throws {
         let client = QualityClient()
         let service = FoundationAssistantService(client: client)
@@ -133,6 +168,104 @@ final class AssistantQualityTests: XCTestCase {
         XCTAssertTrue(client.prompts.isEmpty)
         XCTAssertFalse(AssistantGuidance.isUrgent("No chest pain and no difficulty breathing."))
         XCTAssertFalse(AssistantGuidance.isUrgent("Explain the phrase ‘chest pain with difficulty breathing’."))
+    }
+
+    func testMixedSymptomDenialsKeepAffirmativeEmergencyRouting() async throws {
+        for request in [
+            "No chest pain, but I have severe trouble breathing.",
+            "I have severe chest pain, but no trouble breathing.",
+            "No weakness, but I can't breathe.",
+            "No numbness, but I have crushing chest pain.",
+            "No chest pain, but one side of my body feels weak and I have trouble speaking.",
+            "I have severe chest pain without difficulty breathing.",
+            "No severe chest pain, but I have severe difficulty breathing.",
+            "No difficulty breathing and no numbness, but I have severe chest pain.",
+            "It's not chest pain, but I can't breathe."
+        ] {
+            let client = QualityClient(); client.errors = [.safety]
+            let service = FoundationAssistantService(client: client)
+            let answer = try await service.respond(to: [user(request)], snapshot: AssistantSnapshot())
+            XCTAssertEqual(answer.text, AssistantResponsePolicy.urgent, request)
+            XCTAssertEqual(answer.provenance?.origin, .urgent, request)
+            XCTAssertEqual(service.lastTrace.route, "urgent", request)
+            XCTAssertTrue(answer.cards.isEmpty, request)
+            XCTAssertFalse(answer.safetyRefusal, request)
+            XCTAssertTrue(client.prompts.isEmpty, request)
+            XCTAssertFalse(answer.text.contains("999"), request)
+            XCTAssertNil(FoundationAssistantService.safetyFallback(for: AssistantFailure.safety,
+                messages: [user(request)]), request)
+            // A correct model directive must not be downgraded by display review either.
+            let directive = "Call emergency services now."
+            XCTAssertEqual(AssistantReplyReview.reviewed(directive, request: request,
+                messages: [user(request)]), directive, request)
+        }
+    }
+
+    func testDeniedMedicalSymptomsRemainConversational() async throws {
+        for request in [
+            "No chest pain and no difficulty breathing.",
+            "No severe chest pain and no trouble breathing.",
+            "Without chest pain or trouble breathing, I feel okay.",
+            "I have no weakness or numbness and no chest pain.",
+            "No severe difficulty breathing.",
+            "No severe trouble breathing, and no chest pain.",
+            "It is not severe chest pain.",
+            "No chest pain or severe difficulty breathing.",
+            "No chest pain and severe trouble breathing.",
+            "No weakness or numbness on one side and no trouble speaking.",
+            "I have no weakness or numbness on one side, but I have trouble speaking.",
+            "Without chest pain, severe difficulty breathing, or weakness on one side, I feel okay."
+        ] {
+            let client = QualityClient(); client.output = "Thanks for clarifying."
+            let service = FoundationAssistantService(client: client)
+            let answer = try await service.respond(to: [user(request)], snapshot: AssistantSnapshot())
+            XCTAssertFalse(AssistantGuidance.isUrgent(request), request)
+            XCTAssertEqual(answer.text, client.output, request)
+            XCTAssertEqual(answer.provenance?.origin, .model, request)
+            XCTAssertEqual(service.lastTrace.route, "conversation", request)
+            XCTAssertEqual(client.prompts.count, 1, request)
+            XCTAssertTrue(answer.cards.isEmpty, request)
+            XCTAssertFalse(answer.safetyRefusal, request)
+        }
+    }
+
+    func testQuotedMedicalEmergencyExamplesRemainConversational() async throws {
+        for request in [
+            "Explain the phrase ‘chest pain with difficulty breathing’.",
+            "What does the phrase ‘I can't breathe’ mean?",
+            "Explain the quoted example: ‘No chest pain, but I have severe trouble breathing.’",
+            "What is the meaning of ‘severe chest pain with difficulty breathing’?",
+            "Explain the quote ‘one side of my body feels weak and I have trouble speaking’."
+        ] {
+            let client = QualityClient(); client.output = "That wording describes the symptoms in the example."
+            let service = FoundationAssistantService(client: client)
+            let answer = try await service.respond(to: [user(request)], snapshot: AssistantSnapshot())
+            XCTAssertFalse(AssistantGuidance.isUrgent(request), request)
+            XCTAssertEqual(answer.text, client.output, request)
+            XCTAssertEqual(answer.provenance?.origin, .model, request)
+            XCTAssertEqual(service.lastTrace.route, "conversation", request)
+            XCTAssertEqual(client.prompts.count, 1, request)
+            XCTAssertTrue(answer.cards.isEmpty, request)
+            XCTAssertFalse(answer.safetyRefusal, request)
+        }
+    }
+
+    func testMixedMedicalEmergencyDoesNotDependOnGenerationAvailability() async throws {
+        for availability in [AssistantAvailability.unsupported, .disabled, .notReady, .unavailable] {
+            for request in ["No chest pain, but I have severe trouble breathing.",
+                            "I have severe chest pain, but no trouble breathing.",
+                            "No weakness, but I can't breathe."] {
+                let client = QualityClient(); client.availability = availability
+                let service = FoundationAssistantService(client: client)
+                let answer = try await service.respond(to: [user(request)], snapshot: AssistantSnapshot())
+                XCTAssertEqual(answer.text, AssistantResponsePolicy.urgent, request)
+                XCTAssertEqual(answer.provenance?.origin, .urgent, request)
+                XCTAssertEqual(service.lastTrace.route, "urgent", request)
+                XCTAssertTrue(answer.cards.isEmpty, request)
+                XCTAssertFalse(answer.safetyRefusal, request)
+                XCTAssertTrue(client.prompts.isEmpty, request)
+            }
+        }
     }
 
     func testSafetyWarningAndMeaningfulQuotationAreNotTruncated() {

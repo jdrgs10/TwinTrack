@@ -127,8 +127,15 @@ enum AssistantGuidance {
     }
 
     static func isUrgent(_ request: String) -> Bool {
-        let text = request.lowercased().replacingOccurrences(of: "’", with: "'")
-        guard !AssistantRouter.matches(#"\b(?:no|not|without) (?:severe )?chest pain|\b(?:no|without) (?:trouble|difficulty) breathing|\b(?:no|without) (?:weakness|numbness)|\b(?:quote|quoted|phrase|meaning)\b"#, text) else { return false }
+        let normalized = request.lowercased().replacingOccurrences(of: "’", with: "'")
+        guard !AssistantRouter.matches(#"\b(?:quote|quoted|phrase|meaning)\b"#, normalized) else { return false }
+        // A denial applies to its named symptom or coordinated symptom list,
+        // not a different affirmative red flag elsewhere in the request.
+        let symptom = #"(?:(?:severe|crushing|intense|heavy|tight) )?(?:chest pain|(?:trouble|difficulty) (?:breathing|speaking)|(?:weakness|numbness)(?: (?:on|down) one side)?)\b"#
+        let text = normalized.replacingOccurrences(of:
+            #"\b(?:no|not|without) "# + symptom
+                + #"(?:\s*(?:,\s*(?:(?:and|or)\s+)?|(?:and|or)\s+)(?:(?:no|not|without)\s+)?"# + symptom + #")*"#,
+            with: " ", options: .regularExpression)
         if AssistantRouter.matches(#"\b(?:severe|crushing|intense) chest pain\b|\bchest (?:feels? )?(?:tight|heavy)\b"#, text) { return true }
         if AssistantRouter.matches(#"\b(?:suddenly )?(?:have |having )?severe (?:difficulty|trouble) breathing\b|\b(?:can't|cannot|struggling to) breathe\b"#, text) { return true }
         let oneSidedWeakness = AssistantRouter.matches(#"\b(?:one side(?: of (?:my|the) body)? (?:feels? )?(?:weak|numb)|(?:weakness|numbness) (?:on|down) one side)\b"#, text)

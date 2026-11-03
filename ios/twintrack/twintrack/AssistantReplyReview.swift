@@ -188,7 +188,7 @@ enum AssistantReplyReview {
 /// Conversation quality checks are separate from medical/safety review. They never
 /// truncate an answer or edit a numerical result, and do not persist rejected text.
 enum AssistantConversationReview {
-    static let fallback = "I couldn’t explain that clearly. Could you point to the part you want clarified?"
+    static let fallback = "I didn’t explain that clearly. Which part would you like me to clarify?"
 
     static func issue(in text: String, messages: [AssistantMessage]) -> String? {
         guard let request = messages.last?.text else { return nil }

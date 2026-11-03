@@ -1,5 +1,13 @@
 # TwinTrack assistant evaluation
 
+## 2026-10-06 — Medical negation and current regression review
+
+I corrected a whole-request denial rule that suppressed a separate affirmative emergency symptom. The existing app-owned urgent response now survives mixed symptom reports; coordinated denials and quotations remain distinct. Four new synthetic methods pass alongside the preserved safety/context cases. I retained the concise tone and keyboard work. Current complete results, any initial failures and separate runtime diagnostics belong to [the validation ledger](FINAL_APP_PASS.md); live conversational quality and final physical acceptance still require A's review.
+
+## 2026-10-04 — Concise, friendly replies and keyboard review
+
+I made the tone warm, brief and respectful, using first person for capabilities and limits rather than forcing it into factual answers. I kept grounding and safety intact and added two synthetic response-handling tests. I anchored the composer to the keyboard-aware conversation inset and added large-text/rotation coverage. I passed **496/496 (488 unit + 8 focused UI)**, V1 **21/21**, V2 **176/176**, Build and Analyze; compiler/analyzer warnings/errors **0**. One grouped debugger-termination warning is recorded separately. Live model tone and A's intermittent physical overlap still need a fresh-device retest. See the October 4 evidence entry for initial failures and corrections; older dated results remain historical.
+
 ## 2026-09-20 — Final self-harm routing correction
 
 **Status: focused safety tests 12/12 PASS; complete suite 341/341 PASS; physical confirmation pending A.**

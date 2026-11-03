@@ -348,6 +348,58 @@ final class twintrackUITests: XCTestCase {
     }
 
     @MainActor
+    func testComposerRemainsAboveKeyboardAfterGrowthRotationAndTabReturn() throws {
+        let app = XCUIApplication(), session = UUID().uuidString
+        app.launchArguments = ["--synthetic-chat-ui-tests", "--synthetic-chat-library", session,
+                               "--synthetic-profile-ui-tests", session, "--synthetic-v2-ui-tests", session,
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        func tab(_ title: String) -> XCUIElement {
+            app.tabBars.buttons[title].exists ? app.tabBars.buttons[title] : app.buttons[title].firstMatch
+        }
+        tab("TwinTrack AI").tap()
+        func composer() -> XCUIElement {
+            app.textFields["assistantComposer"].exists
+                ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+        }
+        func checkPlacement() {
+            let keyboard = app.keyboards.firstMatch
+            XCTAssertTrue(keyboard.waitForExistence(timeout: 5))
+            let field = composer(), dismiss = app.buttons["assistantDismissKeyboard"], send = app.buttons["assistantSend"]
+            let aboveKeyboard = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                field.frame.maxY <= keyboard.frame.minY + 1
+                    && dismiss.frame.maxY <= keyboard.frame.minY + 1
+                    && send.frame.maxY <= keyboard.frame.minY + 1
+            }, object: app)
+            XCTAssertEqual(XCTWaiter.wait(for: [aboveKeyboard], timeout: 5), .completed,
+                "Composer: \(field.frame); dismiss: \(dismiss.frame); send: \(send.frame); keyboard: \(keyboard.frame)")
+            XCTAssertTrue(field.isHittable)
+            XCTAssertTrue(dismiss.isHittable)
+        }
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        composer().tap()
+        checkPlacement()
+        composer().typeText("Synthetic first line\nSynthetic second line\nSynthetic third line\nSynthetic fourth line")
+        checkPlacement()
+        XCUIDevice.shared.orientation = .landscapeLeft
+        checkPlacement()
+        XCUIDevice.shared.orientation = .portrait
+        checkPlacement()
+        for _ in 0..<2 {
+            app.buttons["assistantDismissKeyboard"].tap()
+            XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+            for title in ["Home", "Profile", "TwinTrack AI"] {
+                XCTAssertTrue(tab(title).isHittable)
+                tab(title).tap()
+            }
+            composer().tap()
+            checkPlacement()
+        }
+        app.buttons["assistantDismissKeyboard"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+    }
+
+    @MainActor
     func testUserMessageEditCancelAndSave() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--synthetic-chat-ui-tests", "--synthetic-chat-library", UUID().uuidString]
@@ -390,8 +442,12 @@ final class twintrackUITests: XCTestCase {
         app.launchArguments = ["--synthetic-chat-ui-tests", "--synthetic-chat-library", UUID().uuidString]
         app.launch()
         app.tabBars.buttons["TwinTrack AI"].tap()
-        let field = app.textFields["assistantComposer"].exists
-            ? app.textFields["assistantComposer"] : app.textViews["assistantComposer"]
+        XCTAssertTrue(app.staticTexts["pageTitle.TwinTrack AI"].waitForExistence(timeout: 5))
+        let field = app.descendants(matching: .any).matching(identifier: "assistantComposer")
+            .matching(NSPredicate(format: "elementType == %d OR elementType == %d",
+                XCUIElement.ElementType.textField.rawValue, XCUIElement.ElementType.textView.rawValue)).firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.isHittable)
         field.tap()
         field.typeText("Synthetic plan")
         app.buttons["assistantSend"].tap()
@@ -404,9 +460,12 @@ final class twintrackUITests: XCTestCase {
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
         field.typeText("Unsent keyboard test")
         XCTAssertTrue(app.buttons["assistantDismissKeyboard"].isHittable)
-        // Drag through the keyboard edge; a swipe confined to the scroll view
-        // can end before native interactive dismissal has completed.
-        let start = app.scrollViews["assistantMessages"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+        // An inset scroll view's accessibility frame extends behind its composer.
+        // Begin in visible messages, then drag through the keyboard edge.
+        let scroll = app.scrollViews["assistantMessages"]
+        let visibleHeight = min(scroll.frame.maxY, field.frame.minY) - scroll.frame.minY
+        XCTAssertGreaterThan(visibleHeight, 0)
+        let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6 * visibleHeight / scroll.frame.height))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
         start.press(forDuration: 0.05, thenDragTo: end)
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))

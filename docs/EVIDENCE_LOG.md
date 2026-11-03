@@ -1,5 +1,29 @@
 # Evidence Log
 
+## 2026-10-06 — Overnight stabilization: complete automated PASS
+
+I preserved the pending concise reply-tone and keyboard inset work. I corrected one proven High safety-route bug: denial of one symptom suppressed a separate affirmative emergency symptom. Denial now applies to its named symptom/coordinated list; existing quote rules, affirmative criteria and the app-owned UAE response remain. Four synthetic methods cover mixed, denied-only, quoted and unavailable-model cases. I strengthened library composer-readiness and historical disclosure visibility tests without weakening functional assertions or changing prediction/history behavior.
+
+**Final complete gate: 531/531 distinct cases, 534/534 executions PASS** (492 unit + all 39 UI methods / 42 UI executions), **0 failures/skips**, **02:21:17.150–03:00:38.358 Asia/Dubai**, **2361.208 s**. Existing iPhone 17 Pro simulator/iOS 26.5, Xcode 26.6, complete TwinTrack Serial scheme. Unit suite **4.687 s**, UI suite **2328.256 s**. Explicit **Build PASS (12.3 s)** and **Analyze PASS (1.8 s)** at 02:20. V2 **176/176** and V1 **21/21** pass in Xcode and fresh portable checks; tolerance **1e-6**, max error **2.842170943040401e-14**. Portable date contract **12/12**.
+
+Fresh focused gate **86/86**; current-source iPad **4/4 selected cases have passing executions** across an initial 2/4 batch and unchanged 2/2 rerun. I retained all initial failures: library readiness, covered historical disclosure, an overly strict intermediate test helper, runner termination, and intermittent iPad partial typing/Run taps. Exact results and causes/uncertainties are in [FINAL_APP_PASS](FINAL_APP_PASS.md).
+
+Final compiler/analyzer warnings **0/0**, build/compiler errors **0**. Runtime findings remain **two Body frame-warning entries** and **one grouped debugger-termination warning**. Earlier LLDB, accessibility and launch-metrics notices stay in the ledger. The Mac locked during the final run; I read its completed non-sensitive result without further UI access. I did not access a physical device or private evidence.
+
+I verified the approved V2 hash, **210 unchanged model/core paths** and all **79 tested Swift hashes**. The intended commit has **16 files**; generated workspace state and private/runtime/signing material are excluded. Temporary schemes are removed, Serial is unchanged and screenshot mode is disabled. Filtered summaries stay Git-excluded; no raw screenshots/result bundles enter the commit. Diff/whitespace and manifest checks pass. No stage, commit, push, tag, retraining or new research. **Ready for [A's physical acceptance](FINAL_PHYSICAL_ACCEPTANCE.md); NOT FROZEN.**
+
+## 2026-10-04 — Reply tone and keyboard layout
+
+I made replies warmer and brief, using first person for capabilities and limits rather than every factual answer. I softened result introductions and clarification wording while preserving grounding, context and safety.
+
+I anchored the composer to the conversation's bottom safe-area inset, preserving first-tap focus, interactive dismissal and editing. I added two synthetic tone-handling tests and a keyboard geometry test for growing drafts, largest text, rotation and tab return. The original layout also passed that geometry check, so A's intermittent physical overlap remains unproven here. I corrected the swipe test's origin after the inset expanded its accessibility bounds: its old y=567 drag began below the field at y=445–469. The same dismissal assertion then passed. Synthetic tests do not certify live model tone.
+
+I passed **496/496: 488 unit + 8 focused chat UI tests**, zero failures/skips, **20:37:12–20:45:15 Asia/Dubai**, **482.776 seconds**. V1 **21/21**, V2 **176/176**, explicit simulator **Build PASS** and **Analyze PASS**; compiler/analyzer warnings/errors **0**. One grouped debugger warning (`Debug session ended with code 9: killed`) is recorded separately. September 30's complete-UI gate remains historical.
+
+I retained initial failures: **490/491** from the instruction budget (4042 bytes against 4000, corrected by shortening); **493/494** and **495/496** from the gesture origin; intermediate identifier-scope failures and runner exit-code-75 errors. I verified the original-layout swipe and corrected scope/coordinates without weakening assertions. Earlier CLI simulator/macro attempts were sandbox-blocked.
+
+I confirmed the tested Swift files stayed unchanged, protected model/core files match HEAD, and the diff check passes. I removed the temporary scheme, restored TwinTrack Serial and kept screenshot mode disabled. My evidence/explanation summaries are concise and in first person; historical results remain intact. The handoff stays Git-excluded, and generated workspace state is excluded from intended changes. Nothing staged, committed or pushed. A should retest fresh-chat tone and keyboard placement during typing, rotation and tab return; physical acceptance and freeze remain pending.
+
 ## 2026-09-30 — Final app implementation pass: automated PASS, physical review pending
 
 Completed the approved Home guidance, directed Manual Inputs review, exact saved-estimate explanation, dark composer refinement and bounded reliability/accessibility fixes. No physical acceptance or feature freeze is claimed. Nothing staged, committed or pushed.

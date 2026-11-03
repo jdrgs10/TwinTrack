@@ -1,5 +1,11 @@
 # TwinTrack UI Freeze
 
+## 2026-10-06 current source — NOT FROZEN
+
+I preserved the approved three tabs and current Home/Profile/wellbeing design while reviewing the pending reply-tone and keyboard-safe composer work. The overnight audit corrected a proven medical-negation routing blocker and strengthened chat-library readiness and historical-disclosure visibility tests. No model, HealthKit semantics, feature order, website or optional feature changed.
+
+The complete current gate passes **531/531 distinct cases / 534/534 executions**, V2 **176/176**, V1 **21/21**, Build and Analyze; compiler/analyzer warnings **0/0**. Two Body runtime entries and one grouped debugger warning remain recorded in [FINAL_APP_PASS](FINAL_APP_PASS.md). Older complete and focused totals below are historical. I require A's [current synthetic physical acceptance](FINAL_PHYSICAL_ACCEPTANCE.md), including keyboard/tone, wellbeing editor and iPad layout, before declaring feature/UI freeze. Live conversation quality and intermittent physical overlap are not certified by injected responses or simulator geometry tests.
+
 ## 2026-09-30 final app pass — automated PASS; physical acceptance pending
 
 This section supersedes older current-product descriptions below; their results remain historical evidence. This pass covers Home guidance, directed manual review, exact saved-estimate explanations, dark composer refinement and the bounded reliability/accessibility fixes recorded in the ledger. See [implementation and validation ledger](FINAL_APP_PASS.md) and [physical acceptance script](FINAL_PHYSICAL_ACCEPTANCE.md).

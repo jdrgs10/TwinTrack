@@ -129,9 +129,10 @@ struct TwinTrackAIView: View {
                         }
                         .padding(16)
                     }
+                    .accessibilityIdentifier("assistantMessages")
+                    .safeAreaInset(edge: .bottom, spacing: 0) { composer }
                     .scrollDismissesKeyboard(.interactively)
                     .scrollBounceBehavior(.always)
-                    .accessibilityIdentifier("assistantMessages")
                     .onScrollGeometryChange(for: Bool.self) { geometry in
                         geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 80
                     } action: { _, nearEnd in followsLatest = nearEnd }
@@ -150,9 +151,8 @@ struct TwinTrackAIView: View {
                     }
                     .padding(.horizontal, 16).padding(.bottom, 8)
                 }
-                composer
             }
-            .background(palette.background.ignoresSafeArea())
+            .background(palette.background.ignoresSafeArea(.container))
             .toolbar(.hidden, for: .navigationBar)
             .toolbarBackground(palette.background, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)

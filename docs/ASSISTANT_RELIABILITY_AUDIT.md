@@ -1,5 +1,15 @@
 # Assistant reliability audit — 2026-09-24
 
+## Current overnight audit — 2026-10-06
+
+I preserved the pending concise, warmer reply instructions and keyboard-safe composer change. I reviewed canonical recent/saved context, refusal/crisis separation, deterministic numerical routing, BMI consent/fresh reads, cancellation/editing, chat storage/export and privacy. I found one **High** blocker in the existing medical route: a whole-request negation guard made `No chest pain, but I have severe trouble breathing.` non-urgent. The shared output reviewer could then replace correct emergency guidance with general symptom advice.
+
+I now remove only the denied symptom or coordinated denied list before the existing affirmative checks. The existing quote filter, positive red-flag rules and app-owned UAE ambulance response remain intact; urgent routing precedes generation even when the model is unavailable. An initial un-applied draft exposed coordinated-denial false positives during peer review; I corrected those before applying it. Four new synthetic methods cover nine mixed reports, twelve denial-only reports, five quoted examples and twelve unavailable-generation combinations. This is a narrow software correction, not a general or clinically validated triage classifier.
+
+The fresh Xcode results and separated warning counts are recorded in [FINAL_APP_PASS](FINAL_APP_PASS.md) and [EVIDENCE_LOG](EVIDENCE_LOG.md). Live tone, perceived first-tap latency, intermittent physical keyboard overlap and final visual acceptance remain A's checks. The blue Ridge card is restored above the purple Foundation Models card in current Profile; the older September description below is historical. Frozen Ridge V1/V2, HealthKit semantics and prediction/history/What-If state remain unchanged. I did not inspect private evidence or device identifiers, or stage, commit or push.
+
+## Historical September 24 audit
+
 Status: automated validation complete; physical conversational approval remains required. Build marker: `FMQ-2026-09-24-A`. No model retraining or Ridge changes.
 
 ## Evidence and confirmed causes
